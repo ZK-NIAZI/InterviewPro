@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../history/presentation/widgets/history_content_widget.dart';
+import '../../../settings/presentation/widgets/settings_content_widget.dart';
 
 /// Main dashboard page matching the provided HTML design exactly
 class DashboardPage extends StatefulWidget {
@@ -31,8 +32,10 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _selectedIndex == 1
-          ? const Color(0xFFF8F6F6)
-          : AppColors.backgroundLight,
+          ? const Color(0xFFF8F6F6) // History background
+          : _selectedIndex == 2
+          ? const Color(0xFFF8F6F6) // Settings background
+          : AppColors.backgroundLight, // Home background
       body: Column(
         children: [
           // Header - changes based on selected tab
@@ -244,15 +247,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildSettingsContent() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
-      child: const Center(
-        child: Text(
-          'Settings content coming soon...',
-          style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
-        ),
-      ),
-    );
+    return const SettingsContentWidget();
   }
 
   Widget _buildFloatingActionButton() {
