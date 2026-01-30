@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_router.dart';
 
 /// Role selection screen matching the provided HTML design exactly
 class InterviewSetupPage extends StatefulWidget {
@@ -265,15 +266,13 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
   void _onContinue() {
     if (selectedRoleIndex == null) return;
 
-    // TODO: Navigate to next step (level selection or candidate info)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Selected: ${roles[selectedRoleIndex!].title.replaceAll('\n', ' ')}',
-        ),
-        backgroundColor: AppColors.primary,
-      ),
+    final selectedRoleName = roles[selectedRoleIndex!].title.replaceAll(
+      '\n',
+      ' ',
     );
+
+    // Navigate to experience level selection
+    context.push('${AppRouter.experienceLevel}?role=$selectedRoleName');
   }
 }
 
