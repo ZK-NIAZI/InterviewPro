@@ -49,6 +49,13 @@ class AppStrings {
   static const String download = 'Download';
   static const String export = 'Export';
 
+  // Interview Question
+  static const String questionOf = 'QUESTION %d OF %d';
+  static const String previous = 'Previous';
+  static const String next = 'Next';
+  static const String addNotes = 'Add Notes';
+  static const String addNotesHint = 'Add your notes here...';
+
   // Messages
   static const String loading = 'Loading...';
   static const String noData = 'No data available';
@@ -56,4 +63,5 @@ class AppStrings {
   static const String success = 'Success';
   static const String interviewCompleted = 'Interview completed successfully';
   static const String reportGenerated = 'Report generated successfully';
+  static const String pleaseSelectAnswer = 'Please select an answer';
 }

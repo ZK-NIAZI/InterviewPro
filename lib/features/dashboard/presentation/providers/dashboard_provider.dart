@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../../../../shared/domain/entities/entities.dart';
 import '../../../../shared/domain/repositories/repositories.dart';
 
@@ -14,6 +15,7 @@ class DashboardProvider extends ChangeNotifier {
   int _completedInterviews = 0;
   int _inProgressInterviews = 0;
   int _thisWeekInterviews = 0;
+  double _averageScore = 0.0;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -22,6 +24,7 @@ class DashboardProvider extends ChangeNotifier {
   int get completedInterviews => _completedInterviews;
   int get inProgressInterviews => _inProgressInterviews;
   int get thisWeekInterviews => _thisWeekInterviews;
+  double get averageScore => _averageScore;
 
   /// Load dashboard data
   Future<void> loadDashboardData() async {
@@ -66,6 +69,28 @@ class DashboardProvider extends ChangeNotifier {
       final thisWeekInterviews = await _interviewRepository
           .getInterviewsInDateRange(startOfWeek, endOfWeek);
       _thisWeekInterviews = thisWeekInterviews.length;
+
+      // Calculate average score from completed interviews
+      final completedInterviews = await _interviewRepository
+          .getInterviewsByStatus(InterviewStatus.completed);
+
+      if (completedInterviews.isNotEmpty) {
+        // Filter interviews that have scores and calculate average
+        final interviewsWithScores = completedInterviews
+            .where((interview) => interview.overallScore != null)
+            .toList();
+
+        if (interviewsWithScores.isNotEmpty) {
+          final totalScore = interviewsWithScores
+              .map((interview) => interview.overallScore!)
+              .reduce((a, b) => a + b);
+          _averageScore = totalScore / interviewsWithScores.length;
+        } else {
+          _averageScore = 0.0;
+        }
+      } else {
+        _averageScore = 0.0;
+      }
     } catch (e) {
       debugPrint('Error loading statistics: $e');
     }

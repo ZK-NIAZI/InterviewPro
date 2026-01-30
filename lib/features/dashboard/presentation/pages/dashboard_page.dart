@@ -123,7 +123,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: IconButton(
               onPressed: () {
-                // TODO: Navigate to profile
+                // Profile functionality - show user profile dialog
+                _showProfileDialog();
               },
               icon: const Icon(
                 Icons.account_circle,
@@ -170,7 +171,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: IconButton(
               onPressed: () {
-                // TODO: Implement search functionality
+                // Search functionality - show search dialog
+                _showSearchDialog();
               },
               icon: const Icon(Icons.search, size: 28, color: Colors.black),
             ),
@@ -326,7 +328,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildStatCard(
                 'AVG SCORE',
-                '4.2', // TODO: Calculate from actual data
+                provider.averageScore.toStringAsFixed(1),
               ),
             ),
           ],
@@ -633,4 +635,66 @@ class _MockInterview {
   final double? score;
 
   _MockInterview(this.name, this.position, this.date, this.score);
+}
+
+extension _DashboardPageExtensions on _DashboardPageState {
+  /// Shows profile dialog
+  void _showProfileDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Profile'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
+            SizedBox(height: 16),
+            Text(
+              'Alex Johnson',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text('alex.j@example.com'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows search dialog
+  void _showSearchDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search Interviews'),
+        content: TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search by candidate name...',
+            prefixIcon: Icon(Icons.search),
+          ),
+          onChanged: (value) {
+            // Search functionality can be implemented here
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Search action can be implemented here
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
 }

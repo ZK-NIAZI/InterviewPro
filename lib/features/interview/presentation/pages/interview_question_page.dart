@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -23,10 +24,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   final TextEditingController notesController = TextEditingController();
 
   // Mock data - in real app this would come from the question repository
-  final int currentQuestion = 5;
-  final int totalQuestions = 25;
-  final String category = 'Programming Fundamentals';
-  final String questionText =
+  static const int _currentQuestion = 5;
+  static const int _totalQuestions = 25;
+  static const String _category = 'Programming Fundamentals';
+  static const String _questionText =
       'Explain the difference between const and final in Dart?';
 
   @override
@@ -86,7 +87,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
           // Question counter
           Text(
-            'QUESTION $currentQuestion OF $totalQuestions',
+            'QUESTION $_currentQuestion OF $_totalQuestions',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -100,7 +101,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildProgressBar() {
-    final progress = currentQuestion / totalQuestions;
+    final progress = _currentQuestion / _totalQuestions;
 
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
@@ -168,7 +169,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       ),
       child: Center(
         child: Text(
-          category,
+          _category,
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -182,7 +183,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   Widget _buildQuestionNumber() {
     return Text(
-      '#$currentQuestion',
+      '#$_currentQuestion',
       style: TextStyle(
         fontSize: 64,
         fontWeight: FontWeight.w900,
@@ -195,7 +196,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   Widget _buildQuestionText() {
     return Text(
-      questionText,
+      _questionText,
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
@@ -260,7 +261,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'No',
+                    AppStrings.no,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -320,7 +321,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Yes',
+                    AppStrings.yes,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -357,7 +358,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
             ),
             const SizedBox(width: 8),
             Text(
-              'Add Notes',
+              AppStrings.addNotes,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -382,10 +383,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       child: TextField(
         controller: notesController,
         maxLines: 3,
-        decoration: const InputDecoration(
-          hintText: 'Add your notes here...',
+        decoration: InputDecoration(
+          hintText: AppStrings.addNotesHint,
           border: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
         style: const TextStyle(fontSize: 14, color: Colors.black),
       ),
@@ -423,8 +424,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
                     borderRadius: BorderRadius.circular(24),
                   ),
                 ),
-                child: const Text(
-                  'Previous',
+                child: Text(
+                  AppStrings.previous,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -456,8 +457,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
                     borderRadius: BorderRadius.circular(24),
                   ),
                 ),
-                child: const Text(
-                  'Next',
+                child: Text(
+                  AppStrings.next,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -475,8 +476,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       SnackBar(
         content: Text(
           selectedAnswer == null
-              ? 'Please select an answer'
-              : 'Answer saved: ${selectedAnswer! ? "Yes" : "No"}',
+              ? AppStrings.pleaseSelectAnswer
+              : 'Answer saved: ${selectedAnswer! ? AppStrings.yes : AppStrings.no}',
         ),
         backgroundColor: selectedAnswer == null
             ? Colors.orange
