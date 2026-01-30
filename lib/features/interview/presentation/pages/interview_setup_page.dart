@@ -238,12 +238,11 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: selectedRoleIndex != null ? _onContinue : null,
+            onPressed: _onContinue,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey[300],
-              elevation: selectedRoleIndex != null ? 8 : 0,
+              elevation: 8,
               shadowColor: AppColors.primary.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -264,12 +263,10 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
   }
 
   void _onContinue() {
-    if (selectedRoleIndex == null) return;
-
-    final selectedRoleName = roles[selectedRoleIndex!].title.replaceAll(
-      '\n',
-      ' ',
-    );
+    // Use first role as default if no selection is made
+    final selectedRoleName = selectedRoleIndex != null
+        ? roles[selectedRoleIndex!].title.replaceAll('\n', ' ')
+        : roles[0].title.replaceAll('\n', ' ');
 
     // Navigate to experience level selection
     context.push('${AppRouter.experienceLevel}?role=$selectedRoleName');

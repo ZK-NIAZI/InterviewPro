@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_router.dart';
 
 /// Experience level selection screen matching the provided HTML design
 class ExperienceLevelPage extends StatefulWidget {
@@ -25,20 +26,26 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Area
-            _buildHeader(),
+      body: Stack(
+        children: [
+          // Main content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Safe area and header
+              SafeArea(child: _buildHeader()),
 
-            // Main Content: Cards Stack
-            Expanded(child: _buildLevelCards()),
+              // Main Content: Cards Stack
+              Expanded(child: _buildLevelCards()),
 
-            // Bottom Spacer
-            const SizedBox(height: 40),
-          ],
-        ),
+              // Bottom spacer for fixed button
+              const SizedBox(height: 100),
+            ],
+          ),
+
+          // Fixed bottom button
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomButton()),
+        ],
       ),
     );
   }
@@ -117,15 +124,6 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
         setState(() {
           selectedLevelIndex = index;
         });
-
-        // Show selection feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Selected: ${level.title}'),
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 1),
-          ),
-        );
       },
       child: Container(
         width: double.infinity,
@@ -190,6 +188,51 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBottomButton() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _onContinue,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 8,
+              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Continue',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onContinue() {
+    // Use first level as default if no selection is made
+    final selectedLevelName = selectedLevelIndex != null
+        ? levels[selectedLevelIndex!].title
+        : levels[0].title;
+
+    // Navigate to interview question screen
+    context.push(
+      '${AppRouter.interviewQuestion}?role=${widget.selectedRole}&level=$selectedLevelName',
     );
   }
 }

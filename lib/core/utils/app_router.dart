@@ -3,6 +3,7 @@ import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/interview/presentation/pages/interview_setup_page.dart';
 import '../../features/interview/presentation/pages/experience_level_page.dart';
+import '../../features/interview/presentation/pages/interview_question_page.dart';
 
 /// Application routing configuration
 class AppRouter {
@@ -11,6 +12,7 @@ class AppRouter {
   static const String dashboard = '/dashboard';
   static const String interview = '/interview';
   static const String experienceLevel = '/experience-level';
+  static const String interviewQuestion = '/interview-question';
   static const String questions = '/questions';
   static const String reports = '/reports';
 
@@ -39,6 +41,20 @@ class AppRouter {
           final selectedRole =
               state.uri.queryParameters['role'] ?? 'Flutter Developer';
           return ExperienceLevelPage(selectedRole: selectedRole);
+        },
+      ),
+      GoRoute(
+        path: interviewQuestion,
+        name: 'interview-question',
+        builder: (context, state) {
+          final selectedRole =
+              state.uri.queryParameters['role'] ?? 'Flutter Developer';
+          final selectedLevel =
+              state.uri.queryParameters['level'] ?? 'Associate';
+          return InterviewQuestionPage(
+            selectedRole: selectedRole,
+            selectedLevel: selectedLevel,
+          );
         },
       ),
       //  Add other routes as features are implemented
