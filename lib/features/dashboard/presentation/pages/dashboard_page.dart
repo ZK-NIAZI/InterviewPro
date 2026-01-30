@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
 import '../providers/dashboard_provider.dart';
+import '../../../history/presentation/widgets/history_content_widget.dart';
 
 /// Main dashboard page matching the provided HTML design exactly
 class DashboardPage extends StatefulWidget {
@@ -29,47 +30,42 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: _selectedIndex == 1
+          ? const Color(0xFFF8F6F6)
+          : AppColors.backgroundLight,
       body: Column(
         children: [
-          // Header
+          // Header - changes based on selected tab
           _buildHeader(),
 
-          // Main Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                24,
-                16,
-                100,
-              ), // Bottom padding for nav
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero Action Section
-                  _buildStartInterviewButton(),
-                  const SizedBox(height: 32),
-
-                  // Stats Overview
-                  _buildStatsSection(),
-                  const SizedBox(height: 32),
-
-                  // Recent Interviews List
-                  _buildRecentInterviewsSection(),
-                ],
-              ),
-            ),
-          ),
+          // Main Content - changes based on selected tab
+          Expanded(child: _buildMainContent()),
         ],
       ),
 
-      // Bottom Navigation
+      // Bottom Navigation - always visible
       bottomNavigationBar: _buildBottomNavigation(),
+
+      // Floating Action Button - only show on history tab
+      floatingActionButton: _selectedIndex == 1
+          ? _buildFloatingActionButton()
+          : null,
     );
   }
 
   Widget _buildHeader() {
+    // Different headers based on selected tab
+    switch (_selectedIndex) {
+      case 1: // History tab
+        return _buildHistoryHeader();
+      case 2: // Settings tab
+        return _buildSettingsHeader();
+      default: // Home tab
+        return _buildHomeHeader();
+    }
+  }
+
+  Widget _buildHomeHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -134,6 +130,154 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryHeader() {
+    return Container(
+      color: const Color(0xFFF8F6F6),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 16,
+        16,
+        8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Title
+          const Text(
+            'Interview History',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              letterSpacing: -0.5,
+            ),
+          ),
+
+          // Search button
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: IconButton(
+              onPressed: () {
+                // TODO: Implement search functionality
+              },
+              icon: const Icon(Icons.search, size: 28, color: Colors.black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsHeader() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 16,
+        16,
+        16,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight.withValues(alpha: 0.9),
+        border: Border(bottom: BorderSide(color: AppColors.grey200, width: 1)),
+      ),
+      child: const Row(
+        children: [
+          Text(
+            'Settings',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    // Different content based on selected tab
+    switch (_selectedIndex) {
+      case 1: // History tab
+        return const HistoryContentWidget();
+      case 2: // Settings tab
+        return _buildSettingsContent();
+      default: // Home tab
+        return _buildHomeContent();
+    }
+  }
+
+  Widget _buildHomeContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        24,
+        16,
+        100,
+      ), // Bottom padding for nav
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Hero Action Section
+          _buildStartInterviewButton(),
+          const SizedBox(height: 32),
+
+          // Stats Overview
+          _buildStatsSection(),
+          const SizedBox(height: 32),
+
+          // Recent Interviews List
+          _buildRecentInterviewsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsContent() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
+      child: const Center(
+        child: Text(
+          'Settings content coming soon...',
+          style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () {
+          // Navigate to start new interview
+          context.push(AppRouter.interview);
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ),
     );
   }
@@ -254,7 +398,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             TextButton(
               onPressed: () {
-                // TODO: Navigate to all interviews
+                setState(() => _selectedIndex = 1);
               },
               child: const Text(
                 'View All',
