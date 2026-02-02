@@ -53,7 +53,7 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Form title
-              _buildFormTitle(),
+              
 
               const SizedBox(height: 24),
 
@@ -104,16 +104,7 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
     );
   }
 
-  Widget _buildFormTitle() {
-    return const Text(
-      'Evaluation Criteria',
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
-      ),
-    );
-  }
+
 
   Widget _buildRatingSection({
     required String label,
