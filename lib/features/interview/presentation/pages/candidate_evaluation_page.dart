@@ -243,36 +243,9 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   }
 
   void _showReportDialog(String report) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          AppStrings.evaluationComplete,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            report,
-            style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Navigate back to dashboard
-              context.go(AppRouter.dashboard);
-            },
-            child: Text(
-              'Close',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+    // Navigate to interview report page instead of showing dialog
+    context.push(
+      '${AppRouter.interviewReport}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${context.read<EvaluationProvider>().calculatedScore}&communicationSkills=${context.read<EvaluationProvider>().communicationSkills}&problemSolvingApproach=${context.read<EvaluationProvider>().problemSolvingApproach}&culturalFit=${context.read<EvaluationProvider>().culturalFit}&overallImpression=${context.read<EvaluationProvider>().overallImpression}&additionalComments=${Uri.encodeComponent(context.read<EvaluationProvider>().additionalComments)}',
     );
   }
 }
