@@ -159,7 +159,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   ],
                 ),
                 onTap: () {
-                  // TODO: Show language selection dialog
+                  
                   _showLanguageDialog();
                 },
               ),
@@ -232,7 +232,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   color: Colors.grey[400],
                 ),
                 onTap: () {
-                  // TODO: Navigate to question sets
                 },
               ),
 
@@ -304,7 +303,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   color: Colors.grey[400],
                 ),
                 onTap: () {
-                  // TODO: Export data functionality
                   _showExportDialog();
                 },
               ),
@@ -321,7 +319,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   color: Colors.grey[400],
                 ),
                 onTap: () {
-                  // TODO: Clear history functionality
                   _showClearHistoryDialog();
                 },
               ),
@@ -388,7 +385,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   color: Colors.grey[400],
                 ),
                 onTap: () {
-                  // TODO: Open privacy policy
                 },
               ),
 
@@ -404,7 +400,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   color: Colors.grey[400],
                 ),
                 onTap: () {
-                  // TODO: Open terms of service
                 },
               ),
             ],

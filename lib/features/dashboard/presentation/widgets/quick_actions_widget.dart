@@ -61,7 +61,6 @@ class QuickActionsWidget extends StatelessWidget {
               subtitle: 'App settings',
               color: AppColors.grey600,
               onTap: () {
-                // TODO: Navigate to settings when implemented
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Settings coming soon!')),
                 );

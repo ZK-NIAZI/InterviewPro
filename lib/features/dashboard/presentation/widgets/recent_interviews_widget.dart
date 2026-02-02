@@ -27,7 +27,6 @@ class RecentInterviewsWidget extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // TODO: Navigate to all interviews view
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('View all interviews coming soon!'),

@@ -472,7 +472,6 @@ class ReportPreviewPage extends StatelessWidget {
   int _calculateCommunicationScore() => (communicationSkills * 20).round();
 
   void _onDownloadPDF() {
-    // TODO: Implement PDF download
   }
 
   void _onEdit() {
@@ -480,7 +479,6 @@ class ReportPreviewPage extends StatelessWidget {
   }
 
   void _onShare() {
-    // TODO: Implement share functionality
   }
 }
 

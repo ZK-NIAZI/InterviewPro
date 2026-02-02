@@ -480,11 +480,9 @@ class InterviewReportPage extends StatelessWidget {
   }
 
   void _onShareReport() {
-    // TODO: Implement share functionality
   }
 
   void _onDownloadReport() {
-    // TODO: Implement download functionality
   }
 }
 
