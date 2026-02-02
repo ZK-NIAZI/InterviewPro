@@ -33,7 +33,7 @@ class InterviewReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFFFFFFF),
       body: Stack(
         children: [
           Column(
