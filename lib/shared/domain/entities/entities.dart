@@ -5,6 +5,7 @@
 library;
 
 export 'enums.dart';
+export 'evaluation.dart';
 export 'interview.dart';
 export 'question.dart';
 export 'question_response.dart';

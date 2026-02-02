@@ -64,4 +64,16 @@ class AppStrings {
   static const String interviewCompleted = 'Interview completed successfully';
   static const String reportGenerated = 'Report generated successfully';
   static const String pleaseSelectAnswer = 'Please select an answer';
+
+  // Evaluation Screen
+  static const String candidateEvaluation = 'Candidate Evaluation';
+  static const String communicationSkills = 'Communication Skills';
+  static const String problemSolvingApproach = 'Problem-Solving Approach';
+  static const String culturalFit = 'Cultural Fit';
+  static const String overallImpression = 'Overall Impression';
+  static const String additionalComments = 'Additional Comments';
+  static const String generateReport = 'Generate Report';
+  static const String evaluationComplete = 'Evaluation Complete';
+  static const String commentsHint =
+      'Add any additional comments about the candidate...';
 }

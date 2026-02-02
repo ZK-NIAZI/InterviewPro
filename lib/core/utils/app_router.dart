@@ -4,6 +4,7 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/interview/presentation/pages/interview_setup_page.dart';
 import '../../features/interview/presentation/pages/experience_level_page.dart';
 import '../../features/interview/presentation/pages/interview_question_page.dart';
+import '../../features/interview/presentation/pages/candidate_evaluation_page.dart';
 
 /// Application routing configuration
 class AppRouter {
@@ -13,6 +14,7 @@ class AppRouter {
   static const String interview = '/interview';
   static const String experienceLevel = '/experience-level';
   static const String interviewQuestion = '/interview-question';
+  static const String candidateEvaluation = '/candidate-evaluation';
   static const String questions = '/questions';
   static const String reports = '/reports';
 
@@ -54,6 +56,23 @@ class AppRouter {
           return InterviewQuestionPage(
             selectedRole: selectedRole,
             selectedLevel: selectedLevel,
+          );
+        },
+      ),
+      GoRoute(
+        path: candidateEvaluation,
+        name: 'candidate-evaluation',
+        builder: (context, state) {
+          final candidateName =
+              state.uri.queryParameters['candidateName'] ?? '';
+          final role = state.uri.queryParameters['role'] ?? '';
+          final level = state.uri.queryParameters['level'] ?? '';
+          final interviewId = state.uri.queryParameters['interviewId'] ?? '';
+          return CandidateEvaluationPage(
+            candidateName: candidateName,
+            role: role,
+            level: level,
+            interviewId: interviewId,
           );
         },
       ),

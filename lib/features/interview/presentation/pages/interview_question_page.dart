@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/app_router.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   final TextEditingController notesController = TextEditingController();
 
   // Mock data - in real app this would come from the question repository
-  static const int _currentQuestion = 5;
+  static const int _currentQuestion = 25; // Set to last question for demo
   static const int _totalQuestions = 25;
   static const String _category = 'Programming Fundamentals';
   static const String _questionText =
@@ -470,27 +471,35 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   void _onNext() {
-    // In a real app, this would save the answer and navigate to the next question
-    // For now, we'll just show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          selectedAnswer == null
-              ? AppStrings.pleaseSelectAnswer
-              : 'Answer saved: ${selectedAnswer! ? AppStrings.yes : AppStrings.no}',
-        ),
-        backgroundColor: selectedAnswer == null
-            ? Colors.orange
-            : AppColors.primary,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    // Check if this is the last question
+    if (_isLastQuestion()) {
+      // Navigate to candidate evaluation
+      final candidateName = 'John Doe'; // In real app, get from interview data
+      final interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Navigate to next question or complete interview
-    if (selectedAnswer != null) {
-      // For demo purposes, just pop back to previous screen
-      // In real app, this would navigate to next question or results
-      context.pop();
+      context.push(
+        '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId',
+      );
+    } else {
+      // Navigate to next question (for demo, just show snackbar)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            selectedAnswer == null
+                ? AppStrings.pleaseSelectAnswer
+                : 'Answer saved: ${selectedAnswer! ? AppStrings.yes : AppStrings.no}',
+          ),
+          backgroundColor: selectedAnswer == null
+              ? Colors.orange
+              : AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
+  }
+
+  /// Check if this is the last question
+  bool _isLastQuestion() {
+    return _currentQuestion >= _totalQuestions;
   }
 }
