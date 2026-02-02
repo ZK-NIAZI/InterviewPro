@@ -389,7 +389,7 @@ class InterviewReportPage extends StatelessWidget {
                     Icon(Icons.picture_as_pdf, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Download PDF',
+                      'Preview PDF',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
