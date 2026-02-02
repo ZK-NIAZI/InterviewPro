@@ -52,9 +52,6 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Form title
-              
-
               const SizedBox(height: 24),
 
               // Rating sections
@@ -103,8 +100,6 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
       },
     );
   }
-
-
 
   Widget _buildRatingSection({
     required String label,
