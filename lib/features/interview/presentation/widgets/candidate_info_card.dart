@@ -50,14 +50,14 @@ class CandidateInfoCard extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 2,
+        image: const DecorationImage(
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          ),
+          fit: BoxFit.cover,
         ),
       ),
-      child: Icon(Icons.person, size: 32, color: AppColors.primary),
     );
   }
 
@@ -79,11 +79,11 @@ class CandidateInfoCard extends StatelessWidget {
 
         // Role and level
         Text(
-          '$role • $level',
+          '$role - $level',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[600],
+            color: AppColors.primary,
           ),
         ),
 

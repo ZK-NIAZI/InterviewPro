@@ -35,11 +35,11 @@ class StarRatingWidget extends StatelessWidget {
               ? () => onRatingChanged!(starIndex)
               : null,
           child: Container(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(2),
             child: Icon(
-              isActive ? Icons.star : Icons.star_border,
+              Icons.star,
               size: size,
-              color: isActive ? activeColor : inactiveColor,
+              color: isActive ? activeColor : Colors.grey[300],
             ),
           ),
         );
@@ -82,21 +82,22 @@ class LabeledStarRating extends StatelessWidget {
               ),
             ),
             Text(
-              '$rating/$maxRating',
+              rating > 0 ? '$rating/$maxRating' : 'Tap to rate',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: rating > 0 ? Colors.grey[600] : Colors.grey[400],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         StarRatingWidget(
           rating: rating,
           maxRating: maxRating,
           onRatingChanged: onRatingChanged,
           enabled: enabled,
+          size: 28,
         ),
       ],
     );

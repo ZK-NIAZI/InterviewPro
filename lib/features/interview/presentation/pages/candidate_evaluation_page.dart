@@ -66,7 +66,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Row(
         children: [
           // Back button
@@ -79,25 +79,35 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
-                Icons.arrow_back,
-                size: 24,
-                color: Colors.black,
+              child: Icon(
+                Icons.chevron_left,
+                size: 28,
+                color: AppColors.primary,
               ),
             ),
           ),
 
           const SizedBox(width: 16),
 
-          // Title
-          const Expanded(
-            child: Text(
-              AppStrings.candidateEvaluation,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+          // Title and subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  AppStrings.candidateEvaluation,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Soft Skills Assessment',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
             ),
           ),
         ],
@@ -115,7 +125,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

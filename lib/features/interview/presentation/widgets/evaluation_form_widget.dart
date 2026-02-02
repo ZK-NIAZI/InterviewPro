@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../providers/evaluation_provider.dart';
 import 'star_rating_widget.dart';
@@ -36,66 +35,45 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
   Widget build(BuildContext context) {
     return Consumer<EvaluationProvider>(
       builder: (context, provider, child) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Rating sections
+            _buildRatingSection(
+              label: AppStrings.communicationSkills,
+              rating: provider.communicationSkills,
+              onRatingChanged: provider.updateCommunicationSkills,
+            ),
 
-              // Rating sections
-              _buildRatingSection(
-                label: AppStrings.communicationSkills,
-                rating: provider.communicationSkills,
-                onRatingChanged: provider.updateCommunicationSkills,
-              ),
+            const SizedBox(height: 32),
 
-              const SizedBox(height: 20),
+            _buildRatingSection(
+              label: AppStrings.problemSolvingApproach,
+              rating: provider.problemSolvingApproach,
+              onRatingChanged: provider.updateProblemSolvingApproach,
+            ),
 
-              _buildRatingSection(
-                label: AppStrings.problemSolvingApproach,
-                rating: provider.problemSolvingApproach,
-                onRatingChanged: provider.updateProblemSolvingApproach,
-              ),
+            const SizedBox(height: 32),
 
-              const SizedBox(height: 20),
+            _buildRatingSection(
+              label: AppStrings.culturalFit,
+              rating: provider.culturalFit,
+              onRatingChanged: provider.updateCulturalFit,
+            ),
 
-              _buildRatingSection(
-                label: AppStrings.culturalFit,
-                rating: provider.culturalFit,
-                onRatingChanged: provider.updateCulturalFit,
-              ),
+            const SizedBox(height: 32),
 
-              const SizedBox(height: 20),
+            _buildRatingSection(
+              label: AppStrings.overallImpression,
+              rating: provider.overallImpression,
+              onRatingChanged: provider.updateOverallImpression,
+            ),
 
-              _buildRatingSection(
-                label: AppStrings.overallImpression,
-                rating: provider.overallImpression,
-                onRatingChanged: provider.updateOverallImpression,
-              ),
+            const SizedBox(height: 40),
 
-              const SizedBox(height: 24),
-
-              // Additional comments
-              _buildCommentsSection(provider),
-
-              const SizedBox(height: 24),
-
-              // Overall score display
-              _buildOverallScore(provider),
-            ],
-          ),
+            // Additional comments
+            _buildCommentsSection(provider),
+          ],
         );
       },
     );
@@ -106,18 +84,10 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
     required int rating,
     required ValueChanged<int> onRatingChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: LabeledStarRating(
-        label: label,
-        rating: rating,
-        onRatingChanged: onRatingChanged,
-      ),
+    return LabeledStarRating(
+      label: label,
+      rating: rating,
+      onRatingChanged: onRatingChanged,
     );
   }
 
@@ -134,9 +104,10 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         Container(
+          height: 120,
           decoration: BoxDecoration(
             color: Colors.grey[50],
             borderRadius: BorderRadius.circular(12),
@@ -144,54 +115,20 @@ class _EvaluationFormWidgetState extends State<EvaluationFormWidget> {
           ),
           child: TextField(
             controller: _commentsController,
-            maxLines: 4,
+            maxLines: null,
+            expands: true,
             onChanged: provider.updateAdditionalComments,
             decoration: InputDecoration(
-              hintText: AppStrings.commentsHint,
+              hintText: 'Write your observation here...',
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
-              hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
             ),
             style: const TextStyle(fontSize: 14, color: Colors.black),
+            textAlignVertical: TextAlignVertical.top,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildOverallScore(EvaluationProvider provider) {
-    final score = provider.calculatedScore;
-    final scorePercentage = (score * 10).toInt();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Overall Score',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-
-          Text(
-            '${score.toStringAsFixed(1)}/10 ($scorePercentage%)',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
