@@ -81,18 +81,16 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               ),
               child: Icon(
                 Icons.chevron_left,
-                size: 28,
+                size: 36,
                 color: AppColors.primary,
               ),
             ),
           ),
 
-          const SizedBox(width: 16),
-
-          // Title and subtitle
+          // Title and subtitle (centered)
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
                   AppStrings.candidateEvaluation,
@@ -110,6 +108,9 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               ],
             ),
           ),
+
+          // Invisible spacer to balance the back button
+          SizedBox(width: 40, height: 40),
         ],
       ),
     );
