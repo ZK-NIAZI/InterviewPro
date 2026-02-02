@@ -6,6 +6,7 @@ import '../../features/interview/presentation/pages/experience_level_page.dart';
 import '../../features/interview/presentation/pages/interview_question_page.dart';
 import '../../features/interview/presentation/pages/candidate_evaluation_page.dart';
 import '../../features/interview/presentation/pages/interview_report_page.dart';
+import '../../features/interview/presentation/pages/report_preview_page.dart';
 
 /// Application routing configuration
 class AppRouter {
@@ -17,6 +18,7 @@ class AppRouter {
   static const String interviewQuestion = '/interview-question';
   static const String candidateEvaluation = '/candidate-evaluation';
   static const String interviewReport = '/interview-report';
+  static const String reportPreview = '/report-preview';
   static const String questions = '/questions';
   static const String reports = '/reports';
 
@@ -113,6 +115,53 @@ class AppRouter {
               state.uri.queryParameters['additionalComments'] ?? '';
 
           return InterviewReportPage(
+            candidateName: candidateName,
+            role: role,
+            level: level,
+            overallScore: overallScore,
+            communicationSkills: communicationSkills,
+            problemSolvingApproach: problemSolvingApproach,
+            culturalFit: culturalFit,
+            overallImpression: overallImpression,
+            additionalComments: additionalComments,
+          );
+        },
+      ),
+      GoRoute(
+        path: reportPreview,
+        name: 'report-preview',
+        builder: (context, state) {
+          final candidateName =
+              state.uri.queryParameters['candidateName'] ?? '';
+          final role = state.uri.queryParameters['role'] ?? '';
+          final level = state.uri.queryParameters['level'] ?? '';
+          final overallScore =
+              double.tryParse(
+                state.uri.queryParameters['overallScore'] ?? '0',
+              ) ??
+              0.0;
+          final communicationSkills =
+              int.tryParse(
+                state.uri.queryParameters['communicationSkills'] ?? '0',
+              ) ??
+              0;
+          final problemSolvingApproach =
+              int.tryParse(
+                state.uri.queryParameters['problemSolvingApproach'] ?? '0',
+              ) ??
+              0;
+          final culturalFit =
+              int.tryParse(state.uri.queryParameters['culturalFit'] ?? '0') ??
+              0;
+          final overallImpression =
+              int.tryParse(
+                state.uri.queryParameters['overallImpression'] ?? '0',
+              ) ??
+              0;
+          final additionalComments =
+              state.uri.queryParameters['additionalComments'] ?? '';
+
+          return ReportPreviewPage(
             candidateName: candidateName,
             role: role,
             level: level,

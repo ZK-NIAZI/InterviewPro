@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_router.dart';
 import '../widgets/circular_progress_widget.dart';
 import '../widgets/category_performance_widget.dart';
 import '../widgets/quick_stats_widget.dart';
@@ -373,7 +374,7 @@ class InterviewReportPage extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: _onDownloadPDF,
+                onPressed: () => _onDownloadPDF(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -471,8 +472,11 @@ class InterviewReportPage extends StatelessWidget {
     return ((totalRating / 20.0) * 25).round();
   }
 
-  void _onDownloadPDF() {
-    // TODO: Implement PDF download
+  void _onDownloadPDF(BuildContext context) {
+    // Navigate to report preview
+    context.push(
+      '${AppRouter.reportPreview}?candidateName=$candidateName&role=$role&level=$level&overallScore=$overallScore&communicationSkills=$communicationSkills&problemSolvingApproach=$problemSolvingApproach&culturalFit=$culturalFit&overallImpression=$overallImpression&additionalComments=${Uri.encodeComponent(additionalComments)}',
+    );
   }
 
   void _onShareReport() {
