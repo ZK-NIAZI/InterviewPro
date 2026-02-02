@@ -127,7 +127,7 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
 
   Widget _buildSubtitle() {
     return Container(
-      color: Colors.white,
+      color: Colors.grey[50],
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       child: const Text(
         'Choose the designation for this interview',

@@ -120,29 +120,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
-
-          const Spacer(),
-
-          // Profile Button
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: IconButton(
-              onPressed: () {
-                // Profile functionality - show user profile dialog
-                _showProfileDialog();
-              },
-              icon: const Icon(
-                Icons.account_circle,
-                size: 28,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -233,28 +210,65 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildHomeContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        24,
-        16,
-        100,
-      ), // Bottom padding for nav
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hero Action Section
-          _buildStartInterviewButton(),
-          const SizedBox(height: 32),
+    return Column(
+      children: [
+        // Static content section
+        Container(
+          color: AppColors.backgroundLight,
+          child: Column(
+            children: [
+              // Hero Action Section
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                child: _buildStartInterviewButton(),
+              ),
+              const SizedBox(height: 32),
 
-          // Stats Overview
-          _buildStatsSection(),
-          const SizedBox(height: 32),
+              // Stats Overview
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildStatsSection(),
+              ),
+              const SizedBox(height: 32),
 
-          // Recent Interviews List
-          _buildRecentInterviewsSection(),
-        ],
-      ),
+              // Recent Interviews Section Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Recent Interviews',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _selectedIndex = 1);
+                      },
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+
+        // Scrollable content section (only candidate cards)
+        Expanded(child: _buildScrollableInterviewCards()),
+      ],
     );
   }
 
@@ -388,88 +402,71 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildRecentInterviewsSection() {
-    return Column(
-      children: [
-        // Section Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Recent Interviews',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() => _selectedIndex = 1);
-              },
-              child: const Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+  Widget _buildScrollableInterviewCards() {
+    return Consumer<DashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
 
-        // Interview Cards
-        Consumer<DashboardProvider>(
-          builder: (context, provider, child) {
-            if (provider.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              );
-            }
+        // Mock data to match the design
+        final mockInterviews = [
+          _MockInterview(
+            'Sarah Jenkins',
+            'Senior Product Designer - L4',
+            'Oct 24, 2023',
+            4.5,
+          ),
+          _MockInterview(
+            'Michael Chen',
+            'Backend Engineer - L3',
+            'Oct 22, 2023',
+            3.8,
+          ),
+          _MockInterview(
+            'Jessica Alverez',
+            'Product Manager - L5',
+            'Oct 20, 2023',
+            4.8,
+          ),
+          _MockInterview(
+            'David Kim',
+            'Frontend Developer - L3',
+            'Oct 18, 2023',
+            null,
+          ),
+          _MockInterview(
+            'Emily Rodriguez',
+            'UI/UX Designer - L2',
+            'Oct 16, 2023',
+            4.2,
+          ),
+          _MockInterview(
+            'James Wilson',
+            'Full Stack Developer - L4',
+            'Oct 14, 2023',
+            3.9,
+          ),
+        ];
 
-            // Mock data to match the design
-            final mockInterviews = [
-              _MockInterview(
-                'Sarah Jenkins',
-                'Senior Product Designer - L4',
-                'Oct 24, 2023',
-                4.5,
-              ),
-              _MockInterview(
-                'Michael Chen',
-                'Backend Engineer - L3',
-                'Oct 22, 2023',
-                3.8,
-              ),
-              _MockInterview(
-                'Jessica Alverez',
-                'Product Manager - L5',
-                'Oct 20, 2023',
-                4.8,
-              ),
-              _MockInterview(
-                'David Kim',
-                'Frontend Developer - L3',
-                'Oct 18, 2023',
-                null,
-              ),
-            ];
-
-            return Column(
-              children: mockInterviews
-                  .map(
-                    (interview) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildInterviewCard(interview),
-                    ),
-                  )
-                  .toList(),
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            100,
+          ), // Bottom padding for nav
+          itemCount: mockInterviews.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildInterviewCard(mockInterviews[index]),
             );
           },
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -648,34 +645,6 @@ class _MockInterview {
 }
 
 extension _DashboardPageExtensions on _DashboardPageState {
-  /// Shows profile dialog
-  void _showProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Profile'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
-            SizedBox(height: 16),
-            Text(
-              'Alex Johnson',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text('alex.j@example.com'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Shows search dialog
   void _showSearchDialog() {
     showDialog(
