@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
@@ -24,28 +25,42 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Main content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Safe area and header
-              SafeArea(child: _buildHeader()),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            // Main content
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Safe area and header
+                SafeArea(child: _buildHeader()),
 
-              // Main Content: Cards Stack
-              Expanded(child: _buildLevelCards()),
+                // Main Content: Cards Stack
+                Expanded(child: _buildLevelCards()),
 
-              // Bottom spacer for fixed button
-              const SizedBox(height: 100),
-            ],
-          ),
+                // Bottom spacer for fixed button
+                const SizedBox(height: 100),
+              ],
+            ),
 
-          // Fixed bottom button
-          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomButton()),
-        ],
+            // Fixed bottom button
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildBottomButton(),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -39,28 +40,37 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          // Status bar placeholder
-          Container(
-            height: MediaQuery.of(context).padding.top,
-            decoration: const BoxDecoration(color: Colors.white),
-          ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        body: Column(
+          children: [
+            // Status bar placeholder
+            Container(
+              height: MediaQuery.of(context).padding.top,
+              decoration: const BoxDecoration(color: Colors.white),
+            ),
 
-          // Header
-          _buildHeader(),
+            // Header
+            _buildHeader(),
 
-          // Progress bar
-          _buildProgressBar(),
+            // Progress bar
+            _buildProgressBar(),
 
-          // Main content
-          Expanded(child: _buildMainContent()),
+            // Main content
+            Expanded(child: _buildMainContent()),
 
-          // Bottom navigation
-          _buildBottomNavigation(),
-        ],
+            // Bottom navigation
+            _buildBottomNavigation(),
+          ],
+        ),
       ),
     );
   }

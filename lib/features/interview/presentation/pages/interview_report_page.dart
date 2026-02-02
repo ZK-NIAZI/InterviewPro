@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
@@ -33,29 +34,38 @@ class InterviewReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Status bar placeholder
-              Container(
-                height: MediaQuery.of(context).padding.top,
-                decoration: const BoxDecoration(color: Colors.white),
-              ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFFFF),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                // Status bar placeholder
+                Container(
+                  height: MediaQuery.of(context).padding.top,
+                  decoration: const BoxDecoration(color: Colors.white),
+                ),
 
-              // Header
-              _buildHeader(context),
+                // Header
+                _buildHeader(context),
 
-              // Main content
-              Expanded(child: _buildMainContent()),
-            ],
-          ),
+                // Main content
+                Expanded(child: _buildMainContent()),
+              ],
+            ),
 
-          // Bottom actions
-          _buildBottomActions(context),
-        ],
+            // Bottom actions
+            _buildBottomActions(context),
+          ],
+        ),
       ),
     );
   }
@@ -479,11 +489,9 @@ class InterviewReportPage extends StatelessWidget {
     );
   }
 
-  void _onShareReport() {
-  }
+  void _onShareReport() {}
 
-  void _onDownloadReport() {
-  }
+  void _onDownloadReport() {}
 }
 
 // Data class for category performance

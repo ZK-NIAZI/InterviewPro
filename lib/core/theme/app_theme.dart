@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 
 /// Application theme configuration
@@ -17,6 +18,12 @@ class AppTheme {
         foregroundColor: AppColors.textLight,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              Brightness.dark, // Black icons for light theme
+          statusBarBrightness: Brightness.light,
+        ),
       ),
 
       // Elevated Button Theme
@@ -95,6 +102,9 @@ class AppTheme {
 
       // Scaffold Background
       scaffoldBackgroundColor: AppColors.backgroundLight,
+
+      // Global system overlay style for status bar
+      extensions: const <ThemeExtension<dynamic>>[],
     );
   }
 
@@ -106,6 +116,14 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
+      appBarTheme: const AppBarTheme(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              Brightness.light, // White icons for dark theme
+          statusBarBrightness: Brightness.dark,
+        ),
+      ),
     );
   }
 }

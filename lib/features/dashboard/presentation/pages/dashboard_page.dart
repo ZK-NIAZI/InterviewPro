@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -30,29 +31,38 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _selectedIndex == 1
-          ? const Color(0xFFF8F6F6) // History background
-          : _selectedIndex == 2
-          ? const Color(0xFFF8F6F6) // Settings background
-          : AppColors.backgroundLight, // Home background
-      body: Column(
-        children: [
-          // Header - changes based on selected tab
-          _buildHeader(),
-
-          // Main Content - changes based on selected tab
-          Expanded(child: _buildMainContent()),
-        ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
+      child: Scaffold(
+        backgroundColor: _selectedIndex == 1
+            ? const Color(0xFFF8F6F6) // History background
+            : _selectedIndex == 2
+            ? const Color(0xFFF8F6F6) // Settings background
+            : AppColors.backgroundLight, // Home background
+        body: Column(
+          children: [
+            // Header - changes based on selected tab
+            _buildHeader(),
 
-      // Bottom Navigation - always visible
-      bottomNavigationBar: _buildBottomNavigation(),
+            // Main Content - changes based on selected tab
+            Expanded(child: _buildMainContent()),
+          ],
+        ),
 
-      // Floating Action Button - only show on history tab
-      floatingActionButton: _selectedIndex == 1
-          ? _buildFloatingActionButton()
-          : null,
+        // Bottom Navigation - always visible
+        bottomNavigationBar: _buildBottomNavigation(),
+
+        // Floating Action Button - only show on history tab
+        floatingActionButton: _selectedIndex == 1
+            ? _buildFloatingActionButton()
+            : null,
+      ),
     );
   }
 

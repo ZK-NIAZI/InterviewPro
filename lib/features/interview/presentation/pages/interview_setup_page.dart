@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
@@ -25,37 +26,51 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: Stack(
-        children: [
-          // Main content
-          Column(
-            children: [
-              // Header Section
-              _buildHeader(),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Stack(
+          children: [
+            // Main content
+            Column(
+              children: [
+                // Header Section
+                _buildHeader(),
 
-              // Subtitle
-              _buildSubtitle(),
+                // Subtitle
+                _buildSubtitle(),
 
-              // Scrollable Content Area
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    20,
-                    0,
-                    20,
-                    100,
-                  ), // Bottom padding for fixed button
-                  child: _buildRoleGrid(),
+                // Scrollable Content Area
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      0,
+                      20,
+                      100,
+                    ), // Bottom padding for fixed button
+                    child: _buildRoleGrid(),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          // Fixed Bottom Button
-          Positioned(left: 0, right: 0, bottom: 0, child: _buildBottomButton()),
-        ],
+            // Fixed Bottom Button
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildBottomButton(),
+            ),
+          ],
+        ),
       ),
     );
   }

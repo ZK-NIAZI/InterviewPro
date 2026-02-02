@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/document_header_widget.dart';
@@ -35,29 +36,38 @@ class ReportPreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F6),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Status bar placeholder
-              Container(
-                height: MediaQuery.of(context).padding.top,
-                decoration: const BoxDecoration(color: Color(0xFFF8F6F6)),
-              ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F6F6),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                // Status bar placeholder
+                Container(
+                  height: MediaQuery.of(context).padding.top,
+                  decoration: const BoxDecoration(color: Color(0xFFF8F6F6)),
+                ),
 
-              // Header
-              _buildHeader(context),
+                // Header
+                _buildHeader(context),
 
-              // Main content
-              Expanded(child: _buildMainContent()),
-            ],
-          ),
+                // Main content
+                Expanded(child: _buildMainContent()),
+              ],
+            ),
 
-          // Floating action bar
-          _buildFloatingActionBar(context),
-        ],
+            // Floating action bar
+            _buildFloatingActionBar(context),
+          ],
+        ),
       ),
     );
   }
@@ -471,15 +481,13 @@ class ReportPreviewPage extends StatelessWidget {
       ((overallImpression + culturalFit) / 2 * 20).round();
   int _calculateCommunicationScore() => (communicationSkills * 20).round();
 
-  void _onDownloadPDF() {
-  }
+  void _onDownloadPDF() {}
 
   void _onEdit() {
     // Navigate back to previous screen
   }
 
-  void _onShare() {
-  }
+  void _onShare() {}
 }
 
 // Data classes
