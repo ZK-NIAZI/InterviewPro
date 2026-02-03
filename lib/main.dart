@@ -8,6 +8,7 @@ import 'features/splash/presentation/providers/splash_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/interview/presentation/providers/interview_setup_provider.dart';
 import 'features/interview/presentation/providers/evaluation_provider.dart';
+import 'features/interview/presentation/providers/role_provider.dart';
 import 'shared/data/services/hive_service.dart';
 
 void main() async {
@@ -46,6 +47,7 @@ class InterviewProApp extends StatelessWidget {
           create: (_) => InterviewSetupProvider(sl(), sl()),
         ),
         ChangeNotifierProvider(create: (_) => EvaluationProvider(sl())),
+        ChangeNotifierProvider(create: (_) => RoleProvider()),
       ],
       child: MaterialApp.router(
         title: 'InterviewPro',

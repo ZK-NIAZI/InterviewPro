@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../shared/domain/entities/role.dart';
+import '../providers/role_provider.dart';
 
-/// Role selection screen matching the provided HTML design exactly
+/// Role selection screen with dynamic roles from Appwrite backend
 class InterviewSetupPage extends StatefulWidget {
   const InterviewSetupPage({super.key});
 
@@ -13,64 +16,52 @@ class InterviewSetupPage extends StatefulWidget {
 }
 
 class _InterviewSetupPageState extends State<InterviewSetupPage> {
-  int? selectedRoleIndex;
-
-  final List<RoleOption> roles = [
-    RoleOption('Flutter\nDeveloper', Icons.smartphone),
-    RoleOption('UI/UX\nDesigner', Icons.design_services),
-    RoleOption('Product\nManager', Icons.business_center),
-    RoleOption('Backend\nEngineer', Icons.dns),
-    RoleOption('QA\nEngineer', Icons.bug_report),
-    RoleOption('HR\nSpecialist', Icons.groups),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Load roles when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RoleProvider>().loadRoles();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        body: Stack(
-          children: [
-            // Main content
-            Column(
+        body: Consumer<RoleProvider>(
+          builder: (context, roleProvider, child) {
+            return Stack(
               children: [
-                // Header Section
-                _buildHeader(),
+                // Main content
+                Column(
+                  children: [
+                    // Header Section
+                    _buildHeader(),
 
-                // Subtitle
-                _buildSubtitle(),
+                    // Content Area
+                    Expanded(child: _buildContent(roleProvider)),
+                  ],
+                ),
 
-                // Scrollable Content Area
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      20,
-                      0,
-                      20,
-                      // Dynamic bottom padding based on screen size
-                      _calculateBottomPadding(context),
-                    ),
-                    child: _buildRoleGrid(),
-                  ),
+                // Fixed Bottom Button
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildBottomButton(roleProvider),
                 ),
               ],
-            ),
-
-            // Fixed Bottom Button
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildBottomButton(),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -126,23 +117,88 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     );
   }
 
-  Widget _buildSubtitle() {
-    return Container(
-      color: Colors.grey[50],
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: const Text(
-        'Choose the designation for this interview',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: Colors.grey,
+  Widget _buildContent(RoleProvider roleProvider) {
+    if (roleProvider.isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(height: 16),
+            Text(
+              'Loading roles...',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
         ),
-        textAlign: TextAlign.center,
-      ),
+      );
+    }
+
+    if (roleProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load roles',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                roleProvider.error!,
+                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => roleProvider.refreshRoles(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (roleProvider.roles.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.work_off, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No roles available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, _calculateBottomPadding(context)),
+      child: _buildRoleGrid(roleProvider.roles),
     );
   }
 
-  Widget _buildRoleGrid() {
+  Widget _buildRoleGrid(List<Role> roles) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate dynamic spacing based on screen height and width
@@ -152,26 +208,19 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
         // Calculate available space more precisely
         final statusBarHeight = MediaQuery.of(context).padding.top;
         final headerHeight = statusBarHeight + 68;
-        final subtitleHeight = 48;
         final buttonAreaHeight = 96;
         final paddingHeight = _calculateBottomPadding(context);
 
         final availableHeight =
-            screenHeight -
-            headerHeight -
-            subtitleHeight -
-            buttonAreaHeight -
-            paddingHeight;
+            screenHeight - headerHeight - buttonAreaHeight - paddingHeight;
 
         // Adjust grid parameters based on available space
         final crossAxisSpacing = screenWidth > 400 ? 16.0 : 12.0;
         final mainAxisSpacing = availableHeight > 500 ? 16.0 : 12.0;
 
         // Calculate card aspect ratio to fit content properly
-        final cardWidth =
-            (screenWidth - 40 - crossAxisSpacing) /
-            2; // Account for padding and spacing
-        final cardHeight = availableHeight / 3.2; // Fit 3 rows comfortably
+        final cardWidth = (screenWidth - 40 - crossAxisSpacing) / 2;
+        final cardHeight = availableHeight / 3.2;
         final aspectRatio = cardWidth / cardHeight;
 
         // Ensure minimum aspect ratio for readability
@@ -180,7 +229,7 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
             : (aspectRatio > 1.2 ? 1.2 : aspectRatio);
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -192,7 +241,7 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
             ),
             itemCount: roles.length,
             itemBuilder: (context, index) {
-              return _buildRoleCard(index);
+              return _buildRoleCard(roles[index], index);
             },
           ),
         );
@@ -200,9 +249,9 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     );
   }
 
-  Widget _buildRoleCard(int index) {
-    final role = roles[index];
-    final isSelected = selectedRoleIndex == index;
+  Widget _buildRoleCard(Role role, int index) {
+    final roleProvider = context.watch<RoleProvider>();
+    final isSelected = roleProvider.selectedRoleId == role.id;
     final screenHeight = MediaQuery.of(context).size.height;
 
     // Adjust icon and text sizes based on screen height
@@ -210,11 +259,12 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     final fontSize = screenHeight > 700 ? 16.0 : 14.0;
     final spacing = screenHeight > 700 ? 12.0 : 8.0;
 
+    // Map icon names to IconData
+    final iconData = _getIconData(role.icon);
+
     return GestureDetector(
       onTap: () {
-        setState(() {
-          selectedRoleIndex = index;
-        });
+        roleProvider.selectRole(role.id);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -246,14 +296,14 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      role.icon,
+                      iconData,
                       size: iconSize,
                       color: isSelected ? AppColors.primary : Colors.black,
                     ),
                     SizedBox(height: spacing),
                     Flexible(
                       child: Text(
-                        role.title,
+                        role.name,
                         style: TextStyle(
                           fontSize: fontSize,
                           fontWeight: FontWeight.bold,
@@ -291,8 +341,8 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     );
   }
 
-  Widget _buildBottomButton() {
-    final isRoleSelected = selectedRoleIndex != null;
+  Widget _buildBottomButton(RoleProvider roleProvider) {
+    final isRoleSelected = roleProvider.selectedRoleId != null;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -311,7 +361,7 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: isRoleSelected ? _onContinue : null,
+            onPressed: isRoleSelected ? () => _onContinue(roleProvider) : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: isRoleSelected
                   ? AppColors.primary
@@ -324,7 +374,6 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              // Disable button interaction when no role is selected
               disabledBackgroundColor: Colors.grey[300],
               disabledForegroundColor: Colors.grey[500],
             ),
@@ -343,19 +392,15 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     );
   }
 
-  void _onContinue() {
-    // Double-check validation - this should never be called without selection
-    if (selectedRoleIndex == null) {
-      return; // Button should be disabled, but extra safety check
+  void _onContinue(RoleProvider roleProvider) {
+    if (roleProvider.selectedRole == null) {
+      return;
     }
 
-    final selectedRoleName = roles[selectedRoleIndex!].title.replaceAll(
-      '\n',
-      ' ',
-    );
+    final selectedRole = roleProvider.selectedRole!;
 
     // Navigate to experience level selection
-    context.push('${AppRouter.experienceLevel}?role=$selectedRoleName');
+    context.push('${AppRouter.experienceLevel}?role=${selectedRole.name}');
   }
 
   /// Calculate dynamic bottom padding based on screen size and available space
@@ -363,34 +408,47 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Account for status bar, header, subtitle, and button area
+    // Account for status bar, header, and button area (subtitle removed)
     final statusBarHeight = MediaQuery.of(context).padding.top;
-    final headerHeight = statusBarHeight + 68; // Header container height
-    final subtitleHeight = 48; // Subtitle area height
-    final buttonAreaHeight = 96; // Button container + safe area
+    final headerHeight = statusBarHeight + 68;
+    final buttonAreaHeight = 96;
 
-    final availableHeight =
-        screenHeight - headerHeight - subtitleHeight - buttonAreaHeight;
+    final availableHeight = screenHeight - headerHeight - buttonAreaHeight;
 
-    // Calculate required height for 3 rows of cards (6 cards total)
-    final cardHeight = (screenWidth - 56) / 2 * 0.9; // Card aspect ratio 0.9
-    final requiredGridHeight = (cardHeight * 3) + (16 * 2); // 3 rows + spacing
+    // Calculate required height for 3 rows of cards
+    final cardHeight = (screenWidth - 56) / 2 * 0.9;
+    final requiredGridHeight = (cardHeight * 3) + (16 * 2);
 
     // If available space is tight, increase bottom padding
     if (availableHeight < requiredGridHeight + 40) {
-      return 140; // Extra padding for smaller screens
+      return 140;
     } else if (screenHeight < 700) {
-      return 120; // Medium padding for medium screens
+      return 120;
     } else {
-      return 100; // Standard padding for larger screens
+      return 100;
     }
   }
-}
 
-/// Role option data class
-class RoleOption {
-  final String title;
-  final IconData icon;
-
-  RoleOption(this.title, this.icon);
+  /// Map icon string to IconData
+  IconData _getIconData(String iconName) {
+    switch (iconName.toLowerCase()) {
+      case 'flutter':
+      case 'smartphone':
+        return Icons.smartphone;
+      case 'design_services':
+        return Icons.design_services;
+      case 'business_center':
+        return Icons.business_center;
+      case 'storage':
+      case 'dns':
+        return Icons.dns;
+      case 'bug_report':
+        return Icons.bug_report;
+      case 'people':
+      case 'groups':
+        return Icons.groups;
+      default:
+        return Icons.work;
+    }
+  }
 }

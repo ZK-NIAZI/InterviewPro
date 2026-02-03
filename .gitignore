@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local configuration files (contain system-specific paths)
+android/local.properties
+android/.gradle/
+android/.kotlin/
+
+# Kiro IDE configuration (may contain local settings)
+.kiro/
+
+# Personal documentation and notes
+CODEBASE_IMPROVEMENTS.md
+InterviewApp-Documentation.pdf
+
+# Test data files
+test/hive_test/
+
+# Generated files
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
