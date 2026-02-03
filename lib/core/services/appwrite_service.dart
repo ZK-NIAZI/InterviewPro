@@ -33,4 +33,7 @@ class AppwriteService {
 
   /// Get client instance
   Client get client => _client;
+
+  /// Get database ID for collections
+  String get databaseId => AppwriteConfig.databaseId;
 }

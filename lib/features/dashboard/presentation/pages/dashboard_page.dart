@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
-import '../../../../core/config/config_test_page.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../history/presentation/widgets/history_content_widget.dart';
 import '../../../settings/presentation/widgets/settings_content_widget.dart';
@@ -124,16 +123,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const Spacer(),
 
-          // Debug: Config Test Button (remove after setup)
+          // Debug: Config Test Button (removed - use Appwrite console)
           IconButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ConfigTestPage()),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Use Appwrite console to manage configuration'),
+                  duration: Duration(seconds: 2),
+                ),
               );
             },
             icon: const Icon(Icons.settings_applications),
-            tooltip: 'Test Appwrite Config',
+            tooltip: 'Appwrite Console',
           ),
         ],
       ),

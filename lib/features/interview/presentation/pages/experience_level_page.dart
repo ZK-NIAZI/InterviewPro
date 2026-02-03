@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../shared/domain/entities/experience_level.dart';
+import '../providers/experience_level_provider.dart';
+import '../../../../core/services/service_locator.dart';
+import '../../../../shared/domain/repositories/experience_level_repository.dart';
 
-/// Experience level selection screen matching the provided HTML design
+/// Experience level selection screen with Appwrite backend integration
 class ExperienceLevelPage extends StatefulWidget {
   final String selectedRole;
 
@@ -16,50 +21,59 @@ class ExperienceLevelPage extends StatefulWidget {
 
 class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   int? selectedLevelIndex;
+  late ExperienceLevelProvider _experienceLevelProvider;
 
-  final List<ExperienceLevel> levels = [
-    ExperienceLevel('Intern', '0-1 years experience, basic concepts'),
-    ExperienceLevel('Associate', '1-3 years experience, solid fundamentals'),
-    ExperienceLevel('Senior', '3+ years experience, advanced expertise'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _experienceLevelProvider = ExperienceLevelProvider(
+      sl<ExperienceLevelRepository>(),
+    );
+    // Load experience levels in background without blocking UI
+    _experienceLevelProvider.loadExperienceLevelsInBackground();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
-        statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            // Main content
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Safe area and header
-                SafeArea(child: _buildHeader()),
+    return ChangeNotifierProvider.value(
+      value: _experienceLevelProvider,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              Brightness.dark, // Black icons for light theme
+          statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: Stack(
+            children: [
+              // Main content
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Safe area and header
+                  SafeArea(child: _buildHeader()),
 
-                // Main Content: Cards Stack
-                Expanded(child: _buildLevelCards()),
+                  // Main Content: Cards Stack
+                  Expanded(child: _buildLevelCards()),
 
-                // Bottom spacer for fixed button
-                const SizedBox(height: 100),
-              ],
-            ),
+                  // Bottom spacer for fixed button
+                  const SizedBox(height: 100),
+                ],
+              ),
 
-            // Fixed bottom button
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildBottomButton(),
-            ),
-          ],
+              // Fixed bottom button
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _buildBottomButton(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -116,20 +130,43 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 
   Widget _buildLevelCards() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Column(
-        children: levels.asMap().entries.map((entry) {
-          int index = entry.key;
-          ExperienceLevel level = entry.value;
-          bool isSelected = selectedLevelIndex == index;
+    return Consumer<ExperienceLevelProvider>(
+      builder: (context, provider, child) {
+        final levels = provider.experienceLevels;
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildLevelCard(index, level, isSelected),
+        if (provider.isLoading && levels.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           );
-        }).toList(),
-      ),
+        }
+
+        if (levels.isEmpty) {
+          return const Center(
+            child: Text(
+              'No experience levels available',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+          child: Column(
+            children: levels.asMap().entries.map((entry) {
+              int index = entry.key;
+              ExperienceLevel level = entry.value;
+              bool isSelected = selectedLevelIndex == index;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildLevelCard(index, level, isSelected),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -240,6 +277,9 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 
   void _onContinue() {
+    final levels = _experienceLevelProvider.experienceLevels;
+    if (levels.isEmpty) return;
+
     // Use first level as default if no selection is made
     final selectedLevelName = selectedLevelIndex != null
         ? levels[selectedLevelIndex!].title
@@ -252,10 +292,4 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 }
 
-/// Experience level data class
-class ExperienceLevel {
-  final String title;
-  final String description;
-
-  ExperienceLevel(this.title, this.description);
-}
+// Remove the old ExperienceLevel class as we now use the entity

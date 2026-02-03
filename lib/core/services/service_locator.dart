@@ -1,11 +1,11 @@
 import 'package:get_it/get_it.dart';
 import '../../shared/data/datasources/datasources.dart';
-import '../../shared/data/datasources/role_remote_datasource.dart';
 import '../../shared/data/repositories/repositories.dart';
-import '../../shared/data/repositories/role_repository_impl.dart';
 import '../../shared/data/services/default_question_bank_service.dart';
-import '../../shared/domain/repositories/repositories.dart';
+import '../../shared/domain/repositories/interview_repository.dart';
+import '../../shared/domain/repositories/question_repository.dart';
 import '../../shared/domain/repositories/role_repository.dart';
+import '../../shared/domain/repositories/experience_level_repository.dart';
 import 'appwrite_service.dart';
 
 /// Service locator for dependency injection
@@ -30,6 +30,10 @@ Future<void> initializeDependencies() async {
     () => RoleRemoteDatasource(sl()),
   );
 
+  sl.registerLazySingleton<ExperienceLevelRemoteDatasource>(
+    () => ExperienceLevelRemoteDatasource(sl()),
+  );
+
   // Repositories
   sl.registerLazySingleton<InterviewRepository>(
     () => InterviewRepositoryImpl(sl()),
@@ -40,6 +44,10 @@ Future<void> initializeDependencies() async {
   );
 
   sl.registerLazySingleton<RoleRepository>(() => RoleRepositoryImpl(sl()));
+
+  sl.registerLazySingleton<ExperienceLevelRepository>(
+    () => ExperienceLevelRepositoryImpl(sl()),
+  );
 
   // Services
   sl.registerLazySingleton<DefaultQuestionBankService>(

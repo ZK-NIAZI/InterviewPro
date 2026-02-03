@@ -7,12 +7,12 @@ class AppConstants {
   // Timing Constants
   static const int splashDuration = 2000; // 2 seconds in milliseconds
 
-  // Storage Keys
+  // Storage Keys (for future use)
   static const String interviewsBoxKey = 'interviews';
   static const String questionsBoxKey = 'questions';
   static const String reportsBoxKey = 'reports';
 
-  // Default Values
+  // Default Values (for future use)
   static const int defaultQuestionCount = 20;
   static const int maxNotesLength = 500;
 }
