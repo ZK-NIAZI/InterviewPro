@@ -19,7 +19,7 @@ class CandidateInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24), // Increased from 20 for better spacing
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -31,68 +31,66 @@ class CandidateInfoCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Profile picture placeholder
-          _buildProfilePicture(),
-
-          const SizedBox(width: 16),
-
-          // Candidate information
-          Expanded(child: _buildCandidateInfo()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfilePicture() {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          ),
-          fit: BoxFit.cover,
-        ),
-      ),
+      child: _buildCandidateInfo(), // Remove Row wrapper, use info directly
     );
   }
 
   Widget _buildCandidateInfo() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center, // Center align content
       children: [
-        // Candidate name
+        // Candidate name (larger, more prominent)
         Text(
           candidateName,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 22, // Increased from 18
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
+          textAlign: TextAlign.center,
         ),
 
-        const SizedBox(height: 4),
-
-        // Role and level
-        Text(
-          '$role - $level',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primary,
+        const SizedBox(height: 8), // Increased spacing
+        // Role and level (more prominent)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '$role - $level',
+            style: TextStyle(
+              fontSize: 16, // Increased from 14
+              fontWeight: FontWeight.w600, // Increased weight
+              color: AppColors.primary,
+            ),
           ),
         ),
 
-        const SizedBox(height: 4),
-
-        // Interview date
-        Text(
-          _formatDate(interviewDate),
-          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        const SizedBox(height: 12), // Increased spacing
+        // Interview date (better styling)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+              const SizedBox(width: 6),
+              Text(
+                _formatDate(interviewDate),
+                style: TextStyle(
+                  fontSize: 13, // Slightly increased
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

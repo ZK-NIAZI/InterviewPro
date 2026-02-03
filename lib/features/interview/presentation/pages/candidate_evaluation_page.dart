@@ -136,16 +136,23 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+          padding: const EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            20,
+          ), // Reduced from 100
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Candidate info card
-              CandidateInfoCard(
-                candidateName: widget.candidateName,
-                role: widget.role,
-                level: widget.level,
-                interviewDate: DateTime.now(),
+              // Candidate info card - centered
+              Center(
+                child: CandidateInfoCard(
+                  candidateName: widget.candidateName,
+                  role: widget.role,
+                  level: widget.level,
+                  interviewDate: DateTime.now(),
+                ),
               ),
 
               const SizedBox(height: 24),
