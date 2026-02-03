@@ -57,34 +57,12 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
     );
   }
 
-  /// Builds the profile section with avatar and user info
+  /// Builds the profile section with user info (no image)
   Widget _buildProfileSection() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
-          // Profile Avatar
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(48),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(48),
-              child: Icon(Icons.person, size: 48, color: Colors.grey[400]),
-            ),
-          ),
-          const SizedBox(height: 16),
-
           // User Name
           const Text(
             'Alex Johnson',
