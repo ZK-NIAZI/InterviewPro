@@ -150,7 +150,7 @@ class InterviewReportPage extends StatelessWidget {
 
   Widget _buildMainContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 120),
+      padding: const EdgeInsets.only(bottom: 140), // Increased from 120
       child: Column(
         children: [
           // Candidate profile section
@@ -162,7 +162,7 @@ class InterviewReportPage extends StatelessWidget {
           // Category performance
           _buildCategoryPerformance(),
 
-          // Quick stats
+          // Quick stats (with overflow fix)
           _buildQuickStats(),
         ],
       ),
@@ -171,103 +171,94 @@ class InterviewReportPage extends StatelessWidget {
 
   Widget _buildCandidateProfile() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24), // Increased padding
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
       ),
       child: Column(
         children: [
-          // Profile picture with status indicator
-          Stack(
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(48),
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // Remove Stack with profile picture entirely
 
-          const SizedBox(height: 16),
-
-          // Candidate name
+          // Candidate name (more prominent)
           Text(
             candidateName,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 28, // Increased from 22
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
+            textAlign: TextAlign.center,
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
 
-          // Role
-          Text(
-            '$role - $level',
-            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
-          ),
-
-          const SizedBox(height: 4),
-
-          // Interview date
-          Text(
-            'Interview Date: ${_formatDate(DateTime.now())}',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Recommendation badge
+          // Role (enhanced styling with smaller font)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.05),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.2),
-              ),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$role - $level',
+              style: TextStyle(
+                fontSize: 14, // Reduced from 18
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Interview date (better styling with smaller font)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.verified, size: 20, color: AppColors.primary),
-                const SizedBox(width: 8),
+                Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 6),
+                Text(
+                  'Interview Date: ${_formatDate(DateTime.now())}',
+                  style: TextStyle(
+                    fontSize: 12, // Reduced from 15
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Recommendation badge (enhanced)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified, size: 24, color: AppColors.primary),
+                const SizedBox(width: 12),
                 Text(
                   'Recommended for Hire',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16, // Increased from 14
+                    fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
                 ),
@@ -332,7 +323,7 @@ class InterviewReportPage extends StatelessWidget {
   Widget _buildQuickStats() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      margin: const EdgeInsets.only(bottom: 32),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -344,7 +335,8 @@ class InterviewReportPage extends StatelessWidget {
               color: Colors.black,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          // Simple container without complex constraints
           QuickStatsWidget(
             totalQuestions: 25,
             correctAnswers: _calculateCorrectAnswers(),
@@ -373,16 +365,16 @@ class InterviewReportPage extends StatelessWidget {
         ),
         padding: EdgeInsets.fromLTRB(
           20,
+          16, // Reduced from 20
           20,
-          20,
-          MediaQuery.of(context).padding.bottom + 32,
+          MediaQuery.of(context).padding.bottom + 20, // Reduced from 32
         ),
         child: Column(
           children: [
-            // Download PDF button
+            // Download PDF button (reduced height)
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 44, // Reduced from 48
               child: ElevatedButton(
                 onPressed: () => _onDownloadPDF(context),
                 style: ElevatedButton.styleFrom(
@@ -411,12 +403,11 @@ class InterviewReportPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            // Share report button
+            const SizedBox(height: 8), // Reduced from 12
+            // Share report button (reduced height)
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 44, // Reduced from 48
               child: OutlinedButton(
                 onPressed: _onShareReport,
                 style: OutlinedButton.styleFrom(

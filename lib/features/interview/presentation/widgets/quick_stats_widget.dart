@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Widget displaying quick statistics in a grid layout
+/// Simple and efficient Quick Statistics widget
 class QuickStatsWidget extends StatelessWidget {
   final int totalQuestions;
   final int correctAnswers;
@@ -17,21 +17,21 @@ class QuickStatsWidget extends StatelessWidget {
       children: [
         // Total questions card
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.quiz,
-            iconColor: Colors.grey[500]!,
+          child: _buildSimpleStatCard(
+            icon: Icons.quiz_outlined,
+            iconColor: Colors.grey[600]!,
             value: totalQuestions.toString(),
             label: 'Total Questions',
           ),
         ),
 
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
 
         // Correct answers card
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.check_circle,
-            iconColor: Colors.green[600]!,
+          child: _buildSimpleStatCard(
+            icon: Icons.check_circle_outline,
+            iconColor: Colors.green,
             value: correctAnswers.toString(),
             label: 'Correct Answers',
           ),
@@ -40,51 +40,53 @@ class QuickStatsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildSimpleStatCard({
     required IconData icon,
     required Color iconColor,
     required String value,
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: 80, // Fixed height to prevent overflow
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon container
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 20, color: iconColor),
+          // Icon and value in a row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 8),
-
-          // Value
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
+          const SizedBox(height: 4),
 
           // Label
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[500],
+              color: Colors.grey[600],
             ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
