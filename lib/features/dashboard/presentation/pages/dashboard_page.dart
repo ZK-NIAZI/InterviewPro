@@ -182,6 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
         border: Border(bottom: BorderSide(color: AppColors.grey200, width: 1)),
       ),
       child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center, // Center the settings text
         children: [
           Text(
             'Settings',

@@ -24,8 +24,8 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
           20,
           0,
           20,
-          100,
-        ), // Bottom padding for nav
+          20, // Significantly reduced bottom padding
+        ),
         child: Column(
           children: [
             // Profile Section
@@ -50,6 +50,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
 
             // Logout Button
             _buildLogoutButton(),
+            // Removed extra SizedBox to eliminate bottom space
           ],
         ),
       ),
@@ -159,7 +160,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   ],
                 ),
                 onTap: () {
-                  
                   _showLanguageDialog();
                 },
               ),
@@ -231,8 +231,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   size: 20,
                   color: Colors.grey[400],
                 ),
-                onTap: () {
-                },
+                onTap: () {},
               ),
 
               // Divider
@@ -384,8 +383,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   size: 20,
                   color: Colors.grey[400],
                 ),
-                onTap: () {
-                },
+                onTap: () {},
               ),
 
               // Divider
@@ -399,8 +397,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
                   size: 20,
                   color: Colors.grey[400],
                 ),
-                onTap: () {
-                },
+                onTap: () {},
               ),
             ],
           ),
@@ -413,7 +410,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
   Widget _buildLogoutButton() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 16),
+      margin: const EdgeInsets.only(top: 0), // Removed top margin completely
       child: TextButton(
         onPressed: () {
           _showLogoutDialog();
