@@ -142,7 +142,12 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+        padding: const EdgeInsets.fromLTRB(
+          24,
+          0,
+          24,
+          20,
+        ), // Significantly reduced from 100
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -231,6 +236,9 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
         // Notes input (if shown)
         if (showNotes) _buildNotesInput(),
+
+        // Voice recording button (always visible)
+        _buildVoiceRecordingButton(),
       ],
     );
   }
@@ -393,13 +401,39 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       ),
       child: TextField(
         controller: notesController,
-        maxLines: 3,
+        maxLines: 2, // Reduced from 3
+        minLines: 2, // Add minimum lines for consistency
         decoration: InputDecoration(
           hintText: AppStrings.addNotesHint,
           border: InputBorder.none,
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          contentPadding: EdgeInsets.zero, // Remove default padding
         ),
         style: const TextStyle(fontSize: 14, color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildVoiceRecordingButton() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      child: Center(
+        child: GestureDetector(
+          onTap: _onVoiceRecording,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(Icons.mic, size: 28, color: AppColors.primary),
+          ),
+        ),
       ),
     );
   }
@@ -506,6 +540,17 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
         ),
       );
     }
+  }
+
+  void _onVoiceRecording() {
+    // Voice recording functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Voice recording feature coming soon'),
+        backgroundColor: AppColors.primary,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Check if this is the last question
