@@ -75,14 +75,21 @@ class DashboardProvider extends ChangeNotifier {
           .getInterviewsByStatus(InterviewStatus.completed);
 
       if (completedInterviews.isNotEmpty) {
-        // Filter interviews that have scores and calculate average
+        // Filter interviews that have technical scores and calculate average
         final interviewsWithScores = completedInterviews
-            .where((interview) => interview.overallScore != null)
+            .where(
+              (interview) =>
+                  interview.technicalScore != null ||
+                  interview.overallScore != null,
+            )
             .toList();
 
         if (interviewsWithScores.isNotEmpty) {
           final totalScore = interviewsWithScores
-              .map((interview) => interview.overallScore!)
+              .map(
+                (interview) =>
+                    interview.overallScore ?? interview.technicalScore ?? 0.0,
+              )
               .reduce((a, b) => a + b);
           _averageScore = totalScore / interviewsWithScores.length;
         } else {

@@ -6,6 +6,7 @@ import 'core/utils/app_router.dart';
 import 'core/services/service_locator.dart';
 import 'features/splash/presentation/providers/splash_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/history/presentation/providers/history_provider.dart';
 import 'features/interview/presentation/providers/interview_setup_provider.dart';
 import 'features/interview/presentation/providers/evaluation_provider.dart';
 import 'features/interview/presentation/providers/role_provider.dart';
@@ -40,6 +41,7 @@ class InterviewProApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SplashProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider(sl())),
+        ChangeNotifierProvider(create: (_) => HistoryProvider(sl())),
         ChangeNotifierProvider(
           create: (_) => InterviewSetupProvider(sl(), sl()),
         ),

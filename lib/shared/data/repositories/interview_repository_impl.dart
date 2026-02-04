@@ -11,6 +11,13 @@ class InterviewRepositoryImpl implements InterviewRepository {
 
   InterviewRepositoryImpl();
 
+  /// Clear all interviews (for testing)
+  void clearAllInterviews() {
+    _interviews.clear();
+    _responses.clear();
+    debugPrint('🧹 Cleared all interviews from memory');
+  }
+
   @override
   Future<List<Interview>> getAllInterviews() async {
     final interviews = _interviews.values.toList();

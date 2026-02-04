@@ -150,11 +150,12 @@ class RecentInterviewsWidget extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                if (interview.overallScore != null) ...[
+                if (interview.overallScore != null ||
+                    interview.technicalScore != null) ...[
                   Icon(Icons.star_rounded, size: 16, color: AppColors.warning),
                   const SizedBox(width: 4),
                   Text(
-                    '${(interview.overallScore! * 100).toInt()}%',
+                    '${((interview.overallScore ?? interview.technicalScore ?? 0.0)).toStringAsFixed(1)}%',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

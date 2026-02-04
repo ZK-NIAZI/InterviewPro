@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/domain/entities/entities.dart';
+import '../providers/history_provider.dart';
 
 /// History content widget that displays interview history within the dashboard
 class HistoryContentWidget extends StatefulWidget {
@@ -10,50 +14,14 @@ class HistoryContentWidget extends StatefulWidget {
 }
 
 class _HistoryContentWidgetState extends State<HistoryContentWidget> {
-  // Selected filter index (0 = All, 1 = This Week, 2 = This Month)
-  int selectedFilterIndex = 0;
-
-  // Filter options
-  final List<String> filterOptions = ['All', 'This Week', 'This Month'];
-
-  // Mock interview data matching the HTML design
-  final List<InterviewHistoryItem> interviews = [
-    InterviewHistoryItem(
-      name: 'Sarah Jenkins',
-      position: 'UX Designer',
-      date: 'Oct 24',
-      score: 9.2,
-      statusColor: Colors.green,
-    ),
-    InterviewHistoryItem(
-      name: 'Mike Ross',
-      position: 'Legal Consultant',
-      date: 'Oct 22',
-      score: 4.5,
-      statusColor: AppColors.primary,
-    ),
-    InterviewHistoryItem(
-      name: 'Jessica Pearson',
-      position: 'Managing Partner',
-      date: 'Oct 20',
-      score: null, // No score yet
-      statusColor: Colors.grey,
-    ),
-    InterviewHistoryItem(
-      name: 'Louis Litt',
-      position: 'Financial Analyst',
-      date: 'Oct 19',
-      score: 8.8,
-      statusColor: Colors.green,
-    ),
-    InterviewHistoryItem(
-      name: 'Donna Paulsen',
-      position: 'Office Manager',
-      date: 'Oct 18',
-      score: 9.9,
-      statusColor: Colors.green,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Load history data when widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HistoryProvider>().loadHistoryData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,48 +47,47 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
     return Container(
       color: const Color(0xFFF8F6F6),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: filterOptions.asMap().entries.map((entry) {
-            int index = entry.key;
-            String option = entry.value;
-            bool isSelected = selectedFilterIndex == index;
+      child: Consumer<HistoryProvider>(
+        builder: (context, provider, child) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(3, (index) {
+                bool isSelected = provider.selectedFilterIndex == index;
+                String option = provider.getFilterDisplayName(index);
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedFilterIndex = index;
-                  });
-                },
-                child: Container(
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : const Color(0xFFF3E8E9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () => provider.updateFilter(index),
+                    child: Container(
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF666666),
+                            ? AppColors.primary
+                            : const Color(0xFFF3E8E9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          option,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF666666),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+                );
+              }),
+            ),
+          );
+        },
       ),
     );
   }
@@ -130,18 +97,34 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
     return Container(
       color: const Color(0xFFF8F6F6),
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            _buildStatCard('Total Interviews', '24'),
-            const SizedBox(width: 16),
-            _buildStatCard('Avg Score', '8.5'),
-            const SizedBox(width: 16),
-            _buildStatCard('Hired', '6'),
-          ],
-        ),
+      child: Consumer<HistoryProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _buildStatCard(
+                  'Total Interviews',
+                  provider.totalInterviews.toString(),
+                ),
+                const SizedBox(width: 16),
+                _buildStatCard(
+                  'Avg Score',
+                  provider.averageScore.toStringAsFixed(1),
+                ),
+                const SizedBox(width: 16),
+                _buildStatCard('Hired', provider.hiredCount.toString()),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -194,20 +177,63 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
     return Container(
       color: const Color(0xFFF8F6F6),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListView.builder(
-        itemCount: interviews.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildInterviewListItem(interviews[index]),
+      child: Consumer<HistoryProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+
+          if (provider.filteredInterviews.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return ListView.builder(
+            itemCount: provider.filteredInterviews.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildInterviewListItem(
+                  provider.filteredInterviews[index],
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
 
+  /// Builds empty state when no interviews are found
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history_rounded, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No interviews found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start conducting interviews to see them here',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Builds individual interview list item
-  Widget _buildInterviewListItem(InterviewHistoryItem interview) {
+  Widget _buildInterviewListItem(Interview interview) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -224,12 +250,12 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
       ),
       child: Row(
         children: [
-          // Left colored indicator
+          // Left colored indicator based on status
           Container(
             width: 4,
             height: 48,
             decoration: BoxDecoration(
-              color: interview.statusColor,
+              color: _getStatusColor(interview.status),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -242,7 +268,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  interview.name,
+                  interview.candidateName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -253,7 +279,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
                 Row(
                   children: [
                     Text(
-                      interview.position,
+                      _getRoleDisplayName(interview.role),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF666666),
@@ -264,7 +290,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
                       style: TextStyle(fontSize: 12, color: Color(0xFF999999)),
                     ),
                     Text(
-                      interview.date,
+                      _formatDate(interview.startTime),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF666666),
@@ -280,17 +306,17 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: interview.score != null
+              color: interview.overallScore != null
                   ? AppColors.primary.withValues(alpha: 0.1)
                   : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              interview.score?.toString() ?? '--',
+              interview.overallScore?.toStringAsFixed(1) ?? '--',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: interview.score != null
+                color: interview.overallScore != null
                     ? AppColors.primary
                     : const Color(0xFF999999),
               ),
@@ -300,21 +326,50 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
       ),
     );
   }
-}
 
-/// Data class for interview history items
-class InterviewHistoryItem {
-  final String name;
-  final String position;
-  final String date;
-  final double? score;
-  final Color statusColor;
+  /// Get status color based on interview status
+  Color _getStatusColor(InterviewStatus status) {
+    switch (status) {
+      case InterviewStatus.completed:
+        return AppColors.success;
+      case InterviewStatus.inProgress:
+        return AppColors.warning;
+      case InterviewStatus.cancelled:
+        return AppColors.error;
+      case InterviewStatus.notStarted:
+        return AppColors.grey500;
+    }
+  }
 
-  InterviewHistoryItem({
-    required this.name,
-    required this.position,
-    required this.date,
-    this.score,
-    required this.statusColor,
-  });
+  /// Get role display name
+  String _getRoleDisplayName(Role role) {
+    switch (role) {
+      case Role.flutter:
+        return AppStrings.flutterDeveloper;
+      case Role.backend:
+        return AppStrings.backendDeveloper;
+      case Role.frontend:
+        return AppStrings.frontendDeveloper;
+      case Role.fullStack:
+        return AppStrings.fullStackDeveloper;
+      case Role.mobile:
+        return AppStrings.mobileDeveloper;
+    }
+  }
+
+  /// Format date for display
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
 }

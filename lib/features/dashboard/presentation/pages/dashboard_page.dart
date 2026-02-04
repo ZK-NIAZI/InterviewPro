@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../shared/domain/entities/entities.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../history/presentation/widgets/history_content_widget.dart';
 import '../../../settings/presentation/widgets/settings_content_widget.dart';
@@ -433,45 +434,9 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         }
 
-        // Mock data to match the design
-        final mockInterviews = [
-          _MockInterview(
-            'Sarah Jenkins',
-            'Senior Product Designer - L4',
-            'Oct 24, 2023',
-            4.5,
-          ),
-          _MockInterview(
-            'Michael Chen',
-            'Backend Engineer - L3',
-            'Oct 22, 2023',
-            3.8,
-          ),
-          _MockInterview(
-            'Jessica Alverez',
-            'Product Manager - L5',
-            'Oct 20, 2023',
-            4.8,
-          ),
-          _MockInterview(
-            'David Kim',
-            'Frontend Developer - L3',
-            'Oct 18, 2023',
-            null,
-          ),
-          _MockInterview(
-            'Emily Rodriguez',
-            'UI/UX Designer - L2',
-            'Oct 16, 2023',
-            4.2,
-          ),
-          _MockInterview(
-            'James Wilson',
-            'Full Stack Developer - L4',
-            'Oct 14, 2023',
-            3.9,
-          ),
-        ];
+        if (provider.recentInterviews.isEmpty) {
+          return _buildEmptyInterviewsState();
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(
@@ -480,11 +445,11 @@ class _DashboardPageState extends State<DashboardPage> {
             16,
             100,
           ), // Bottom padding for nav
-          itemCount: mockInterviews.length,
+          itemCount: provider.recentInterviews.length,
           itemBuilder: (context, index) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _buildInterviewCard(mockInterviews[index]),
+              child: _buildRealInterviewCard(provider.recentInterviews[index]),
             );
           },
         );
@@ -492,7 +457,42 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildInterviewCard(_MockInterview interview) {
+  Widget _buildEmptyInterviewsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.quiz_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No interviews yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start your first interview to see it here',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => context.push(AppRouter.interview),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Start Interview'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRealInterviewCard(Interview interview) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -514,7 +514,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  interview.name,
+                  interview.candidateName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -523,7 +523,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  interview.position,
+                  '${_getRoleDisplayName(interview.role)} - ${_getLevelDisplayName(interview.level)}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -540,12 +540,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      interview.date,
+                      _formatInterviewDate(interview.startTime),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    _buildStatusChip(interview.status),
                   ],
                 ),
               ],
@@ -561,17 +563,23 @@ class _DashboardPageState extends State<DashboardPage> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: interview.score != null
+                  color:
+                      (interview.overallScore != null ||
+                          interview.technicalScore != null)
                       ? AppColors.primary.withValues(alpha: 0.1)
                       : AppColors.grey200,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  interview.score?.toString() ?? '–',
+                  (interview.overallScore ?? interview.technicalScore)
+                          ?.toStringAsFixed(1) ??
+                      '–',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: interview.score != null
+                    color:
+                        (interview.overallScore != null ||
+                            interview.technicalScore != null)
                         ? AppColors.primary
                         : AppColors.textSecondary,
                   ),
@@ -584,6 +592,88 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildStatusChip(InterviewStatus status) {
+    Color color;
+    String text;
+
+    switch (status) {
+      case InterviewStatus.completed:
+        color = AppColors.success;
+        text = 'Completed';
+        break;
+      case InterviewStatus.inProgress:
+        color = AppColors.warning;
+        text = 'In Progress';
+        break;
+      case InterviewStatus.cancelled:
+        color = AppColors.error;
+        text = 'Cancelled';
+        break;
+      case InterviewStatus.notStarted:
+        color = AppColors.grey500;
+        text = 'Not Started';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  String _getRoleDisplayName(Role role) {
+    switch (role) {
+      case Role.flutter:
+        return AppStrings.flutterDeveloper;
+      case Role.backend:
+        return AppStrings.backendDeveloper;
+      case Role.frontend:
+        return AppStrings.frontendDeveloper;
+      case Role.fullStack:
+        return AppStrings.fullStackDeveloper;
+      case Role.mobile:
+        return AppStrings.mobileDeveloper;
+    }
+  }
+
+  String _getLevelDisplayName(Level level) {
+    switch (level) {
+      case Level.intern:
+        return AppStrings.intern;
+      case Level.associate:
+        return AppStrings.associate;
+      case Level.senior:
+        return AppStrings.senior;
+    }
+  }
+
+  String _formatInterviewDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 
   Widget _buildBottomNavigation() {
@@ -686,14 +776,4 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-}
-
-// Mock interview class for demonstration
-class _MockInterview {
-  final String name;
-  final String position;
-  final String date;
-  final double? score;
-
-  _MockInterview(this.name, this.position, this.date, this.score);
 }
