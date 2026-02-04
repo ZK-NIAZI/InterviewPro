@@ -244,6 +244,8 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 
   Widget _buildBottomButton() {
+    final bool hasSelection = selectedLevelIndex != null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(color: Colors.white),
@@ -252,12 +254,16 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: _onContinue,
+            onPressed: hasSelection ? _onContinue : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 8,
-              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+              backgroundColor: hasSelection
+                  ? AppColors.primary
+                  : Colors.grey[300],
+              foregroundColor: hasSelection ? Colors.white : Colors.grey[600],
+              elevation: hasSelection ? 8 : 0,
+              shadowColor: hasSelection
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -277,13 +283,24 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 
   void _onContinue() {
-    final levels = _experienceLevelProvider.experienceLevels;
-    if (levels.isEmpty) return;
+    // Ensure an experience level is selected
+    if (selectedLevelIndex == null) {
+      // Show a snackbar to inform the user to select an experience level
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an experience level to continue'),
+          backgroundColor: AppColors.primary,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    // Use first level as default if no selection is made
-    final selectedLevelName = selectedLevelIndex != null
-        ? levels[selectedLevelIndex!].title
-        : levels[0].title;
+    final levels = _experienceLevelProvider.experienceLevels;
+    if (levels.isEmpty || selectedLevelIndex! >= levels.length) return;
+
+    // Use the selected level
+    final selectedLevelName = levels[selectedLevelIndex!].title;
 
     // Navigate to interview question screen
     context.push(
