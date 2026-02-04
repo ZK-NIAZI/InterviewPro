@@ -1,11 +1,10 @@
 import 'package:get_it/get_it.dart';
 import '../../shared/data/datasources/datasources.dart';
 import '../../shared/data/repositories/repositories.dart';
-import '../../shared/data/services/default_question_bank_service.dart';
 import '../../shared/domain/repositories/interview_repository.dart';
-import '../../shared/domain/repositories/question_repository.dart';
 import '../../shared/domain/repositories/role_repository.dart';
 import '../../shared/domain/repositories/experience_level_repository.dart';
+import '../../shared/domain/repositories/interview_question_repository.dart';
 import 'appwrite_service.dart';
 
 /// Service locator for dependency injection
@@ -22,10 +21,6 @@ Future<void> initializeDependencies() async {
     () => InterviewLocalDataSource(),
   );
 
-  sl.registerLazySingleton<QuestionLocalDataSource>(
-    () => QuestionLocalDataSource(),
-  );
-
   sl.registerLazySingleton<RoleRemoteDatasource>(
     () => RoleRemoteDatasource(sl()),
   );
@@ -34,13 +29,13 @@ Future<void> initializeDependencies() async {
     () => ExperienceLevelRemoteDatasource(sl()),
   );
 
+  sl.registerLazySingleton<InterviewQuestionRemoteDatasource>(
+    () => InterviewQuestionRemoteDatasource(sl()),
+  );
+
   // Repositories
   sl.registerLazySingleton<InterviewRepository>(
     () => InterviewRepositoryImpl(sl()),
-  );
-
-  sl.registerLazySingleton<QuestionRepository>(
-    () => QuestionRepositoryImpl(sl()),
   );
 
   sl.registerLazySingleton<RoleRepository>(() => RoleRepositoryImpl(sl()));
@@ -49,15 +44,13 @@ Future<void> initializeDependencies() async {
     () => ExperienceLevelRepositoryImpl(sl()),
   );
 
-  // Services
-  sl.registerLazySingleton<DefaultQuestionBankService>(
-    () => DefaultQuestionBankService(sl()),
+  sl.registerLazySingleton<InterviewQuestionRepository>(
+    () => InterviewQuestionRepositoryImpl(sl()),
   );
 
   // Initialize data sources
   await sl<InterviewLocalDataSource>().init();
-  await sl<QuestionLocalDataSource>().init();
 
-  // Initialize default question bank on first launch
-  await sl<DefaultQuestionBankService>().initializeDefaultQuestions();
+  // Initialize interview questions from JSON
+  await sl<InterviewQuestionRepository>().initializeDefaultQuestions();
 }

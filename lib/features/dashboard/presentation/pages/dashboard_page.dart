@@ -126,6 +126,13 @@ class _DashboardPageState extends State<DashboardPage> {
           // Debug: Config Test Button (removed - use Appwrite console)
           IconButton(
             onPressed: () {
+              context.push(AppRouter.questionBank);
+            },
+            icon: const Icon(Icons.quiz),
+            tooltip: 'Question Bank',
+          ),
+          IconButton(
+            onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Use Appwrite console to manage configuration'),

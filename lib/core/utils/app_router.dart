@@ -7,6 +7,7 @@ import '../../features/interview/presentation/pages/interview_question_page.dart
 import '../../features/interview/presentation/pages/candidate_evaluation_page.dart';
 import '../../features/interview/presentation/pages/interview_report_page.dart';
 import '../../features/interview/presentation/pages/report_preview_page.dart';
+import '../../features/interview/presentation/pages/question_bank_page.dart';
 
 /// Application routing configuration
 class AppRouter {
@@ -19,6 +20,7 @@ class AppRouter {
   static const String candidateEvaluation = '/candidate-evaluation';
   static const String interviewReport = '/interview-report';
   static const String reportPreview = '/report-preview';
+  static const String questionBank = '/question-bank';
   static const String questions = '/questions';
   static const String reports = '/reports';
 
@@ -173,6 +175,11 @@ class AppRouter {
             additionalComments: additionalComments,
           );
         },
+      ),
+      GoRoute(
+        path: questionBank,
+        name: 'question-bank',
+        builder: (context, state) => const QuestionBankPage(),
       ),
       //  Add other routes as features are implemented
     ],

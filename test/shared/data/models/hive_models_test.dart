@@ -15,7 +15,6 @@ void main() {
       Hive.registerAdapter(QuestionCategoryAdapter());
       Hive.registerAdapter(InterviewStatusAdapter());
       Hive.registerAdapter(InterviewModelAdapter());
-      Hive.registerAdapter(QuestionModelAdapter());
       Hive.registerAdapter(QuestionResponseModelAdapter());
     });
 
@@ -59,32 +58,6 @@ void main() {
       );
       expect(convertedBack.status, equals(interview.status));
       expect(convertedBack.overallScore, equals(interview.overallScore));
-    });
-
-    test('QuestionModel should convert to and from entity correctly', () {
-      // Arrange
-      final question = Question(
-        id: 'q-1',
-        text: 'What is Flutter?',
-        category: QuestionCategory.programmingFundamentals,
-        applicableRoles: [Role.flutter, Role.mobile],
-        difficulty: Level.intern,
-        expectedAnswer: 'Flutter is a UI toolkit',
-        tags: ['flutter', 'basics'],
-      );
-
-      // Act
-      final model = QuestionModel.fromEntity(question);
-      final convertedBack = model.toEntity();
-
-      // Assert
-      expect(convertedBack.id, equals(question.id));
-      expect(convertedBack.text, equals(question.text));
-      expect(convertedBack.category, equals(question.category));
-      expect(convertedBack.applicableRoles, equals(question.applicableRoles));
-      expect(convertedBack.difficulty, equals(question.difficulty));
-      expect(convertedBack.expectedAnswer, equals(question.expectedAnswer));
-      expect(convertedBack.tags, equals(question.tags));
     });
 
     test(

@@ -1,0 +1,332 @@
+import 'package:appwrite/appwrite.dart';
+import 'package:flutter/foundation.dart';
+import '../../../core/services/appwrite_service.dart';
+import '../../domain/entities/interview_question.dart';
+import '../../domain/entities/question_category.dart';
+
+/// Remote data source for interview questions using Appwrite
+class InterviewQuestionRemoteDatasource {
+  final AppwriteService _appwriteService;
+  late final Databases _databases;
+
+  // Collection IDs
+  static const String questionsCollectionId = 'questions';
+  static const String categoriesCollectionId = 'question_categories';
+
+  InterviewQuestionRemoteDatasource(this._appwriteService) {
+    _databases = _appwriteService.databases;
+  }
+
+  /// Check if questions collection exists and has data
+  Future<bool> hasQuestions() async {
+    try {
+      final response = await _databases.listDocuments(
+        databaseId: _appwriteService.databaseId,
+        collectionId: questionsCollectionId,
+        queries: [Query.limit(1)],
+      );
+      return response.documents.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error checking questions existence: $e');
+      return false;
+    }
+  }
+
+  /// Check if categories collection exists and has data
+  Future<bool> hasCategories() async {
+    try {
+      final response = await _databases.listDocuments(
+        databaseId: _appwriteService.databaseId,
+        collectionId: categoriesCollectionId,
+        queries: [Query.limit(1)],
+      );
+      return response.documents.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error checking categories existence: $e');
+      return false;
+    }
+  }
+
+  /// Get all interview questions
+  Future<List<InterviewQuestion>> getQuestions({
+    String? category,
+    String? difficulty,
+    String? roleSpecific,
+    List<String>? tags,
+    int limit = 100,
+  }) async {
+    try {
+      final queries = <String>[
+        Query.limit(limit),
+        Query.equal('isActive', true),
+        Query.orderDesc('\$createdAt'),
+      ];
+
+      // Add filters
+      if (category != null) {
+        queries.add(Query.equal('category', category));
+      }
+      if (difficulty != null) {
+        queries.add(Query.equal('difficulty', difficulty));
+      }
+      if (roleSpecific != null) {
+        queries.add(Query.equal('roleSpecific', roleSpecific));
+      }
+
+      final response = await _databases.listDocuments(
+        databaseId: _appwriteService.databaseId,
+        collectionId: questionsCollectionId,
+        queries: queries,
+      );
+
+      return response.documents
+          .map((doc) => InterviewQuestion.fromJson(doc.data))
+          .where((question) {
+            // Additional filtering for tags if provided
+            if (tags != null && tags.isNotEmpty) {
+              return question.hasAnyTag(tags);
+            }
+            return true;
+          })
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching questions: $e');
+      throw Exception('Failed to fetch questions: $e');
+    }
+  }
+
+  /// Get questions by category
+  Future<List<InterviewQuestion>> getQuestionsByCategory(
+    String category,
+  ) async {
+    return getQuestions(category: category);
+  }
+
+  /// Get questions by difficulty
+  Future<List<InterviewQuestion>> getQuestionsByDifficulty(
+    String difficulty,
+  ) async {
+    return getQuestions(difficulty: difficulty);
+  }
+
+  /// Get questions by role
+  Future<List<InterviewQuestion>> getQuestionsByRole(String role) async {
+    return getQuestions(roleSpecific: role);
+  }
+
+  /// Get random questions for interview
+  Future<List<InterviewQuestion>> getRandomQuestions({
+    required int count,
+    String? category,
+    String? difficulty,
+    String? roleSpecific,
+  }) async {
+    final allQuestions = await getQuestions(
+      category: category,
+      difficulty: difficulty,
+      roleSpecific: roleSpecific,
+      limit: 200, // Get more to have better randomization
+    );
+
+    if (allQuestions.length <= count) {
+      return allQuestions;
+    }
+
+    // Shuffle and take the requested count
+    allQuestions.shuffle();
+    return allQuestions.take(count).toList();
+  }
+
+  /// Create a new question
+  Future<InterviewQuestion> createQuestion(InterviewQuestion question) async {
+    try {
+      final response = await _databases.createDocument(
+        databaseId: _appwriteService.databaseId,
+        collectionId: questionsCollectionId,
+        documentId: question.id, // Use the question's ID as document ID
+        data: question.toJson(),
+      );
+
+      return InterviewQuestion.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error creating question: $e');
+      throw Exception('Failed to create question: $e');
+    }
+  }
+
+  /// Update an existing question
+  Future<InterviewQuestion> updateQuestion(InterviewQuestion question) async {
+    try {
+      final response = await _databases.updateDocument(
+        databaseId: _appwriteService.databaseId,
+        collectionId: questionsCollectionId,
+        documentId: question.id,
+        data: question.copyWith(updatedAt: DateTime.now()).toJson(),
+      );
+
+      return InterviewQuestion.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error updating question: $e');
+      throw Exception('Failed to update question: $e');
+    }
+  }
+
+  /// Delete a question
+  Future<void> deleteQuestion(String questionId) async {
+    try {
+      await _databases.deleteDocument(
+        databaseId: _appwriteService.databaseId,
+        collectionId: questionsCollectionId,
+        documentId: questionId,
+      );
+    } catch (e) {
+      debugPrint('Error deleting question: $e');
+      throw Exception('Failed to delete question: $e');
+    }
+  }
+
+  /// Get all question categories
+  Future<List<QuestionCategoryEntity>> getCategories() async {
+    try {
+      final response = await _databases.listDocuments(
+        databaseId: _appwriteService.databaseId,
+        collectionId: categoriesCollectionId,
+        queries: [Query.equal('isActive', true), Query.orderAsc('name')],
+      );
+
+      return response.documents
+          .map((doc) => QuestionCategoryEntity.fromJson(doc.data))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+      throw Exception('Failed to fetch categories: $e');
+    }
+  }
+
+  /// Create a new category
+  Future<QuestionCategoryEntity> createCategory(
+    QuestionCategoryEntity category,
+  ) async {
+    try {
+      final response = await _databases.createDocument(
+        databaseId: _appwriteService.databaseId,
+        collectionId: categoriesCollectionId,
+        documentId: ID.unique(),
+        data: category.toJson(),
+      );
+
+      return QuestionCategoryEntity.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error creating category: $e');
+      throw Exception('Failed to create category: $e');
+    }
+  }
+
+  /// Bulk create questions from JSON data
+  Future<List<InterviewQuestion>> bulkCreateQuestions(
+    List<Map<String, dynamic>> questionsData,
+  ) async {
+    final createdQuestions = <InterviewQuestion>[];
+
+    for (final questionData in questionsData) {
+      try {
+        final question = InterviewQuestion(
+          id: questionData['id'],
+          question: questionData['question'],
+          category: questionData['category'],
+          difficulty: questionData['difficulty'],
+          expectedDuration: questionData['expectedDuration'],
+          tags: List<String>.from(questionData['tags']),
+          sampleAnswer: questionData['sampleAnswer'],
+          evaluationCriteria: List<String>.from(
+            questionData['evaluationCriteria'],
+          ),
+          roleSpecific: questionData['roleSpecific'],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        final createdQuestion = await createQuestion(question);
+        createdQuestions.add(createdQuestion);
+
+        debugPrint('✅ Created question: ${question.id}');
+      } catch (e) {
+        debugPrint('❌ Failed to create question ${questionData['id']}: $e');
+      }
+    }
+
+    return createdQuestions;
+  }
+
+  /// Bulk create categories from JSON data
+  Future<List<QuestionCategoryEntity>> bulkCreateCategories(
+    List<Map<String, dynamic>> categoriesData,
+  ) async {
+    final createdCategories = <QuestionCategoryEntity>[];
+
+    for (final categoryData in categoriesData) {
+      try {
+        final category = QuestionCategoryEntity(
+          id: categoryData['id'],
+          name: categoryData['name'],
+          description: categoryData['description'],
+          questionCount: (categoryData['questions'] as List).length,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        final createdCategory = await createCategory(category);
+        createdCategories.add(createdCategory);
+
+        debugPrint('✅ Created category: ${category.name}');
+      } catch (e) {
+        debugPrint('❌ Failed to create category ${categoryData['name']}: $e');
+      }
+    }
+
+    return createdCategories;
+  }
+
+  /// Get question statistics
+  Future<Map<String, dynamic>> getQuestionStats() async {
+    try {
+      final allQuestions = await getQuestions(limit: 1000);
+
+      final stats = <String, dynamic>{
+        'totalQuestions': allQuestions.length,
+        'byCategory': <String, int>{},
+        'byDifficulty': <String, int>{},
+        'averageDuration': 0.0,
+      };
+
+      // Calculate statistics
+      var totalDuration = 0;
+      for (final question in allQuestions) {
+        // Count by category
+        stats['byCategory'][question.category] =
+            (stats['byCategory'][question.category] ?? 0) + 1;
+
+        // Count by difficulty
+        stats['byDifficulty'][question.difficulty] =
+            (stats['byDifficulty'][question.difficulty] ?? 0) + 1;
+
+        totalDuration += question.expectedDuration;
+      }
+
+      // Calculate average duration
+      if (allQuestions.isNotEmpty) {
+        stats['averageDuration'] = totalDuration / allQuestions.length;
+      }
+
+      return stats;
+    } catch (e) {
+      debugPrint('Error getting question stats: $e');
+      return {
+        'totalQuestions': 0,
+        'byCategory': <String, int>{},
+        'byDifficulty': <String, int>{},
+        'averageDuration': 0.0,
+      };
+    }
+  }
+}

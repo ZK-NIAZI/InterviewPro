@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../shared/domain/entities/interview_question.dart';
+import '../providers/interview_question_provider.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -25,12 +28,90 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   bool showNotes = false;
   final TextEditingController notesController = TextEditingController();
 
-  // Mock data - in real app this would come from the question repository
-  static const int _currentQuestion = 25; // Set to last question for demo
-  static const int _totalQuestions = 25;
-  static const String _category = 'Programming Fundamentals';
-  static const String _questionText =
-      'Explain the difference between const and final in Dart?';
+  // Dynamic question data
+  List<InterviewQuestion> _questions = [];
+  int _currentQuestionIndex = 0;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestions();
+  }
+
+  /// Load questions based on selected role and experience level
+  Future<void> _loadQuestions() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final provider = context.read<InterviewQuestionProvider>();
+
+      // Load questions filtered by role and difficulty level
+      final questions = await provider.getRandomQuestions(
+        count: 25, // Get 25 questions for the interview
+        roleSpecific: widget.selectedRole,
+        difficulty: _mapExperienceLevelToDifficulty(widget.selectedLevel),
+      );
+
+      // If no role-specific questions, get general questions
+      if (questions.isEmpty) {
+        final generalQuestions = await provider.getRandomQuestions(
+          count: 25,
+          difficulty: _mapExperienceLevelToDifficulty(widget.selectedLevel),
+        );
+
+        setState(() {
+          _questions = generalQuestions;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _questions = questions;
+          _isLoading = false;
+        });
+      }
+
+      if (_questions.isEmpty) {
+        setState(() {
+          _error = 'No questions found for the selected criteria';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load questions: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Map experience level to difficulty
+  String _mapExperienceLevelToDifficulty(String level) {
+    switch (level.toLowerCase()) {
+      case 'intern':
+        return 'beginner';
+      case 'associate':
+        return 'intermediate';
+      case 'senior':
+        return 'advanced';
+      default:
+        return 'intermediate';
+    }
+  }
+
+  /// Get current question
+  InterviewQuestion? get _currentQuestion {
+    if (_questions.isEmpty || _currentQuestionIndex >= _questions.length) {
+      return null;
+    }
+    return _questions[_currentQuestionIndex];
+  }
+
+  /// Get total questions count
+  int get _totalQuestions => _questions.length;
 
   @override
   void dispose() {
@@ -43,35 +124,147 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Colors.grey[100],
-        body: Column(
-          children: [
-            // Status bar placeholder
-            Container(
-              height: MediaQuery.of(context).padding.top,
-              decoration: const BoxDecoration(color: Colors.white),
-            ),
-
-            // Header
-            _buildHeader(),
-
-            // Progress bar
-            _buildProgressBar(),
-
-            // Main content
-            Expanded(child: _buildMainContent()),
-
-            // Bottom navigation
-            _buildBottomNavigation(),
-          ],
-        ),
+        body: _isLoading
+            ? _buildLoadingState()
+            : _error != null
+            ? _buildErrorState()
+            : _questions.isEmpty
+            ? _buildEmptyState()
+            : _buildQuestionContent(),
       ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: AppColors.primary),
+          SizedBox(height: 16),
+          Text(
+            'Loading interview questions...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Error Loading Questions',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _loadQuestions,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () => context.pop(),
+            child: const Text('Go Back'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.quiz_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No Questions Available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'No questions found for ${widget.selectedRole} at ${widget.selectedLevel} level.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _loadQuestions,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reload Questions'),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () => context.pop(),
+            child: const Text('Go Back'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuestionContent() {
+    return Column(
+      children: [
+        // Status bar placeholder
+        Container(
+          height: MediaQuery.of(context).padding.top,
+          decoration: const BoxDecoration(color: Colors.white),
+        ),
+
+        // Header
+        _buildHeader(),
+
+        // Progress bar
+        _buildProgressBar(),
+
+        // Main content
+        Expanded(child: _buildMainContent()),
+
+        // Bottom navigation
+        _buildBottomNavigation(),
+      ],
     );
   }
 
@@ -98,7 +291,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
           // Question counter
           Text(
-            'QUESTION $_currentQuestion OF $_totalQuestions',
+            'QUESTION ${_currentQuestionIndex + 1} OF $_totalQuestions',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -112,7 +305,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildProgressBar() {
-    final progress = _currentQuestion / _totalQuestions;
+    final progress = (_currentQuestionIndex + 1) / _totalQuestions;
 
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
@@ -175,6 +368,9 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildCategoryChip() {
+    final question = _currentQuestion;
+    if (question == null) return const SizedBox.shrink();
+
     return Container(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -185,7 +381,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       ),
       child: Center(
         child: Text(
-          _category,
+          question.categoryDisplayName,
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -199,7 +395,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   Widget _buildQuestionNumber() {
     return Text(
-      '#$_currentQuestion',
+      '#${_currentQuestionIndex + 1}',
       style: TextStyle(
         fontSize: 64,
         fontWeight: FontWeight.w900,
@@ -211,15 +407,60 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildQuestionText() {
-    return Text(
-      _questionText,
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
-        height: 1.2,
-        letterSpacing: -0.5,
-      ),
+    final question = _currentQuestion;
+    if (question == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question.question,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ),
+        if (question.expectedDuration > 0) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 4),
+              Text(
+                'Expected time: ${question.expectedDuration} minutes',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ],
+        if (question.tags.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: question.tags.take(3).map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  tag,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.primary,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 
@@ -462,7 +703,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
                 border: Border.all(color: Colors.grey[300]!),
               ),
               child: TextButton(
-                onPressed: () => context.pop(),
+                onPressed: _onPrevious,
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
@@ -515,6 +756,16 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   void _onNext() {
+    final question = _currentQuestion;
+    if (question == null) return;
+
+    // Save the current answer (in a real app, you'd save this to a database)
+    debugPrint('Question ${_currentQuestionIndex + 1}: ${question.question}');
+    debugPrint(
+      'Answer: ${selectedAnswer == null ? "No answer" : (selectedAnswer! ? "Yes" : "No")}',
+    );
+    debugPrint('Notes: ${notesController.text}');
+
     // Check if this is the last question
     if (_isLastQuestion()) {
       // Navigate to candidate evaluation
@@ -525,20 +776,35 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
         '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId',
       );
     } else {
-      // Navigate to next question (for demo, just show snackbar)
+      // Move to next question
+      setState(() {
+        _currentQuestionIndex++;
+        selectedAnswer = null; // Reset answer for next question
+        showNotes = false; // Hide notes
+        notesController.clear(); // Clear notes
+      });
+
+      // Show feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            selectedAnswer == null
-                ? AppStrings.pleaseSelectAnswer
-                : 'Answer saved: ${selectedAnswer! ? AppStrings.yes : AppStrings.no}',
-          ),
-          backgroundColor: selectedAnswer == null
-              ? Colors.orange
-              : AppColors.primary,
-          duration: const Duration(seconds: 2),
+          content: Text('Moving to question ${_currentQuestionIndex + 1}'),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 1),
         ),
       );
+    }
+  }
+
+  void _onPrevious() {
+    if (_currentQuestionIndex > 0) {
+      setState(() {
+        _currentQuestionIndex--;
+        selectedAnswer = null; // Reset answer
+        showNotes = false; // Hide notes
+        notesController.clear(); // Clear notes
+      });
+    } else {
+      context.pop();
     }
   }
 
@@ -555,6 +821,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   /// Check if this is the last question
   bool _isLastQuestion() {
-    return _currentQuestion >= _totalQuestions;
+    return _currentQuestionIndex >= _totalQuestions - 1;
   }
 }

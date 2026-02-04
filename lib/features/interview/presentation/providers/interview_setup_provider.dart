@@ -4,7 +4,7 @@ import '../../../../shared/domain/repositories/repositories.dart';
 
 /// Provider for managing interview setup state and logic
 class InterviewSetupProvider extends ChangeNotifier {
-  final QuestionRepository _questionRepository;
+  final InterviewQuestionRepository _questionRepository;
   final InterviewRepository _interviewRepository;
 
   InterviewSetupProvider(this._questionRepository, this._interviewRepository);
@@ -13,14 +13,14 @@ class InterviewSetupProvider extends ChangeNotifier {
   Role? _selectedRole;
   Level? _selectedLevel;
   String _candidateName = '';
-  List<Question> _availableQuestions = [];
+  List<InterviewQuestion> _availableQuestions = [];
 
   // Getters
   bool get isLoading => _isLoading;
   Role? get selectedRole => _selectedRole;
   Level? get selectedLevel => _selectedLevel;
   String get candidateName => _candidateName;
-  List<Question> get availableQuestions => _availableQuestions;
+  List<InterviewQuestion> get availableQuestions => _availableQuestions;
   bool get isValid =>
       _selectedRole != null &&
       _selectedLevel != null &&
@@ -64,8 +64,11 @@ class InterviewSetupProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _availableQuestions = await _questionRepository
-          .getQuestionsByRoleAndLevel(_selectedRole!, _selectedLevel!);
+      final allQuestions = await _questionRepository.getQuestions();
+      _availableQuestions = allQuestions.where((question) {
+        return question.isSuitableForRole(_selectedRole!.name) &&
+            question.matchesDifficulty(_selectedLevel!.name);
+      }).toList();
     } catch (e) {
       debugPrint('Error loading questions: $e');
       _availableQuestions = [];
@@ -80,11 +83,12 @@ class InterviewSetupProvider extends ChangeNotifier {
     if (_selectedRole == null || _selectedLevel == null) return 0;
 
     try {
-      final questions = await _questionRepository.getQuestionsByRoleAndLevel(
-        _selectedRole!,
-        _selectedLevel!,
-      );
-      return questions.length;
+      final allQuestions = await _questionRepository.getQuestions();
+      final filteredQuestions = allQuestions.where((question) {
+        return question.isSuitableForRole(_selectedRole!.name) &&
+            question.matchesDifficulty(_selectedLevel!.name);
+      }).toList();
+      return filteredQuestions.length;
     } catch (e) {
       debugPrint('Error getting question count: $e');
       return 0;
@@ -106,15 +110,19 @@ class InterviewSetupProvider extends ChangeNotifier {
 
     try {
       // Load questions for the interview
-      final questions = await _questionRepository.getRandomQuestions(
-        _selectedRole!,
-        _selectedLevel!,
-        count: 15, // Default to 15 questions per interview
-      );
+      final allQuestions = await _questionRepository.getQuestions();
+      final suitableQuestions = allQuestions.where((question) {
+        return question.isSuitableForRole(_selectedRole!.name) &&
+            question.matchesDifficulty(_selectedLevel!.name);
+      }).toList();
 
-      if (questions.isEmpty) {
+      if (suitableQuestions.isEmpty) {
         throw Exception('No questions available for selected role and level');
       }
+
+      // Shuffle questions for variety (questions will be loaded dynamically during interview)
+      final shuffledQuestions = List<InterviewQuestion>.from(suitableQuestions);
+      shuffledQuestions.shuffle();
 
       // Create the interview
       final interview = Interview(
@@ -153,17 +161,18 @@ class InterviewSetupProvider extends ChangeNotifier {
   }
 
   /// Get questions by category for current role and level
-  Future<List<Question>> getQuestionsByCategory(
-    QuestionCategory category,
+  Future<List<InterviewQuestion>> getQuestionsByCategory(
+    String category,
   ) async {
     if (_selectedRole == null || _selectedLevel == null) return [];
 
     try {
-      return await _questionRepository.getQuestionsByCategoryRoleAndLevel(
-        category,
-        _selectedRole!,
-        _selectedLevel!,
-      );
+      final allQuestions = await _questionRepository.getQuestions();
+      return allQuestions.where((question) {
+        return question.category.toLowerCase() == category.toLowerCase() &&
+            question.isSuitableForRole(_selectedRole!.name) &&
+            question.matchesDifficulty(_selectedLevel!.name);
+      }).toList();
     } catch (e) {
       debugPrint('Error getting questions by category: $e');
       return [];
@@ -171,20 +180,21 @@ class InterviewSetupProvider extends ChangeNotifier {
   }
 
   /// Preview questions for current selection
-  Future<List<Question>> previewQuestions({int limit = 5}) async {
+  Future<List<InterviewQuestion>> previewQuestions({int limit = 5}) async {
     if (_selectedRole == null || _selectedLevel == null) return [];
 
     try {
-      final questions = await _questionRepository.getQuestionsByRoleAndLevel(
-        _selectedRole!,
-        _selectedLevel!,
-      );
+      final allQuestions = await _questionRepository.getQuestions();
+      final suitableQuestions = allQuestions.where((question) {
+        return question.isSuitableForRole(_selectedRole!.name) &&
+            question.matchesDifficulty(_selectedLevel!.name);
+      }).toList();
 
-      if (questions.length <= limit) {
-        return questions;
+      if (suitableQuestions.length <= limit) {
+        return suitableQuestions;
       }
 
-      return questions.take(limit).toList();
+      return suitableQuestions.take(limit).toList();
     } catch (e) {
       debugPrint('Error previewing questions: $e');
       return [];

@@ -96,57 +96,6 @@ void main() {
       });
     });
 
-    group('Question', () {
-      test('should create Question with required fields', () {
-        final question = Question(
-          id: 'q1',
-          text: 'What is Flutter?',
-          category: QuestionCategory.programmingFundamentals,
-          applicableRoles: [Role.flutter, Role.mobile],
-          difficulty: Level.intern,
-          tags: ['flutter', 'basics'],
-        );
-
-        expect(question.id, 'q1');
-        expect(question.text, 'What is Flutter?');
-        expect(question.category, QuestionCategory.programmingFundamentals);
-        expect(question.applicableRoles, [Role.flutter, Role.mobile]);
-        expect(question.difficulty, Level.intern);
-        expect(question.tags, ['flutter', 'basics']);
-        expect(question.expectedAnswer, null);
-      });
-
-      test('should check role applicability correctly', () {
-        final question = Question(
-          id: 'q1',
-          text: 'What is Flutter?',
-          category: QuestionCategory.programmingFundamentals,
-          applicableRoles: [Role.flutter, Role.mobile],
-          difficulty: Level.intern,
-          tags: ['flutter'],
-        );
-
-        expect(question.isApplicableForRole(Role.flutter), true);
-        expect(question.isApplicableForRole(Role.mobile), true);
-        expect(question.isApplicableForRole(Role.backend), false);
-      });
-
-      test('should check suitability for role and level', () {
-        final question = Question(
-          id: 'q1',
-          text: 'What is Flutter?',
-          category: QuestionCategory.programmingFundamentals,
-          applicableRoles: [Role.flutter],
-          difficulty: Level.intern,
-          tags: ['flutter'],
-        );
-
-        expect(question.isSuitableFor(Role.flutter, Level.intern), true);
-        expect(question.isSuitableFor(Role.flutter, Level.senior), false);
-        expect(question.isSuitableFor(Role.backend, Level.intern), false);
-      });
-    });
-
     group('Interview', () {
       test('should create Interview with required fields', () {
         final startTime = DateTime.now();

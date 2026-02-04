@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:interview_pro_app/core/services/service_locator.dart';
 import 'package:interview_pro_app/shared/data/services/hive_service.dart';
 import 'package:interview_pro_app/shared/domain/entities/entities.dart';
-import 'package:interview_pro_app/shared/domain/repositories/repositories.dart';
+import 'package:interview_pro_app/shared/domain/repositories/interview_question_repository.dart';
+import 'package:interview_pro_app/shared/domain/repositories/interview_repository.dart';
 
 void main() {
   group('Hive Integration Tests', () {
@@ -41,70 +42,56 @@ void main() {
       expect(retrieved.level, equals(Level.associate));
     });
 
-    test('should save and retrieve question through repository', () async {
-      // Arrange
-      final questionRepo = sl<QuestionRepository>();
-      final question = Question(
-        id: 'integration-q-1',
-        text: 'Integration test question?',
-        category: QuestionCategory.programmingFundamentals,
-        applicableRoles: [Role.flutter],
-        difficulty: Level.intern,
-        tags: ['test'],
-      );
-
-      // Act
-      await questionRepo.saveQuestion(question);
-      final retrieved = await questionRepo.getQuestionById('integration-q-1');
-
-      // Assert
-      expect(retrieved, isNotNull);
-      expect(retrieved!.text, equals('Integration test question?'));
-      expect(
-        retrieved.category,
-        equals(QuestionCategory.programmingFundamentals),
-      );
-      expect(retrieved.applicableRoles, contains(Role.flutter));
-    });
-
     test(
-      'should filter questions by role and level through repository',
+      'should save and retrieve interview question through repository',
       () async {
         // Arrange
-        final questionRepo = sl<QuestionRepository>();
-        final questions = [
-          Question(
-            id: 'filter-q-1',
-            text: 'Flutter intern question',
-            category: QuestionCategory.programmingFundamentals,
-            applicableRoles: [Role.flutter],
-            difficulty: Level.intern,
-            tags: ['flutter', 'intern'],
-          ),
-          Question(
-            id: 'filter-q-2',
-            text: 'Backend senior question',
-            category: QuestionCategory.roleSpecificTechnical,
-            applicableRoles: [Role.backend],
-            difficulty: Level.senior,
-            tags: ['backend', 'senior'],
-          ),
-        ];
+        final questionRepo = sl<InterviewQuestionRepository>();
+        final question = InterviewQuestion(
+          id: 'integration-q-1',
+          question: 'Integration test question?',
+          category: 'technical',
+          difficulty: 'beginner',
+          expectedDuration: 5,
+          tags: ['test'],
+          evaluationCriteria: ['Clear explanation'],
+          roleSpecific: 'Flutter Developer',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
         // Act
-        await questionRepo.saveQuestions(questions);
-        final flutterInternQuestions = await questionRepo
-            .getQuestionsByRoleAndLevel(Role.flutter, Level.intern);
+        await questionRepo.createQuestion(question);
+        final questions = await questionRepo.getQuestions();
+        final retrieved = questions.firstWhere(
+          (q) => q.id == 'integration-q-1',
+        );
 
         // Assert
-        expect(flutterInternQuestions.length, equals(1));
-        expect(flutterInternQuestions.first.id, equals('filter-q-1'));
-        expect(
-          flutterInternQuestions.first.applicableRoles,
-          contains(Role.flutter),
-        );
-        expect(flutterInternQuestions.first.difficulty, equals(Level.intern));
+        expect(retrieved, isNotNull);
+        expect(retrieved.question, equals('Integration test question?'));
+        expect(retrieved.category, equals('technical'));
+        expect(retrieved.roleSpecific, equals('Flutter Developer'));
       },
     );
+
+    test('should retrieve questions from repository', () async {
+      // Arrange
+      final questionRepo = sl<InterviewQuestionRepository>();
+
+      // Act - Load questions (should initialize from JSON if empty)
+      final hasQuestions = await questionRepo.hasQuestions();
+
+      if (!hasQuestions) {
+        await questionRepo.initializeDefaultQuestions();
+      }
+
+      final questions = await questionRepo.getQuestions();
+
+      // Assert
+      expect(questions, isNotEmpty);
+      expect(questions.first.question, isNotEmpty);
+      expect(questions.first.category, isNotEmpty);
+    });
   });
 }

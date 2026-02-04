@@ -1,6 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/interview_model.dart';
-import '../models/question_model.dart';
 import '../models/question_response_model.dart';
 import '../models/enum_adapters.dart';
 
@@ -23,7 +22,6 @@ class HiveService {
 
     // Register model adapters (these will be generated)
     Hive.registerAdapter(InterviewModelAdapter());
-    Hive.registerAdapter(QuestionModelAdapter());
     Hive.registerAdapter(QuestionResponseModelAdapter());
 
     _isInitialized = true;
@@ -46,5 +44,4 @@ class HiveService {
 
   /// Get box names
   static const String interviewsBoxName = 'interviews';
-  static const String questionsBoxName = 'questions';
 }
