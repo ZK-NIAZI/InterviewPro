@@ -61,13 +61,16 @@ class _SplashPageState extends State<SplashPage>
       child: Scaffold(
         backgroundColor: AppColors.backgroundLight,
         body: Center(
+          key: const Key('splash_center'),
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Column(
+              key: const Key('splash_content'),
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo Container
                 Container(
+                  key: const Key('logo_container'),
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
@@ -114,7 +117,7 @@ class _SplashPageState extends State<SplashPage>
                 const SizedBox(height: 48),
 
                 // Loading Spinner
-                const _LoadingSpinner(),
+                const _LoadingSpinner(key: Key('loading_spinner')),
               ],
             ),
           ),
@@ -126,7 +129,7 @@ class _SplashPageState extends State<SplashPage>
 
 /// Custom loading spinner widget
 class _LoadingSpinner extends StatefulWidget {
-  const _LoadingSpinner();
+  const _LoadingSpinner({super.key});
 
   @override
   State<_LoadingSpinner> createState() => _LoadingSpinnerState();

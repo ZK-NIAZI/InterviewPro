@@ -75,9 +75,33 @@ void main() {
       final Scaffold scaffold = tester.widget(find.byType(Scaffold));
       expect(scaffold.backgroundColor, AppColors.backgroundLight);
 
-      // Verify main column structure
-      expect(find.byType(Column), findsWidgets);
-      expect(find.byType(Expanded), findsWidgets);
+      // Verify main layout structure using widget keys
+      expect(find.byKey(const Key('splash_center')), findsOneWidget);
+      expect(find.byKey(const Key('splash_content')), findsOneWidget);
+      expect(find.byKey(const Key('logo_container')), findsOneWidget);
+      expect(find.byKey(const Key('loading_spinner')), findsOneWidget);
+
+      // Verify that the splash content is properly structured
+      final centerWidget = tester.widget<Center>(
+        find.byKey(const Key('splash_center')),
+      );
+      expect(centerWidget, isNotNull);
+
+      final columnWidget = tester.widget<Column>(
+        find.byKey(const Key('splash_content')),
+      );
+      expect(columnWidget.mainAxisAlignment, MainAxisAlignment.center);
+
+      // Verify Container is used for logo and has proper decoration
+      final logoContainer = tester.widget<Container>(
+        find.byKey(const Key('logo_container')),
+      );
+      expect(logoContainer.decoration, isA<BoxDecoration>());
+
+      // Verify the logo container has the expected styling
+      final decoration = logoContainer.decoration as BoxDecoration;
+      expect(decoration.color, AppColors.primary);
+      expect(decoration.borderRadius, isA<BorderRadius>());
     });
   });
 }
