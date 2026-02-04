@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/services/service_locator.dart';
+import '../../../../shared/domain/entities/interview.dart';
+import '../../../../shared/domain/repositories/interview_repository.dart';
 import '../providers/evaluation_provider.dart';
 import '../widgets/candidate_info_card.dart';
 import '../widgets/evaluation_form_widget.dart';
@@ -30,13 +33,46 @@ class CandidateEvaluationPage extends StatefulWidget {
 }
 
 class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
+  Interview? _completedInterview;
+  bool _loadingInterview = true;
+
   @override
   void initState() {
     super.initState();
+    _loadInterviewData();
+
     // Load existing evaluation if any
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EvaluationProvider>().loadEvaluation(widget.interviewId);
     });
+  }
+
+  /// Load interview data from repository
+  Future<void> _loadInterviewData() async {
+    try {
+      final interviewRepository = sl<InterviewRepository>();
+      final interview = await interviewRepository.getInterviewById(
+        widget.interviewId,
+      );
+
+      setState(() {
+        _completedInterview = interview;
+        _loadingInterview = false;
+      });
+
+      if (interview != null) {
+        debugPrint('✅ Loaded interview data: ${interview.id}');
+        debugPrint('Technical Score: ${interview.technicalScore}');
+        debugPrint('Responses: ${interview.responses.length}');
+      } else {
+        debugPrint('⚠️ No interview found with ID: ${widget.interviewId}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading interview data: $e');
+      setState(() {
+        _loadingInterview = false;
+      });
+    }
   }
 
   @override
@@ -129,19 +165,14 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   Widget _buildMainContent() {
     return Consumer<EvaluationProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) {
+        if (provider.isLoading || _loadingInterview) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.primary),
           );
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            16,
-            24,
-            20,
-          ), // Reduced from 100
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -157,12 +188,173 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
 
               const SizedBox(height: 24),
 
+              // Interview performance summary (if available)
+              if (_completedInterview != null) ...[
+                _buildInterviewPerformanceSummary(),
+                const SizedBox(height: 24),
+              ],
+
               // Evaluation form
               const EvaluationFormWidget(),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Build interview performance summary widget
+  Widget _buildInterviewPerformanceSummary() {
+    final interview = _completedInterview!;
+    final stats = interview.getPerformanceStats();
+    final categoryPerformance = interview.calculateCategoryPerformance();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.analytics, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Interview Performance',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Performance metrics
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  'Technical Score',
+                  '${(interview.technicalScore ?? 0).toStringAsFixed(1)}%',
+                  AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMetricCard(
+                  'Questions Answered',
+                  '${stats['answeredQuestions']}/${stats['totalQuestions']}',
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  'Correct Answers',
+                  '${stats['correctAnswers']}',
+                  Colors.green,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMetricCard(
+                  'Completion',
+                  '${stats['completionPercentage'].toStringAsFixed(0)}%',
+                  Colors.orange,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Category breakdown
+          const Text(
+            'Category Performance',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          ...categoryPerformance.entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    entry.key,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  Text(
+                    '${entry.value.toStringAsFixed(1)}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build metric card widget
+  Widget _buildMetricCard(String title, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -239,15 +431,17 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     if (!mounted) return;
 
     if (success) {
-      // Generate report
-      final report = await provider.generateReport(
-        candidateName: widget.candidateName,
-        role: widget.role,
-        level: widget.level,
-      );
+      // Calculate overall score using actual technical score
+      double overallScore = provider.calculatedScore;
+      if (_completedInterview != null) {
+        final technicalScore = _completedInterview!.technicalScore ?? 0.0;
+        final evaluationScore = provider.calculatedScore;
+        // 70% technical + 30% soft skills evaluation
+        overallScore = (technicalScore * 0.7) + (evaluationScore * 0.3);
+      }
 
-      // Show report dialog
-      _showReportDialog(report);
+      // Show report with real data
+      _showReportDialog(provider, overallScore);
     } else {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
@@ -259,10 +453,10 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     }
   }
 
-  void _showReportDialog(String report) {
-    // Navigate to interview report page instead of showing dialog
+  void _showReportDialog(EvaluationProvider provider, double overallScore) {
+    // Navigate to interview report page with actual calculated data
     context.push(
-      '${AppRouter.interviewReport}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${context.read<EvaluationProvider>().calculatedScore}&communicationSkills=${context.read<EvaluationProvider>().communicationSkills}&problemSolvingApproach=${context.read<EvaluationProvider>().problemSolvingApproach}&culturalFit=${context.read<EvaluationProvider>().culturalFit}&overallImpression=${context.read<EvaluationProvider>().overallImpression}&additionalComments=${Uri.encodeComponent(context.read<EvaluationProvider>().additionalComments)}',
+      '${AppRouter.interviewReport}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${overallScore.toStringAsFixed(1)}&communicationSkills=${provider.communicationSkills}&problemSolvingApproach=${provider.problemSolvingApproach}&culturalFit=${provider.culturalFit}&overallImpression=${provider.overallImpression}&additionalComments=${Uri.encodeComponent(provider.additionalComments)}',
     );
   }
 }

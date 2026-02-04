@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
 
@@ -34,9 +36,14 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   bool _isLoading = true;
   String? _error;
 
+  // Interview session manager
+  late final InterviewSessionManager _sessionManager;
+  bool _sessionStarted = false;
+
   @override
   void initState() {
     super.initState();
+    _sessionManager = sl<InterviewSessionManager>();
     _loadQuestions();
   }
 
@@ -79,11 +86,44 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
         setState(() {
           _error = 'No questions found for the selected criteria';
         });
+        return;
       }
+
+      // Start interview session after questions are loaded
+      await _startInterviewSession();
     } catch (e) {
       setState(() {
         _error = 'Failed to load questions: $e';
         _isLoading = false;
+      });
+    }
+  }
+
+  /// Start interview session with loaded questions
+  Future<void> _startInterviewSession() async {
+    try {
+      // Generate candidate name (in real app, this would come from user input)
+      final candidateName =
+          'Candidate ${DateTime.now().millisecondsSinceEpoch}';
+
+      await _sessionManager.startInterview(
+        candidateName: candidateName,
+        role: widget.selectedRole,
+        level: widget.selectedLevel,
+        questions: _questions,
+      );
+
+      setState(() {
+        _sessionStarted = true;
+        _currentQuestionIndex = _sessionManager.currentQuestionIndex;
+      });
+
+      debugPrint('✅ Interview session started successfully');
+    } catch (e) {
+      debugPrint('❌ Error starting interview session: $e');
+      // Continue without session tracking if it fails
+      setState(() {
+        _sessionStarted = false;
       });
     }
   }
@@ -104,6 +144,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   /// Get current question
   InterviewQuestion? get _currentQuestion {
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
+      return _sessionManager.getCurrentQuestion();
+    }
+
     if (_questions.isEmpty || _currentQuestionIndex >= _questions.length) {
       return null;
     }
@@ -111,11 +155,26 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   /// Get total questions count
-  int get _totalQuestions => _questions.length;
+  int get _totalQuestions {
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
+      return _sessionManager.totalQuestions;
+    }
+    return _questions.length;
+  }
+
+  /// Get current question index
+  int get _currentIndex {
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
+      return _sessionManager.currentQuestionIndex;
+    }
+    return _currentQuestionIndex;
+  }
 
   @override
   void dispose() {
     notesController.dispose();
+    // Note: We don't clear the session here as it should persist
+    // until the interview is completed or explicitly cancelled
     super.dispose();
   }
 
@@ -291,7 +350,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
           // Question counter
           Text(
-            'QUESTION ${_currentQuestionIndex + 1} OF $_totalQuestions',
+            'QUESTION ${_currentIndex + 1} OF $_totalQuestions',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -305,7 +364,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildProgressBar() {
-    final progress = (_currentQuestionIndex + 1) / _totalQuestions;
+    final progress = (_currentIndex + 1) / _totalQuestions;
 
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
@@ -395,7 +454,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   Widget _buildQuestionNumber() {
     return Text(
-      '#${_currentQuestionIndex + 1}',
+      '#${_currentIndex + 1}',
       style: TextStyle(
         fontSize: 64,
         fontWeight: FontWeight.w900,
@@ -755,12 +814,27 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     );
   }
 
-  void _onNext() {
+  void _onNext() async {
     final question = _currentQuestion;
     if (question == null) return;
 
-    // Save the current answer (in a real app, you'd save this to a database)
-    debugPrint('Question ${_currentQuestionIndex + 1}: ${question.question}');
+    // Record response if session is active and answer is selected
+    if (_sessionStarted &&
+        _sessionManager.hasActiveSession &&
+        selectedAnswer != null) {
+      try {
+        await _sessionManager.recordResponse(
+          isCorrect: selectedAnswer!,
+          notes: notesController.text.isNotEmpty ? notesController.text : null,
+        );
+        debugPrint('✅ Response recorded for question ${_currentIndex + 1}');
+      } catch (e) {
+        debugPrint('❌ Error recording response: $e');
+      }
+    }
+
+    // Debug logging (for development)
+    debugPrint('Question ${_currentIndex + 1}: ${question.question}');
     debugPrint(
       'Answer: ${selectedAnswer == null ? "No answer" : (selectedAnswer! ? "Yes" : "No")}',
     );
@@ -768,26 +842,82 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
     // Check if this is the last question
     if (_isLastQuestion()) {
-      // Navigate to candidate evaluation
-      final candidateName = 'John Doe'; // In real app, get from interview data
-      final interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
+      // Complete interview session and navigate to evaluation
+      await _completeInterviewAndNavigate();
+    } else {
+      // Move to next question
+      await _moveToNextQuestion();
+    }
+  }
 
+  /// Complete interview session and navigate to evaluation
+  Future<void> _completeInterviewAndNavigate() async {
+    String candidateName = 'John Doe'; // Default fallback
+    String interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
+
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
+      try {
+        // Move to next question first to complete all responses
+        if (_sessionManager.currentQuestionIndex <
+            _sessionManager.totalQuestions - 1) {
+          await _sessionManager.nextQuestion();
+        }
+
+        // Complete the interview session
+        final completedInterview = await _sessionManager.completeInterview();
+        candidateName = completedInterview.candidateName;
+        interviewId = completedInterview.id;
+
+        debugPrint('✅ Interview completed: $interviewId');
+      } catch (e) {
+        debugPrint('❌ Error completing interview: $e');
+      }
+    }
+
+    // Navigate to candidate evaluation
+    if (mounted) {
       context.push(
         '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId',
       );
+    }
+  }
+
+  /// Move to next question
+  Future<void> _moveToNextQuestion() async {
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
+      try {
+        await _sessionManager.nextQuestion();
+        setState(() {
+          _currentQuestionIndex = _sessionManager.currentQuestionIndex;
+          selectedAnswer = null; // Reset answer for next question
+          showNotes = false; // Hide notes
+          notesController.clear(); // Clear notes
+        });
+      } catch (e) {
+        debugPrint('❌ Error moving to next question: $e');
+        // Fallback to manual navigation
+        setState(() {
+          _currentQuestionIndex++;
+          selectedAnswer = null;
+          showNotes = false;
+          notesController.clear();
+        });
+      }
     } else {
-      // Move to next question
+      // Fallback to manual navigation
       setState(() {
         _currentQuestionIndex++;
-        selectedAnswer = null; // Reset answer for next question
-        showNotes = false; // Hide notes
-        notesController.clear(); // Clear notes
+        selectedAnswer = null;
+        showNotes = false;
+        notesController.clear();
       });
+    }
 
-      // Show feedback
+    // Show feedback
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Moving to question ${_currentQuestionIndex + 1}'),
+          content: Text('Moving to question ${_currentIndex + 1}'),
           backgroundColor: AppColors.primary,
           duration: const Duration(seconds: 1),
         ),
@@ -795,14 +925,36 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     }
   }
 
-  void _onPrevious() {
-    if (_currentQuestionIndex > 0) {
-      setState(() {
-        _currentQuestionIndex--;
-        selectedAnswer = null; // Reset answer
-        showNotes = false; // Hide notes
-        notesController.clear(); // Clear notes
-      });
+  void _onPrevious() async {
+    if (_currentIndex > 0) {
+      if (_sessionStarted && _sessionManager.hasActiveSession) {
+        try {
+          await _sessionManager.previousQuestion();
+          setState(() {
+            _currentQuestionIndex = _sessionManager.currentQuestionIndex;
+            selectedAnswer = null; // Reset answer
+            showNotes = false; // Hide notes
+            notesController.clear(); // Clear notes
+          });
+        } catch (e) {
+          debugPrint('❌ Error moving to previous question: $e');
+          // Fallback to manual navigation
+          setState(() {
+            _currentQuestionIndex--;
+            selectedAnswer = null;
+            showNotes = false;
+            notesController.clear();
+          });
+        }
+      } else {
+        // Fallback to manual navigation
+        setState(() {
+          _currentQuestionIndex--;
+          selectedAnswer = null;
+          showNotes = false;
+          notesController.clear();
+        });
+      }
     } else {
       context.pop();
     }
@@ -821,6 +973,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
 
   /// Check if this is the last question
   bool _isLastQuestion() {
-    return _currentQuestionIndex >= _totalQuestions - 1;
+    return _currentIndex >= _totalQuestions - 1;
   }
 }
