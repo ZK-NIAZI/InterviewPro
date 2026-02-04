@@ -6,6 +6,7 @@ import 'package:interview_pro_app/shared/domain/entities/question_category.dart'
 import 'package:interview_pro_app/shared/domain/repositories/interview_question_repository.dart';
 import 'package:interview_pro_app/features/interview/presentation/providers/interview_question_provider.dart';
 
+import '../../helpers/test_helper.dart';
 import 'interview_question_test.mocks.dart';
 
 @GenerateMocks([InterviewQuestionRepository])
@@ -177,9 +178,18 @@ void main() {
     late MockInterviewQuestionRepository mockRepository;
     late InterviewQuestionProvider provider;
 
-    setUp(() {
+    setUp(() async {
+      // Setup clean test environment
+      await TestHelper.setupTest();
+
+      // Create fresh mocks and provider for each test
       mockRepository = MockInterviewQuestionRepository();
       provider = InterviewQuestionProvider(mockRepository);
+    });
+
+    tearDown(() async {
+      // Cleanup after each test
+      await TestHelper.teardownTest();
     });
 
     test('should load questions successfully', () async {
@@ -210,13 +220,19 @@ void main() {
     });
 
     test('should handle loading errors gracefully', () async {
-      // Clear any cached data first
-      provider.setItems([]);
+      // Ensure completely clean state
+      TestHelper.clearTestCaches();
+      provider.setItems([]); // Clear provider items
+      provider.clearError(); // Clear any existing errors
+      provider.resetBackendTried(); // Reset backend tried flag
 
+      // Mock repository to throw error
       when(mockRepository.hasQuestions()).thenThrow(Exception('Network error'));
 
+      // Attempt to load questions
       await provider.loadQuestions();
 
+      // Verify error handling
       expect(provider.questions, isEmpty);
       expect(provider.isLoading, false);
       expect(provider.error, isNotNull);

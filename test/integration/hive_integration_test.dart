@@ -5,15 +5,26 @@ import 'package:interview_pro_app/shared/domain/entities/entities.dart';
 import 'package:interview_pro_app/shared/domain/repositories/interview_question_repository.dart';
 import 'package:interview_pro_app/shared/domain/repositories/interview_repository.dart';
 
+import '../helpers/test_helper.dart';
+
 void main() {
   group('Hive Integration Tests', () {
     setUpAll(() async {
+      // Setup clean test environment
+      await TestHelper.setupTest();
+
       await HiveService.init();
       await initializeDependencies();
     });
 
     tearDownAll(() async {
       await HiveService.clearAllData();
+      await TestHelper.teardownTest();
+    });
+
+    setUp(() async {
+      // Clear cache before each test to ensure isolation
+      TestHelper.clearTestCaches();
     });
 
     test('should save and retrieve interview through repository', () async {
