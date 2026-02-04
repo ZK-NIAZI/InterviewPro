@@ -118,7 +118,8 @@ void main() {
         updatedAt: DateTime(2024, 1, 2),
       );
 
-      final json = originalQuestion.toJson();
+      final json = originalQuestion
+          .toTestJson(); // Use toTestJson for complete serialization
       final reconstructedQuestion = InterviewQuestion.fromJson(json);
 
       expect(reconstructedQuestion.id, originalQuestion.id);
@@ -158,7 +159,8 @@ void main() {
         updatedAt: DateTime(2024, 1, 2),
       );
 
-      final json = originalCategory.toJson();
+      final json = originalCategory
+          .toTestJson(); // Use toTestJson for complete serialization
       final reconstructedCategory = QuestionCategoryEntity.fromJson(json);
 
       expect(reconstructedCategory.id, originalCategory.id);

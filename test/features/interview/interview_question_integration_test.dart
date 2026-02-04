@@ -125,7 +125,8 @@ void main() {
         );
 
         // Act
-        final json = originalQuestion.toJson();
+        final json = originalQuestion
+            .toTestJson(); // Use toTestJson for complete serialization
         final reconstructedQuestion = InterviewQuestion.fromJson(json);
 
         // Assert

@@ -195,6 +195,24 @@ class InterviewQuestion extends Equatable {
     };
   }
 
+  /// Converts to JSON including ID field (for testing purposes)
+  Map<String, dynamic> toTestJson() {
+    return {
+      'id': id, // Include id for complete serialization in tests
+      'question': question,
+      'category': category,
+      'difficulty': difficulty,
+      'expectedDuration': expectedDuration,
+      'tags': tags,
+      'sampleAnswer': sampleAnswer,
+      'evaluationCriteria': evaluationCriteria,
+      'roleSpecific': roleSpecific,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'isActive': isActive,
+    };
+  }
+
   /// Creates from JSON (from Appwrite)
   factory InterviewQuestion.fromJson(Map<String, dynamic> json) {
     return InterviewQuestion(

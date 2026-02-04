@@ -67,6 +67,19 @@ class QuestionCategoryEntity extends Equatable {
     };
   }
 
+  /// Converts to JSON including all fields (for testing purposes)
+  Map<String, dynamic> toTestJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'questionCount': questionCount,
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
   /// Creates from JSON (from Appwrite)
   factory QuestionCategoryEntity.fromJson(Map<String, dynamic> json) {
     return QuestionCategoryEntity(
