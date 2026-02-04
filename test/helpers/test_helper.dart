@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:interview_pro_app/core/services/cache_manager.dart';
 import 'package:interview_pro_app/core/services/service_locator.dart';
+import 'platform_mock_helper.dart';
 
 /// Test helper class for managing test isolation and setup
 class TestHelper {
   /// Setup clean test environment
   static Future<void> setupTest() async {
+    // Setup platform mocks first
+    PlatformMockHelper.setupMocks();
+
     // Clear all caches to prevent test interference
     CacheManager.clear();
 
@@ -20,6 +24,9 @@ class TestHelper {
 
     // Clean up expired entries
     CacheManager.cleanExpired();
+
+    // Teardown platform mocks
+    PlatformMockHelper.teardownMocks();
   }
 
   /// Reset service locator (use carefully - only when needed)
