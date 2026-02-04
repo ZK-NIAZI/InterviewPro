@@ -175,4 +175,10 @@ class ExperienceLevelProvider extends BaseProvider<ExperienceLevel> {
       setLoading(false);
     }
   }
+
+  @override
+  void dispose() {
+    // Clean up any resources
+    super.dispose();
+  }
 }

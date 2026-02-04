@@ -133,4 +133,10 @@ class DashboardProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  @override
+  void dispose() {
+    // Clean up any resources
+    super.dispose();
+  }
 }

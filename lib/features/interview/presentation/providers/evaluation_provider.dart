@@ -47,32 +47,85 @@ class EvaluationProvider extends ChangeNotifier {
 
   /// Update communication skills rating
   void updateCommunicationSkills(int rating) {
-    _communicationSkills = rating;
-    notifyListeners();
+    if (_communicationSkills != rating) {
+      _communicationSkills = rating;
+      notifyListeners();
+    }
   }
 
   /// Update problem solving approach rating
   void updateProblemSolvingApproach(int rating) {
-    _problemSolvingApproach = rating;
-    notifyListeners();
+    if (_problemSolvingApproach != rating) {
+      _problemSolvingApproach = rating;
+      notifyListeners();
+    }
   }
 
   /// Update cultural fit rating
   void updateCulturalFit(int rating) {
-    _culturalFit = rating;
-    notifyListeners();
+    if (_culturalFit != rating) {
+      _culturalFit = rating;
+      notifyListeners();
+    }
   }
 
   /// Update overall impression rating
   void updateOverallImpression(int rating) {
-    _overallImpression = rating;
-    notifyListeners();
+    if (_overallImpression != rating) {
+      _overallImpression = rating;
+      notifyListeners();
+    }
   }
 
   /// Update additional comments
   void updateAdditionalComments(String comments) {
-    _additionalComments = comments;
-    notifyListeners();
+    if (_additionalComments != comments) {
+      _additionalComments = comments;
+      notifyListeners();
+    }
+  }
+
+  /// Batch update multiple evaluation fields
+  void updateEvaluationBatch({
+    int? communicationSkills,
+    int? problemSolvingApproach,
+    int? culturalFit,
+    int? overallImpression,
+    String? additionalComments,
+  }) {
+    bool hasChanges = false;
+
+    if (communicationSkills != null &&
+        _communicationSkills != communicationSkills) {
+      _communicationSkills = communicationSkills;
+      hasChanges = true;
+    }
+
+    if (problemSolvingApproach != null &&
+        _problemSolvingApproach != problemSolvingApproach) {
+      _problemSolvingApproach = problemSolvingApproach;
+      hasChanges = true;
+    }
+
+    if (culturalFit != null && _culturalFit != culturalFit) {
+      _culturalFit = culturalFit;
+      hasChanges = true;
+    }
+
+    if (overallImpression != null && _overallImpression != overallImpression) {
+      _overallImpression = overallImpression;
+      hasChanges = true;
+    }
+
+    if (additionalComments != null &&
+        _additionalComments != additionalComments) {
+      _additionalComments = additionalComments;
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      notifyListeners();
+    }
   }
 
   /// Reset evaluation form

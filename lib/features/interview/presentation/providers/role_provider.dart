@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/config/appwrite_config.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/cache_manager.dart';
+import '../../../../core/utils/retry_helper.dart';
 import '../../../../shared/domain/entities/role.dart';
 import '../../../../shared/domain/repositories/role_repository.dart';
 
@@ -29,6 +31,15 @@ class RoleProvider extends ChangeNotifier {
   Future<void> loadRoles() async {
     _setLoading(true);
     _error = null;
+
+    // Try to get from cache first
+    final cachedRoles = CacheManager.get<List<Role>>(CacheManager.rolesKey);
+    if (cachedRoles != null && cachedRoles.isNotEmpty) {
+      debugPrint('✅ Using cached roles (${cachedRoles.length} items)');
+      _roles = cachedRoles;
+      _setLoading(false);
+      return;
+    }
 
     // Always start with fallback roles for immediate UI response
     _createFallbackRoles();
@@ -65,38 +76,47 @@ class RoleProvider extends ChangeNotifier {
 
   /// Load roles from backend with proper error handling
   Future<void> _loadFromBackend() async {
-    try {
-      // Check if roles exist in backend
-      final hasRoles = await _roleRepository.hasRoles();
+    await RetryHelper.withRetry(
+      () async {
+        // Check if roles exist in backend
+        final hasRoles = await _roleRepository.hasRoles();
 
-      if (!hasRoles) {
-        debugPrint('📝 No roles found, creating default roles...');
-        // Create default roles if none exist
-        await _createDefaultRoles();
-      }
+        if (!hasRoles) {
+          debugPrint('📝 No roles found, creating default roles...');
+          // Create default roles if none exist
+          await _createDefaultRoles();
+        }
 
-      // Fetch roles from backend
-      debugPrint('📥 Fetching roles from backend...');
-      final backendRoles = await _roleRepository.getRoles();
+        // Fetch roles from backend
+        debugPrint('📥 Fetching roles from backend...');
+        final backendRoles = await _roleRepository.getRoles();
 
-      if (backendRoles.isNotEmpty) {
-        debugPrint(
-          '✅ Successfully loaded ${backendRoles.length} roles from backend',
-        );
-        _roles = backendRoles;
-        notifyListeners(); // Update UI with backend data
-      } else {
-        debugPrint('⚠️ No roles returned from backend, keeping fallback');
-      }
-    } catch (e) {
-      debugPrint('❌ Backend error: $e');
-      rethrow; // Re-throw to be caught by timeout handler
-    }
+        if (backendRoles.isNotEmpty) {
+          debugPrint(
+            '✅ Successfully loaded ${backendRoles.length} roles from backend',
+          );
+          _roles = backendRoles;
+
+          // Cache the roles
+          CacheManager.set(
+            CacheManager.rolesKey,
+            backendRoles,
+            CacheManager.rolesTTL,
+          );
+
+          notifyListeners(); // Update UI with backend data
+        } else {
+          debugPrint('⚠️ No roles returned from backend, keeping fallback');
+        }
+      },
+      config: RetryHelper.networkConfig,
+      shouldRetry: RetryHelper.isRetryableError,
+    );
   }
 
   /// Select a role by ID
   void selectRole(String roleId) {
-    if (_roles.any((role) => role.id == roleId)) {
+    if (_roles.any((role) => role.id == roleId) && _selectedRoleId != roleId) {
       _selectedRoleId = roleId;
       notifyListeners();
     }
@@ -104,8 +124,10 @@ class RoleProvider extends ChangeNotifier {
 
   /// Clear selected role
   void clearSelection() {
-    _selectedRoleId = null;
-    notifyListeners();
+    if (_selectedRoleId != null) {
+      _selectedRoleId = null;
+      notifyListeners();
+    }
   }
 
   /// Create default roles in Appwrite backend
@@ -232,6 +254,14 @@ class RoleProvider extends ChangeNotifier {
 
   /// Refresh roles from backend
   Future<void> refreshRoles() async {
+    // Clear cache to force fresh data
+    CacheManager.remove(CacheManager.rolesKey);
     await loadRoles();
+  }
+
+  @override
+  void dispose() {
+    // Cancel any pending operations
+    super.dispose();
   }
 }

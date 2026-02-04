@@ -355,26 +355,24 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStatsSection() {
-    return Consumer<DashboardProvider>(
-      builder: (context, provider, child) {
-        return Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'THIS WEEK',
-                provider.thisWeekInterviews.toString(),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'AVG SCORE',
-                provider.averageScore.toStringAsFixed(1),
-              ),
-            ),
-          ],
-        );
-      },
+    return Row(
+      children: [
+        Expanded(
+          child: Selector<DashboardProvider, int>(
+            selector: (context, provider) => provider.thisWeekInterviews,
+            builder: (context, thisWeekInterviews, child) =>
+                _buildStatCard('THIS WEEK', thisWeekInterviews.toString()),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Selector<DashboardProvider, double>(
+            selector: (context, provider) => provider.averageScore,
+            builder: (context, averageScore, child) =>
+                _buildStatCard('AVG SCORE', averageScore.toStringAsFixed(1)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -649,19 +647,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-}
 
-// Mock interview class for demonstration
-class _MockInterview {
-  final String name;
-  final String position;
-  final String date;
-  final double? score;
-
-  _MockInterview(this.name, this.position, this.date, this.score);
-}
-
-extension _DashboardPageExtensions on _DashboardPageState {
   /// Shows search dialog
   void _showSearchDialog() {
     showDialog(
@@ -693,4 +679,14 @@ extension _DashboardPageExtensions on _DashboardPageState {
       ),
     );
   }
+}
+
+// Mock interview class for demonstration
+class _MockInterview {
+  final String name;
+  final String position;
+  final String date;
+  final double? score;
+
+  _MockInterview(this.name, this.position, this.date, this.score);
 }
