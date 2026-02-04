@@ -1,57 +1,100 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 
-/// Simple and efficient Quick Statistics widget
+/// Enhanced Quick Statistics widget with detailed interview metrics
 class QuickStatsWidget extends StatelessWidget {
   final int totalQuestions;
   final int correctAnswers;
+  final int? answeredQuestions;
+  final double? completionPercentage;
+  final int? duration;
 
   const QuickStatsWidget({
     super.key,
     required this.totalQuestions,
     required this.correctAnswers,
+    this.answeredQuestions,
+    this.completionPercentage,
+    this.duration,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final answered = answeredQuestions ?? correctAnswers;
+    final completion =
+        completionPercentage ?? (answered / totalQuestions * 100);
+
+    return Column(
       children: [
-        // Total questions card
-        Expanded(
-          child: _buildSimpleStatCard(
-            icon: Icons.quiz_outlined,
-            iconColor: Colors.grey[600]!,
-            value: totalQuestions.toString(),
-            label: 'Total Questions',
-          ),
+        // First row: Total questions and correct answers
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.quiz_outlined,
+                iconColor: Colors.blue,
+                value: totalQuestions.toString(),
+                label: 'Total Questions',
+                backgroundColor: Colors.blue.withOpacity(0.1),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.check_circle_outline,
+                iconColor: Colors.green,
+                value: correctAnswers.toString(),
+                label: 'Correct Answers',
+                backgroundColor: Colors.green.withOpacity(0.1),
+              ),
+            ),
+          ],
         ),
 
-        const SizedBox(width: 12),
+        const SizedBox(height: 12),
 
-        // Correct answers card
-        Expanded(
-          child: _buildSimpleStatCard(
-            icon: Icons.check_circle_outline,
-            iconColor: Colors.green,
-            value: correctAnswers.toString(),
-            label: 'Correct Answers',
-          ),
+        // Second row: Completion and duration
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.pie_chart_outline,
+                iconColor: AppColors.primary,
+                value: '${completion.toStringAsFixed(0)}%',
+                label: 'Completion',
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.access_time,
+                iconColor: Colors.orange,
+                value: duration != null ? '${duration}m' : '--',
+                label: 'Duration',
+                backgroundColor: Colors.orange.withOpacity(0.1),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSimpleStatCard({
+  Widget _buildStatCard({
     required IconData icon,
     required Color iconColor,
     required String value,
     required String label,
+    required Color backgroundColor,
   }) {
     return Container(
       height: 80, // Fixed height to prevent overflow
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: iconColor.withOpacity(0.2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -61,14 +104,17 @@ class QuickStatsWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: iconColor),
+              Icon(icon, size: 18, color: iconColor),
               const SizedBox(width: 6),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: iconColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -82,7 +128,7 @@ class QuickStatsWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: Colors.grey[700],
             ),
             textAlign: TextAlign.center,
             maxLines: 1,

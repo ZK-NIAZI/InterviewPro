@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
-import '../../../../core/services/service_locator.dart';
-import '../../../../shared/domain/entities/interview.dart';
-import '../../../../shared/domain/entities/enums.dart';
-import '../../../../shared/domain/repositories/interview_repository.dart';
+import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
 import '../widgets/category_performance_widget.dart';
 import '../widgets/quick_stats_widget.dart';
+import '../widgets/question_breakdown_widget.dart';
 import '../widgets/candidate_info_card.dart';
 
 /// Interview report screen showing detailed evaluation results
@@ -23,6 +22,7 @@ class InterviewReportPage extends StatefulWidget {
   final int culturalFit;
   final int overallImpression;
   final String additionalComments;
+  final String? interviewId; // Add interview ID for data loading
 
   const InterviewReportPage({
     super.key,
@@ -35,6 +35,7 @@ class InterviewReportPage extends StatefulWidget {
     required this.culturalFit,
     required this.overallImpression,
     required this.additionalComments,
+    this.interviewId,
   });
 
   @override
@@ -42,38 +43,15 @@ class InterviewReportPage extends StatefulWidget {
 }
 
 class _InterviewReportPageState extends State<InterviewReportPage> {
-  Interview? _interviewData;
-  bool _loadingInterview = true;
-
   @override
   void initState() {
     super.initState();
-    _loadInterviewData();
-  }
-
-  /// Load interview data to get actual performance metrics
-  Future<void> _loadInterviewData() async {
-    try {
-      final interviewRepository = sl<InterviewRepository>();
-
-      // Try to find recent completed interviews
-      final interviews = await interviewRepository.getInterviewsByStatus(
-        InterviewStatus.completed,
-      );
-
-      if (interviews.isNotEmpty) {
-        // Get the most recent completed interview (assuming it's for this candidate)
-        interviews.sort((a, b) => b.startTime.compareTo(a.startTime));
-        _interviewData = interviews.first;
-        debugPrint('✅ Loaded interview data for report: ${_interviewData!.id}');
-      } else {
-        debugPrint('⚠️ No completed interviews found');
-      }
-    } catch (e) {
-      debugPrint('❌ Error loading interview data for report: $e');
-    } finally {
-      setState(() {
-        _loadingInterview = false;
+    // Load interview data if ID is provided
+    if (widget.interviewId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ReportDataProvider>().loadInterviewData(
+          widget.interviewId!,
+        );
       });
     }
   }
@@ -195,42 +173,83 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
   }
 
   Widget _buildMainContent() {
-    if (_loadingInterview) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
-    }
+    return Consumer<ReportDataProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 140),
-      child: Column(
-        children: [
-          // Candidate profile section (now using CandidateInfoCard)
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+        if (provider.error != null) {
+          return _buildErrorState(provider.error!);
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 140),
+          child: Column(
+            children: [
+              // Candidate profile section
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+                  ),
+                ),
+                child: _buildCandidateProfile(provider.reportData),
               ),
-            ),
-            child: _buildCandidateProfile(),
+
+              // Score hero section
+              _buildScoreHero(provider.reportData),
+
+              // Category performance
+              _buildCategoryPerformance(provider.reportData),
+
+              // Quick stats
+              _buildQuickStats(provider.reportData),
+
+              // Question breakdown
+              if (provider.reportData != null)
+                _buildQuestionBreakdown(provider.reportData!),
+            ],
           ),
+        );
+      },
+    );
+  }
 
-          // Score hero section
-          _buildScoreHero(),
-
-          // Category performance
-          _buildCategoryPerformance(),
-
-          // Quick stats (with overflow fix)
-          _buildQuickStats(),
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Error Loading Report',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCandidateProfile() {
+  Widget _buildCandidateProfile(ReportData? reportData) {
     return Column(
       children: [
         // Reuse CandidateInfoCard for consistency
@@ -239,23 +258,26 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             candidateName: widget.candidateName,
             role: widget.role,
             level: widget.level,
-            interviewDate: DateTime.now(),
+            interviewDate: reportData?.interview.startTime ?? DateTime.now(),
           ),
         ),
 
         const SizedBox(height: 16),
 
         // Separate recommendation badge
-        _buildRecommendationBadge(),
+        _buildRecommendationBadge(reportData),
       ],
     );
   }
 
   /// Builds the recommendation badge as a separate component
-  Widget _buildRecommendationBadge() {
-    final isRecommended = widget.overallScore >= 70.0;
+  Widget _buildRecommendationBadge(ReportData? reportData) {
+    final score = reportData?.overallScore ?? widget.overallScore;
+    final isRecommended = score >= 70.0;
     final color = isRecommended ? AppColors.primary : Colors.red;
-    final text = isRecommended ? 'Recommended for Hire' : 'Not Recommended';
+    final text =
+        reportData?.recommendation ??
+        (isRecommended ? 'Recommended for Hire' : 'Not Recommended');
     final icon = isRecommended ? Icons.verified : Icons.cancel;
 
     return Container(
@@ -283,14 +305,19 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     );
   }
 
-  Widget _buildScoreHero() {
+  Widget _buildScoreHero(ReportData? reportData) {
+    final score = reportData?.overallScore ?? widget.overallScore;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32),
-      child: CircularProgressWidget(score: widget.overallScore, size: 192),
+      child: CircularProgressWidget(
+        score: score,
+        size: 192,
+        label: 'Overall Score',
+      ),
     );
   }
 
-  Widget _buildCategoryPerformance() {
+  Widget _buildCategoryPerformance(ReportData? reportData) {
     return Container(
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 32),
@@ -306,58 +333,20 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             ),
           ),
           const SizedBox(height: 16),
-          CategoryPerformanceWidget(categories: _getCategoryPerformanceData()),
+          CategoryPerformanceWidget(
+            categories:
+                reportData?.categoryPerformanceList ??
+                _getFallbackCategoryData(),
+          ),
         ],
       ),
     );
   }
 
-  /// Get category performance data from actual interview or fallback to evaluation
-  List<CategoryData> _getCategoryPerformanceData() {
-    if (_interviewData != null) {
-      // Use actual interview performance data
-      final categoryPerformance = _interviewData!
-          .calculateCategoryPerformance();
-      return [
-        CategoryData('Programming', categoryPerformance['Programming'] ?? 0.0),
-        CategoryData('Soft Skills', categoryPerformance['Soft Skills'] ?? 0.0),
-        CategoryData(
-          'System Design',
-          categoryPerformance['System Design'] ?? 0.0,
-        ),
-      ];
-    } else {
-      // Fallback to evaluation-based calculation
-      return [
-        CategoryData(
-          'Programming',
-          _calculateCategoryScore([
-            widget.communicationSkills,
-            widget.problemSolvingApproach,
-          ]),
-        ),
-        CategoryData(
-          'Soft Skills',
-          _calculateCategoryScore([
-            widget.communicationSkills,
-            widget.culturalFit,
-          ]),
-        ),
-        CategoryData(
-          'System Design',
-          _calculateCategoryScore([
-            widget.problemSolvingApproach,
-            widget.overallImpression,
-          ]),
-        ),
-      ];
-    }
-  }
-
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(ReportData? reportData) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -370,32 +359,28 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Simple container without complex constraints
           QuickStatsWidget(
-            totalQuestions: _getTotalQuestions(),
-            correctAnswers: _getCorrectAnswers(),
+            totalQuestions: reportData?.totalQuestions ?? 25,
+            correctAnswers:
+                reportData?.correctAnswers ?? _calculateCorrectAnswers(),
+            answeredQuestions: reportData?.answeredQuestions,
+            completionPercentage: reportData?.completionPercentage,
+            duration: reportData?.duration,
           ),
         ],
       ),
     );
   }
 
-  /// Get total questions from actual interview data or fallback
-  int _getTotalQuestions() {
-    if (_interviewData != null) {
-      return _interviewData!.totalQuestions;
-    }
-    return 25; // Default fallback
-  }
-
-  /// Get correct answers from actual interview data or calculated estimate
-  int _getCorrectAnswers() {
-    if (_interviewData != null) {
-      final stats = _interviewData!.getPerformanceStats();
-      return stats['correctAnswers'] as int;
-    }
-    // Fallback calculation based on evaluation scores
-    return _calculateCorrectAnswers();
+  Widget _buildQuestionBreakdown(ReportData reportData) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.only(bottom: 32),
+      child: QuestionBreakdownWidget(
+        breakdown: reportData.questionBreakdown,
+        showDetails: true,
+      ),
+    );
   }
 
   Widget _buildBottomActions(BuildContext context) {
@@ -491,6 +476,33 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     );
   }
 
+  /// Get fallback category performance data when no real data is available
+  List<CategoryPerformanceData> _getFallbackCategoryData() {
+    return [
+      CategoryPerformanceData(
+        'Programming',
+        _calculateCategoryScore([
+          widget.communicationSkills,
+          widget.problemSolvingApproach,
+        ]),
+      ),
+      CategoryPerformanceData(
+        'Soft Skills',
+        _calculateCategoryScore([
+          widget.communicationSkills,
+          widget.culturalFit,
+        ]),
+      ),
+      CategoryPerformanceData(
+        'System Design',
+        _calculateCategoryScore([
+          widget.problemSolvingApproach,
+          widget.overallImpression,
+        ]),
+      ),
+    ];
+  }
+
   double _calculateCategoryScore(List<int> ratings) {
     if (ratings.isEmpty) return 0.0;
     final average = ratings.reduce((a, b) => a + b) / ratings.length;
@@ -513,15 +525,23 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     );
   }
 
-  void _onShareReport() {}
+  void _onShareReport() {
+    // TODO: Implement report sharing functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Report sharing feature coming soon'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
 
-  void _onDownloadReport() {}
-}
-
-// Data class for category performance
-class CategoryData {
-  final String name;
-  final double percentage;
-
-  CategoryData(this.name, this.percentage);
+  void _onDownloadReport() {
+    // TODO: Implement report download functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Report download feature coming soon'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
 }

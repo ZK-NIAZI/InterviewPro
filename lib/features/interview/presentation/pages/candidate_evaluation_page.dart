@@ -454,9 +454,11 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   }
 
   void _showReportDialog(EvaluationProvider provider, double overallScore) {
-    // Navigate to interview report page with actual calculated data
+    // Navigate to interview report page with actual calculated data and interview ID
+    final interviewId = _completedInterview?.id ?? widget.interviewId;
+    final finalInterviewId = interviewId.isNotEmpty ? interviewId : '';
     context.push(
-      '${AppRouter.interviewReport}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${overallScore.toStringAsFixed(1)}&communicationSkills=${provider.communicationSkills}&problemSolvingApproach=${provider.problemSolvingApproach}&culturalFit=${provider.culturalFit}&overallImpression=${provider.overallImpression}&additionalComments=${Uri.encodeComponent(provider.additionalComments)}',
+      '${AppRouter.interviewReport}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${overallScore.toStringAsFixed(1)}&communicationSkills=${provider.communicationSkills}&problemSolvingApproach=${provider.problemSolvingApproach}&culturalFit=${provider.culturalFit}&overallImpression=${provider.overallImpression}&additionalComments=${Uri.encodeComponent(provider.additionalComments)}&interviewId=$finalInterviewId',
     );
   }
 }

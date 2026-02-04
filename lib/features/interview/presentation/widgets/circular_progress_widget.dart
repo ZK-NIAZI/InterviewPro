@@ -6,17 +6,23 @@ import '../../../../core/constants/app_colors.dart';
 class CircularProgressWidget extends StatelessWidget {
   final double score;
   final double size;
+  final String? label;
+  final bool showPercentage;
 
   const CircularProgressWidget({
     super.key,
     required this.score,
     this.size = 192.0,
+    this.label,
+    this.showPercentage = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (score * 10).toInt();
-    final progress = score / 10.0; // Convert to 0-1 range
+    // Score is already in 0-100 range, clamp to ensure valid values
+    final clampedScore = score.clamp(0.0, 100.0);
+    final percentage = clampedScore.round();
+    final progress = clampedScore / 100.0; // Convert to 0-1 range for painting
 
     return SizedBox(
       width: size,
@@ -34,12 +40,12 @@ class CircularProgressWidget extends StatelessWidget {
             ),
           ),
 
-          // Progress circle
+          // Progress circle with dynamic color
           CustomPaint(
             size: Size(size, size),
             painter: CircularProgressPainter(
               progress: progress,
-              color: AppColors.primary,
+              color: _getScoreColor(clampedScore),
               strokeWidth: 12.0,
             ),
           ),
@@ -48,29 +54,45 @@ class CircularProgressWidget extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '$percentage%',
-                style: TextStyle(
-                  fontSize: size * 0.25, // Responsive font size
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                  height: 1.0,
+              if (showPercentage) ...[
+                Text(
+                  '$percentage%',
+                  style: TextStyle(
+                    fontSize: size * 0.25, // Responsive font size
+                    fontWeight: FontWeight.bold,
+                    color: _getScoreColor(clampedScore),
+                    height: 1.0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
+                const SizedBox(height: 4),
+              ],
               Text(
-                'Overall Score',
+                label ?? 'Overall Score',
                 style: TextStyle(
                   fontSize: size * 0.07, // Responsive font size
                   fontWeight: FontWeight.w500,
                   color: Colors.grey[400],
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  /// Get color based on score performance
+  Color _getScoreColor(double score) {
+    if (score >= 80.0) {
+      return Colors.green; // Excellent
+    } else if (score >= 70.0) {
+      return AppColors.primary; // Good
+    } else if (score >= 50.0) {
+      return Colors.orange; // Average
+    } else {
+      return Colors.red; // Poor
+    }
   }
 }
 
