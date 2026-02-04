@@ -10,7 +10,6 @@ import 'features/interview/presentation/providers/interview_setup_provider.dart'
 import 'features/interview/presentation/providers/evaluation_provider.dart';
 import 'features/interview/presentation/providers/role_provider.dart';
 import 'features/interview/presentation/providers/interview_question_provider.dart';
-import 'shared/data/services/hive_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +24,6 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-
-  // Initialize Hive database
-  await HiveService.init();
 
   // Initialize dependencies
   await initializeDependencies();

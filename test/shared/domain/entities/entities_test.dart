@@ -47,11 +47,13 @@ void main() {
         final timestamp = DateTime.now();
         final response = QuestionResponse(
           questionId: 'q1',
+          questionText: 'What is Flutter?',
           isCorrect: true,
           timestamp: timestamp,
         );
 
         expect(response.questionId, 'q1');
+        expect(response.questionText, 'What is Flutter?');
         expect(response.isCorrect, true);
         expect(response.notes, null);
         expect(response.timestamp, timestamp);
@@ -63,6 +65,7 @@ void main() {
         final timestamp = DateTime.now();
         final response = QuestionResponse(
           questionId: 'q1',
+          questionText: 'Explain state management in Flutter',
           isCorrect: false,
           notes: 'Candidate struggled with the concept',
           timestamp: timestamp,
@@ -80,6 +83,7 @@ void main() {
         final timestamp = DateTime.now();
         final original = QuestionResponse(
           questionId: 'q1',
+          questionText: 'What is Dart?',
           isCorrect: false,
           timestamp: timestamp,
         );
@@ -90,6 +94,7 @@ void main() {
         );
 
         expect(updated.questionId, 'q1');
+        expect(updated.questionText, 'What is Dart?');
         expect(updated.isCorrect, true);
         expect(updated.notes, 'Good answer');
         expect(updated.timestamp, timestamp);

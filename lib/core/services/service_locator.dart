@@ -6,6 +6,7 @@ import '../../shared/domain/repositories/role_repository.dart';
 import '../../shared/domain/repositories/experience_level_repository.dart';
 import '../../shared/domain/repositories/interview_question_repository.dart';
 import 'appwrite_service.dart';
+import 'interview_session_manager.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
@@ -17,10 +18,6 @@ Future<void> initializeDependencies() async {
   sl<AppwriteService>().initialize();
 
   // Data sources
-  sl.registerLazySingleton<InterviewLocalDataSource>(
-    () => InterviewLocalDataSource(),
-  );
-
   sl.registerLazySingleton<RoleRemoteDatasource>(
     () => RoleRemoteDatasource(sl()),
   );
@@ -35,7 +32,7 @@ Future<void> initializeDependencies() async {
 
   // Repositories
   sl.registerLazySingleton<InterviewRepository>(
-    () => InterviewRepositoryImpl(sl()),
+    () => InterviewRepositoryImpl(),
   );
 
   sl.registerLazySingleton<RoleRepository>(() => RoleRepositoryImpl(sl()));
@@ -48,9 +45,17 @@ Future<void> initializeDependencies() async {
     () => InterviewQuestionRepositoryImpl(sl()),
   );
 
+  // Services
+  sl.registerLazySingleton<InterviewSessionManager>(
+    () => InterviewSessionManager(sl<InterviewRepository>()),
+  );
+
   // Initialize data sources
-  await sl<InterviewLocalDataSource>().init();
+  // (No local data sources to initialize)
 
   // Initialize interview questions from JSON
   await sl<InterviewQuestionRepository>().initializeDefaultQuestions();
+
+  // Load any cached interview session
+  await sl<InterviewSessionManager>().loadSessionFromCache();
 }

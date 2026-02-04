@@ -43,4 +43,44 @@ abstract class InterviewRepository {
 
   /// Check if interview exists
   Future<bool> interviewExists(String id);
+
+  /// Get interviews with performance above threshold
+  Future<List<Interview>> getHighPerformingInterviews({
+    double threshold = 70.0,
+  });
+
+  /// Get average performance by role
+  Future<Map<Role, double>> getAveragePerformanceByRole();
+
+  /// Get average performance by level
+  Future<Map<Level, double>> getAveragePerformanceByLevel();
+
+  /// Get interview statistics
+  Future<Map<String, dynamic>> getInterviewStatistics();
+
+  /// Save question response (for real-time updates)
+  Future<void> saveQuestionResponse(
+    String interviewId,
+    QuestionResponse response,
+  );
+
+  /// Get question responses for an interview
+  Future<List<QuestionResponse>> getQuestionResponses(String interviewId);
+
+  /// Update interview progress
+  Future<void> updateInterviewProgress(
+    String interviewId,
+    int currentQuestionIndex,
+  );
+
+  /// Get active (in-progress) interviews
+  Future<List<Interview>> getActiveInterviews();
+
+  /// Complete interview with final scores
+  Future<void> completeInterview(
+    String interviewId, {
+    required double technicalScore,
+    double? softSkillsScore,
+    double? overallScore,
+  });
 }
