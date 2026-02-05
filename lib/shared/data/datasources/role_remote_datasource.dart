@@ -3,12 +3,23 @@ import '../../../core/config/appwrite_config.dart';
 import '../../../core/services/appwrite_service.dart';
 import '../models/role_model.dart';
 
-/// Remote datasource for Role operations using Appwrite
-class RoleRemoteDatasource {
+/// Abstract remote datasource for Role operations
+abstract class RoleRemoteDatasource {
+  Future<List<RoleModel>> getRoles();
+  Future<RoleModel?> getRoleById(String id);
+  Future<RoleModel> createRole(RoleModel role);
+  Future<RoleModel> updateRole(RoleModel role);
+  Future<void> deleteRole(String id);
+  Future<bool> hasRoles();
+}
+
+/// Implementation of remote datasource for Role operations using Appwrite
+class RoleRemoteDatasourceImpl implements RoleRemoteDatasource {
   final AppwriteService _appwriteService;
 
-  RoleRemoteDatasource(this._appwriteService);
+  RoleRemoteDatasourceImpl(this._appwriteService);
 
+  @override
   /// Get all active roles from Appwrite
   Future<List<RoleModel>> getRoles() async {
     try {
@@ -26,6 +37,7 @@ class RoleRemoteDatasource {
     }
   }
 
+  @override
   /// Get role by ID from Appwrite
   Future<RoleModel?> getRoleById(String id) async {
     try {
@@ -44,6 +56,7 @@ class RoleRemoteDatasource {
     }
   }
 
+  @override
   /// Create a new role in Appwrite
   Future<RoleModel> createRole(RoleModel role) async {
     try {
@@ -60,6 +73,7 @@ class RoleRemoteDatasource {
     }
   }
 
+  @override
   /// Update existing role in Appwrite
   Future<RoleModel> updateRole(RoleModel role) async {
     try {
@@ -76,6 +90,7 @@ class RoleRemoteDatasource {
     }
   }
 
+  @override
   /// Delete role from Appwrite
   Future<void> deleteRole(String id) async {
     try {
@@ -89,6 +104,7 @@ class RoleRemoteDatasource {
     }
   }
 
+  @override
   /// Check if any roles exist in the collection
   Future<bool> hasRoles() async {
     try {

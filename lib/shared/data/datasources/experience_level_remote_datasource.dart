@@ -1,104 +1,86 @@
-import 'package:appwrite/appwrite.dart';
-import '../../../core/services/appwrite_service.dart';
-import '../models/experience_level_model.dart';
+import '../../domain/entities/experience_level.dart';
 
-/// Remote datasource for experience level operations using Appwrite
-class ExperienceLevelRemoteDatasource {
-  final AppwriteService _appwriteService;
-  static const String _collectionId = 'experience_levels';
+/// Remote datasource for experience levels using direct entities
+abstract class ExperienceLevelRemoteDatasource {
+  Future<List<ExperienceLevel>> getExperienceLevels();
+  Future<ExperienceLevel> createExperienceLevel({
+    required String title,
+    required String description,
+    required int sortOrder,
+  });
+  Future<ExperienceLevel> updateExperienceLevel(
+    ExperienceLevel experienceLevel,
+  );
+  Future<void> deleteExperienceLevel(String id);
+  Future<bool> hasExperienceLevels();
+}
 
-  ExperienceLevelRemoteDatasource(this._appwriteService);
-
-  /// Get all experience levels from Appwrite
-  Future<List<ExperienceLevelModel>> getExperienceLevels() async {
-    try {
-      final databases = _appwriteService.databases;
-      final response = await databases.listDocuments(
-        databaseId: _appwriteService.databaseId,
-        collectionId: _collectionId,
-        queries: [Query.equal('isActive', true), Query.orderAsc('sortOrder')],
-      );
-
-      return response.documents
-          .map((doc) => ExperienceLevelModel.fromDocument(doc.data))
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to fetch experience levels: $e');
-    }
+/// Implementation of experience level remote datasource
+class ExperienceLevelRemoteDatasourceImpl
+    implements ExperienceLevelRemoteDatasource {
+  @override
+  Future<List<ExperienceLevel>> getExperienceLevels() async {
+    final now = DateTime.now();
+    // Return predefined experience levels
+    return [
+      ExperienceLevel(
+        id: 'intern',
+        title: 'Intern',
+        description: 'Entry-level position for students or recent graduates',
+        sortOrder: 1,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      ExperienceLevel(
+        id: 'associate',
+        title: 'Associate',
+        description: 'Mid-level position with 1-3 years of experience',
+        sortOrder: 2,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      ExperienceLevel(
+        id: 'senior',
+        title: 'Senior',
+        description: 'Senior-level position with 3+ years of experience',
+        sortOrder: 3,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
   }
 
-  /// Create a new experience level in Appwrite
-  Future<ExperienceLevelModel> createExperienceLevel({
+  @override
+  Future<ExperienceLevel> createExperienceLevel({
     required String title,
     required String description,
     required int sortOrder,
   }) async {
-    try {
-      final databases = _appwriteService.databases;
-      final document = await databases.createDocument(
-        databaseId: _appwriteService.databaseId,
-        collectionId: _collectionId,
-        documentId: ID.unique(),
-        data: {
-          'title': title,
-          'description': description,
-          'sortOrder': sortOrder,
-          'isActive': true,
-        },
-      );
-
-      return ExperienceLevelModel.fromDocument(document.data);
-    } catch (e) {
-      throw Exception('Failed to create experience level: $e');
-    }
+    final now = DateTime.now();
+    return ExperienceLevel(
+      id: 'custom_${now.millisecondsSinceEpoch}',
+      title: title,
+      description: description,
+      sortOrder: sortOrder,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
-  /// Update an existing experience level in Appwrite
-  Future<ExperienceLevelModel> updateExperienceLevel(
-    ExperienceLevelModel experienceLevel,
+  @override
+  Future<ExperienceLevel> updateExperienceLevel(
+    ExperienceLevel experienceLevel,
   ) async {
-    try {
-      final databases = _appwriteService.databases;
-      final document = await databases.updateDocument(
-        databaseId: _appwriteService.databaseId,
-        collectionId: _collectionId,
-        documentId: experienceLevel.id,
-        data: experienceLevel.toDocument(),
-      );
-
-      return ExperienceLevelModel.fromDocument(document.data);
-    } catch (e) {
-      throw Exception('Failed to update experience level: $e');
-    }
+    return experienceLevel;
   }
 
-  /// Delete an experience level from Appwrite
+  @override
   Future<void> deleteExperienceLevel(String id) async {
-    try {
-      final databases = _appwriteService.databases;
-      await databases.deleteDocument(
-        databaseId: _appwriteService.databaseId,
-        collectionId: _collectionId,
-        documentId: id,
-      );
-    } catch (e) {
-      throw Exception('Failed to delete experience level: $e');
-    }
+    // No-op for predefined levels
   }
 
-  /// Check if experience levels exist in Appwrite
+  @override
   Future<bool> hasExperienceLevels() async {
-    try {
-      final databases = _appwriteService.databases;
-      final response = await databases.listDocuments(
-        databaseId: _appwriteService.databaseId,
-        collectionId: _collectionId,
-        queries: [Query.equal('isActive', true), Query.limit(1)],
-      );
-
-      return response.documents.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
+    return true;
   }
 }

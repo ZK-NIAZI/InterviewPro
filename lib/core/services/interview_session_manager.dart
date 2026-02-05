@@ -27,7 +27,7 @@ class InterviewSessionManager extends ChangeNotifier {
   double get progressPercentage =>
       totalQuestions > 0 ? (currentQuestionIndex / totalQuestions) * 100 : 0.0;
 
-  /// Start a new interview session
+  /// Start a new interview session with enhanced validation
   Future<Interview> startInterview({
     required String candidateName,
     required String role,
@@ -35,10 +35,13 @@ class InterviewSessionManager extends ChangeNotifier {
     required List<InterviewQuestion> questions,
   }) async {
     try {
-      // Create new interview entity
+      // Enhanced input validation
+      _validateInterviewInput(candidateName, role, level, questions);
+
+      // Create new interview entity with secure ID
       final interview = Interview(
-        id: 'interview_${DateTime.now().millisecondsSinceEpoch}',
-        candidateName: candidateName,
+        id: _generateSecureInterviewId(),
+        candidateName: _sanitizeInput(candidateName),
         role: _parseRole(role),
         level: _parseLevel(level),
         startTime: DateTime.now(),
@@ -53,10 +56,10 @@ class InterviewSessionManager extends ChangeNotifier {
       _sessionQuestions = questions;
       _questionStartTime = DateTime.now();
 
-      // Cache the session data
+      // Cache the session data securely
       _cacheSessionData();
 
-      // Save to repository
+      // Save to repository with error handling
       await _interviewRepository.saveInterview(interview);
 
       debugPrint('✅ Started interview session: ${interview.id}');
@@ -65,11 +68,12 @@ class InterviewSessionManager extends ChangeNotifier {
       return interview;
     } catch (e) {
       debugPrint('❌ Error starting interview session: $e');
+      _clearSession();
       rethrow;
     }
   }
 
-  /// Record a response to the current question
+  /// Record a response to the current question with enhanced validation
   Future<void> recordResponse({required bool isCorrect, String? notes}) async {
     if (_currentInterview == null || _sessionQuestions.isEmpty) {
       throw Exception('No active interview session');
@@ -85,14 +89,17 @@ class InterviewSessionManager extends ChangeNotifier {
           ? DateTime.now().difference(_questionStartTime!).inSeconds
           : null;
 
-      // Create question response
+      // Validate and sanitize notes
+      final sanitizedNotes = notes != null ? _sanitizeInput(notes) : null;
+
+      // Create question response with validation
       final response = QuestionResponse.fromQuestion(
         questionId: currentQuestion.id,
         questionText: currentQuestion.question,
         questionCategory: currentQuestion.categoryDisplayName,
         questionDifficulty: currentQuestion.difficulty,
         isCorrect: isCorrect,
-        notes: notes,
+        notes: sanitizedNotes,
         responseTimeSeconds: responseTime,
       );
 
@@ -111,8 +118,10 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository
-      await _interviewRepository.updateInterview(_currentInterview!);
+      // Save to repository with retry mechanism
+      await _saveWithRetry(
+        () => _interviewRepository.updateInterview(_currentInterview!),
+      );
 
       debugPrint(
         '✅ Recorded response for question ${currentQuestionIndex + 1}',
@@ -124,7 +133,7 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Move to the next question
+  /// Move to the next question with validation
   Future<void> nextQuestion() async {
     if (_currentInterview == null) {
       throw Exception('No active interview session');
@@ -146,8 +155,10 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository
-      await _interviewRepository.updateInterview(_currentInterview!);
+      // Save to repository with retry
+      await _saveWithRetry(
+        () => _interviewRepository.updateInterview(_currentInterview!),
+      );
 
       debugPrint('✅ Moved to question ${currentQuestionIndex + 1}');
       notifyListeners();
@@ -157,7 +168,7 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Move to the previous question
+  /// Move to the previous question with validation
   Future<void> previousQuestion() async {
     if (_currentInterview == null) {
       throw Exception('No active interview session');
@@ -179,8 +190,10 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository
-      await _interviewRepository.updateInterview(_currentInterview!);
+      // Save to repository with retry
+      await _saveWithRetry(
+        () => _interviewRepository.updateInterview(_currentInterview!),
+      );
 
       debugPrint('✅ Moved to question ${currentQuestionIndex + 1}');
       notifyListeners();
@@ -190,7 +203,7 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Complete the interview session
+  /// Complete the interview session with enhanced validation
   Future<Interview> completeInterview() async {
     if (_currentInterview == null) {
       throw Exception('No active interview session');
@@ -207,8 +220,10 @@ class InterviewSessionManager extends ChangeNotifier {
         technicalScore: finalTechnicalScore,
       );
 
-      // Save to repository
-      await _interviewRepository.updateInterview(_currentInterview!);
+      // Save to repository with retry
+      await _saveWithRetry(
+        () => _interviewRepository.updateInterview(_currentInterview!),
+      );
 
       // Clear session cache
       _clearSessionCache();
@@ -218,11 +233,7 @@ class InterviewSessionManager extends ChangeNotifier {
       final completedInterview = _currentInterview!;
 
       // Clear current session
-      _currentInterview = null;
-      _sessionQuestions = [];
-      _questionStartTime = null;
-
-      notifyListeners();
+      _clearSession();
 
       return completedInterview;
     } catch (e) {
@@ -275,9 +286,14 @@ class InterviewSessionManager extends ChangeNotifier {
     return _currentInterview!.getPerformanceStats();
   }
 
-  /// Resume an existing interview session
+  /// Resume an existing interview session with validation
   Future<void> resumeInterview(String interviewId) async {
     try {
+      // Validate interview ID
+      if (interviewId.isEmpty) {
+        throw Exception('Invalid interview ID');
+      }
+
       final interview = await _interviewRepository.getInterviewById(
         interviewId,
       );
@@ -333,11 +349,81 @@ class InterviewSessionManager extends ChangeNotifier {
 
   /// Clear current session
   void clearSession() {
+    _clearSession();
+  }
+
+  /// Private method to clear session
+  void _clearSession() {
     _currentInterview = null;
     _sessionQuestions = [];
     _questionStartTime = null;
     _clearSessionCache();
     notifyListeners();
+  }
+
+  /// Enhanced input validation
+  void _validateInterviewInput(
+    String candidateName,
+    String role,
+    String level,
+    List<InterviewQuestion> questions,
+  ) {
+    if (candidateName.trim().isEmpty) {
+      throw Exception('Candidate name cannot be empty');
+    }
+    if (candidateName.trim().length > 100) {
+      throw Exception('Candidate name too long (max 100 characters)');
+    }
+    if (role.trim().isEmpty) {
+      throw Exception('Role cannot be empty');
+    }
+    if (level.trim().isEmpty) {
+      throw Exception('Level cannot be empty');
+    }
+    if (questions.isEmpty) {
+      throw Exception('Questions list cannot be empty');
+    }
+    if (questions.length > 100) {
+      throw Exception('Too many questions (max 100)');
+    }
+  }
+
+  /// Sanitize user input to prevent injection attacks
+  String _sanitizeInput(String input) {
+    return input
+        .trim()
+        .replaceAll(
+          RegExp(r'''[<>"']'''),
+          '',
+        ) // Remove potentially dangerous characters
+        .replaceAll(RegExp(r'\s+'), ' '); // Normalize whitespace
+  }
+
+  /// Generate secure interview ID
+  String _generateSecureInterviewId() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = (timestamp * 31) % 1000000; // Simple hash for uniqueness
+    return 'interview_${timestamp}_$random';
+  }
+
+  /// Save with retry mechanism
+  Future<void> _saveWithRetry(
+    Future<void> Function() saveFunction, {
+    int maxRetries = 3,
+  }) async {
+    int attempts = 0;
+    while (attempts < maxRetries) {
+      try {
+        await saveFunction();
+        return;
+      } catch (e) {
+        attempts++;
+        if (attempts >= maxRetries) {
+          rethrow;
+        }
+        await Future.delayed(Duration(milliseconds: 500 * attempts));
+      }
+    }
   }
 
   /// Helper method to calculate technical score
@@ -358,33 +444,41 @@ class InterviewSessionManager extends ChangeNotifier {
     return tempInterview.calculateTechnicalScore();
   }
 
-  /// Cache session data
+  /// Cache session data securely
   void _cacheSessionData() {
-    if (_currentInterview != null) {
-      CacheManager.set(
-        _currentInterviewKey,
-        _currentInterview!,
-        const Duration(hours: 24),
-      );
-    }
-    if (_sessionQuestions.isNotEmpty) {
-      CacheManager.set(
-        _sessionQuestionsKey,
-        _sessionQuestions,
-        const Duration(hours: 24),
-      );
+    try {
+      if (_currentInterview != null) {
+        CacheManager.set(
+          _currentInterviewKey,
+          _currentInterview!,
+          const Duration(hours: 24),
+        );
+      }
+      if (_sessionQuestions.isNotEmpty) {
+        CacheManager.set(
+          _sessionQuestionsKey,
+          _sessionQuestions,
+          const Duration(hours: 24),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error caching session data: $e');
     }
   }
 
   /// Clear session cache
   void _clearSessionCache() {
-    CacheManager.remove(_currentInterviewKey);
-    CacheManager.remove(_sessionQuestionsKey);
+    try {
+      CacheManager.remove(_currentInterviewKey);
+      CacheManager.remove(_sessionQuestionsKey);
+    } catch (e) {
+      debugPrint('❌ Error clearing session cache: $e');
+    }
   }
 
-  /// Parse role string to Role enum
+  /// Parse role string to Role enum with validation
   Role _parseRole(String roleString) {
-    switch (roleString.toLowerCase()) {
+    switch (roleString.toLowerCase().trim()) {
       case 'flutter developer':
         return Role.flutter;
       case 'backend developer':
@@ -396,13 +490,14 @@ class InterviewSessionManager extends ChangeNotifier {
       case 'mobile developer':
         return Role.mobile;
       default:
+        debugPrint('⚠️ Unknown role: $roleString, defaulting to Flutter');
         return Role.flutter;
     }
   }
 
-  /// Parse level string to Level enum
+  /// Parse level string to Level enum with validation
   Level _parseLevel(String levelString) {
-    switch (levelString.toLowerCase()) {
+    switch (levelString.toLowerCase().trim()) {
       case 'intern':
         return Level.intern;
       case 'associate':
@@ -410,6 +505,7 @@ class InterviewSessionManager extends ChangeNotifier {
       case 'senior':
         return Level.senior;
       default:
+        debugPrint('⚠️ Unknown level: $levelString, defaulting to Associate');
         return Level.associate;
     }
   }

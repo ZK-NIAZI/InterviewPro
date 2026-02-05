@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.interview_pro_app"
+    namespace = "com.interviewpro.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,26 +16,72 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.interview_pro_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Professional application ID for production deployment
+        applicationId = "com.interviewpro.app"
+        
+        // Optimized SDK versions for production
+        minSdk = flutter.minSdkVersion  // Android 5.0 (API level 21) for broader compatibility
+        targetSdk = 34  // Latest stable Android API
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // App metadata for production
+        resValue("string", "app_name", "InterviewPro")
+        
+        // Performance optimizations
+        multiDexEnabled = true
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+        
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Production release configuration
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            
+            // Code obfuscation and optimization
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            
+            // TODO: Configure proper signing for production release
+            // For now, using debug keys for development builds
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+    
+    // Build optimization
+    buildFeatures {
+        buildConfig = true
+    }
+    
+    // Packaging options for production
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt"
+            )
+        }
+    }
+    
+    // Lint options for production quality
+    lint {
+        checkReleaseBuilds = true
+        abortOnError = false
+        warningsAsErrors = false
     }
 }
 

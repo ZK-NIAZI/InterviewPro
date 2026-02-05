@@ -4,8 +4,45 @@ import '../../../core/services/appwrite_service.dart';
 import '../../domain/entities/interview_question.dart';
 import '../../domain/entities/question_category.dart';
 
-/// Remote data source for interview questions using Appwrite
-class InterviewQuestionRemoteDatasource {
+/// Abstract remote data source for interview questions
+abstract class InterviewQuestionRemoteDatasource {
+  Future<bool> hasQuestions();
+  Future<bool> hasCategories();
+  Future<List<InterviewQuestion>> getQuestions({
+    String? category,
+    String? difficulty,
+    String? roleSpecific,
+    List<String>? tags,
+    int limit = 100,
+  });
+  Future<List<InterviewQuestion>> getQuestionsByCategory(String category);
+  Future<List<InterviewQuestion>> getQuestionsByDifficulty(String difficulty);
+  Future<List<InterviewQuestion>> getQuestionsByRole(String role);
+  Future<List<InterviewQuestion>> getRandomQuestions({
+    required int count,
+    String? category,
+    String? difficulty,
+    String? roleSpecific,
+  });
+  Future<InterviewQuestion> createQuestion(InterviewQuestion question);
+  Future<InterviewQuestion> updateQuestion(InterviewQuestion question);
+  Future<void> deleteQuestion(String questionId);
+  Future<List<QuestionCategoryEntity>> getCategories();
+  Future<QuestionCategoryEntity> createCategory(
+    QuestionCategoryEntity category,
+  );
+  Future<List<InterviewQuestion>> bulkCreateQuestions(
+    List<Map<String, dynamic>> questionsData,
+  );
+  Future<List<QuestionCategoryEntity>> bulkCreateCategories(
+    List<Map<String, dynamic>> categoriesData,
+  );
+  Future<Map<String, dynamic>> getQuestionStats();
+}
+
+/// Implementation of remote data source for interview questions using Appwrite
+class InterviewQuestionRemoteDatasourceImpl
+    implements InterviewQuestionRemoteDatasource {
   final AppwriteService _appwriteService;
   late final Databases _databases;
 
@@ -13,10 +50,11 @@ class InterviewQuestionRemoteDatasource {
   static const String questionsCollectionId = 'questions';
   static const String categoriesCollectionId = 'question_categories';
 
-  InterviewQuestionRemoteDatasource(this._appwriteService) {
+  InterviewQuestionRemoteDatasourceImpl(this._appwriteService) {
     _databases = _appwriteService.databases;
   }
 
+  @override
   /// Check if questions collection exists and has data
   Future<bool> hasQuestions() async {
     try {
@@ -32,6 +70,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Check if categories collection exists and has data
   Future<bool> hasCategories() async {
     try {
@@ -47,6 +86,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Get all interview questions
   Future<List<InterviewQuestion>> getQuestions({
     String? category,
@@ -95,6 +135,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Get questions by category
   Future<List<InterviewQuestion>> getQuestionsByCategory(
     String category,
@@ -102,6 +143,7 @@ class InterviewQuestionRemoteDatasource {
     return getQuestions(category: category);
   }
 
+  @override
   /// Get questions by difficulty
   Future<List<InterviewQuestion>> getQuestionsByDifficulty(
     String difficulty,
@@ -109,11 +151,13 @@ class InterviewQuestionRemoteDatasource {
     return getQuestions(difficulty: difficulty);
   }
 
+  @override
   /// Get questions by role
   Future<List<InterviewQuestion>> getQuestionsByRole(String role) async {
     return getQuestions(roleSpecific: role);
   }
 
+  @override
   /// Get random questions for interview
   Future<List<InterviewQuestion>> getRandomQuestions({
     required int count,
@@ -137,6 +181,7 @@ class InterviewQuestionRemoteDatasource {
     return allQuestions.take(count).toList();
   }
 
+  @override
   /// Create a new question
   Future<InterviewQuestion> createQuestion(InterviewQuestion question) async {
     try {
@@ -154,6 +199,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Update an existing question
   Future<InterviewQuestion> updateQuestion(InterviewQuestion question) async {
     try {
@@ -171,6 +217,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Delete a question
   Future<void> deleteQuestion(String questionId) async {
     try {
@@ -185,6 +232,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Get all question categories
   Future<List<QuestionCategoryEntity>> getCategories() async {
     try {
@@ -203,6 +251,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Create a new category
   Future<QuestionCategoryEntity> createCategory(
     QuestionCategoryEntity category,
@@ -222,6 +271,7 @@ class InterviewQuestionRemoteDatasource {
     }
   }
 
+  @override
   /// Bulk create questions from JSON data
   Future<List<InterviewQuestion>> bulkCreateQuestions(
     List<Map<String, dynamic>> questionsData,
@@ -258,6 +308,7 @@ class InterviewQuestionRemoteDatasource {
     return createdQuestions;
   }
 
+  @override
   /// Bulk create categories from JSON data
   Future<List<QuestionCategoryEntity>> bulkCreateCategories(
     List<Map<String, dynamic>> categoriesData,
@@ -287,6 +338,7 @@ class InterviewQuestionRemoteDatasource {
     return createdCategories;
   }
 
+  @override
   /// Get question statistics
   Future<Map<String, dynamic>> getQuestionStats() async {
     try {

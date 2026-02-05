@@ -19,15 +19,15 @@ Future<void> initializeDependencies() async {
 
   // Data sources
   sl.registerLazySingleton<RoleRemoteDatasource>(
-    () => RoleRemoteDatasource(sl()),
+    () => RoleRemoteDatasourceImpl(sl<AppwriteService>()),
   );
 
   sl.registerLazySingleton<ExperienceLevelRemoteDatasource>(
-    () => ExperienceLevelRemoteDatasource(sl()),
+    () => ExperienceLevelRemoteDatasourceImpl(),
   );
 
   sl.registerLazySingleton<InterviewQuestionRemoteDatasource>(
-    () => InterviewQuestionRemoteDatasource(sl()),
+    () => InterviewQuestionRemoteDatasourceImpl(sl<AppwriteService>()),
   );
 
   // Repositories
@@ -35,10 +35,12 @@ Future<void> initializeDependencies() async {
     () => InterviewRepositoryImpl(),
   );
 
-  sl.registerLazySingleton<RoleRepository>(() => RoleRepositoryImpl(sl()));
+  sl.registerLazySingleton<RoleRepository>(
+    () => RoleRepositoryImpl(sl<RoleRemoteDatasource>()),
+  );
 
   sl.registerLazySingleton<ExperienceLevelRepository>(
-    () => ExperienceLevelRepositoryImpl(sl()),
+    () => ExperienceLevelRepositoryImpl(),
   );
 
   sl.registerLazySingleton<InterviewQuestionRepository>(
