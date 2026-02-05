@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 
 /// Enhanced Quick Statistics widget with detailed interview metrics
 class QuickStatsWidget extends StatelessWidget {
@@ -20,10 +19,6 @@ class QuickStatsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final answered = answeredQuestions ?? correctAnswers;
-    final completion =
-        completionPercentage ?? (answered / totalQuestions * 100);
-
     return Column(
       children: [
         // First row: Total questions and correct answers
@@ -46,33 +41,6 @@ class QuickStatsWidget extends StatelessWidget {
                 value: correctAnswers.toString(),
                 label: 'Correct Answers',
                 backgroundColor: Colors.green.withOpacity(0.1),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        // Second row: Completion and duration
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                icon: Icons.pie_chart_outline,
-                iconColor: AppColors.primary,
-                value: '${completion.toStringAsFixed(0)}%',
-                label: 'Completion',
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                icon: Icons.access_time,
-                iconColor: Colors.orange,
-                value: duration != null ? '${duration}m' : '--',
-                label: 'Duration',
-                backgroundColor: Colors.orange.withOpacity(0.1),
               ),
             ),
           ],

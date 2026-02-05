@@ -68,10 +68,10 @@ class ReportDataProvider extends ChangeNotifier {
   ReportData _generateReportData(Interview interview) {
     final stats = interview.getPerformanceStats();
 
-    // Calculate overall score (70% technical + 30% soft skills if available)
-    final technicalScore =
-        interview.technicalScore ?? interview.calculateTechnicalScore();
-    final overallScore = interview.overallScore ?? technicalScore;
+    // Calculate overall score (strictly technical based on new requirements)
+    final technicalScore = interview.calculateTechnicalScore();
+    // Force usage of calculated score to avoid stale data from DB and ensure consistency with "Recommended" logic
+    final overallScore = technicalScore;
 
     // Generate detailed question breakdown
     final questionBreakdown = _generateQuestionBreakdown(interview);
@@ -181,7 +181,6 @@ class QuestionBreakdownItem {
     required this.incorrectAnswers,
     required this.responses,
   });
-
 
   double get accuracy =>
       totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0.0;

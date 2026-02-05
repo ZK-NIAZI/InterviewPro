@@ -117,25 +117,24 @@ class Interview extends Equatable {
 
     // Count correct answers
     final correctAnswers = responses.where((r) => r.isCorrect == true).length;
-    final totalQuestions = responses.length;
+
+    // User Requirement: "suppose there are total 4 questions in interview, candidate answers 2 correct and 2 wrong then the overall score % should be 50%"
+    // Use this.totalQuestions as denominator to ensure correct percentage relative to the full interview
+    final denominator = totalQuestions > 0
+        ? totalQuestions
+        : (responses.isNotEmpty ? responses.length : 1);
 
     // Calculate percentage
-    final score = (correctAnswers / totalQuestions) * 100;
+    final score = (correctAnswers / denominator) * 100;
 
     return score.clamp(0.0, 100.0);
   }
 
-  /// Calculate final overall score combining technical (70%) and soft skills (30%)
+  /// Calculate final overall score
+  /// Per requirements: strictly based on technical accuracy (correct answers / total questions) * 100
   double calculateOverallScore({double? evaluationScore}) {
-    final techScore = technicalScore ?? calculateTechnicalScore();
-
-    if (evaluationScore != null) {
-      // 70% technical + 30% soft skills evaluation
-      return (techScore * 0.7) + (evaluationScore * 0.3);
-    }
-
-    // If no evaluation score, use technical score only
-    return techScore;
+    // Ignoring evaluationScore for overall percentage as per specific requirement
+    return technicalScore ?? calculateTechnicalScore();
   }
 
   /// Get recommendation based on overall score

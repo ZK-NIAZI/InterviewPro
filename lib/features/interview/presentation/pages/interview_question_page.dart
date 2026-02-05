@@ -745,10 +745,20 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     final question = _currentQuestion;
     if (question == null) return;
 
+    // Validation: Ensure an option is selected
+    if (selectedAnswer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select Yes or No to continue'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     // Record response if session is active and answer is selected
-    if (_sessionStarted &&
-        _sessionManager.hasActiveSession &&
-        selectedAnswer != null) {
+    if (_sessionStarted && _sessionManager.hasActiveSession) {
       try {
         await _sessionManager.recordResponse(
           isCorrect: selectedAnswer!,
@@ -852,17 +862,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
         showNotes = false;
         notesController.clear();
       });
-    }
-
-    // Show feedback
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Moving to question ${_currentIndex + 1}'),
-          backgroundColor: AppColors.primary,
-          duration: const Duration(seconds: 1),
-        ),
-      );
     }
   }
 
