@@ -403,11 +403,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Category chip
-            _buildCategoryChip(),
-
-            const SizedBox(height: 24),
-
             // Question number
             _buildQuestionNumber(),
 
@@ -421,32 +416,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
             // Answer section
             _buildAnswerSection(),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip() {
-    final question = _currentQuestion;
-    if (question == null) return const SizedBox.shrink();
-
-    return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.transparent),
-      ),
-      child: Center(
-        child: Text(
-          question.categoryDisplayName,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.5,
-          ),
         ),
       ),
     );
@@ -469,57 +438,15 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     final question = _currentQuestion;
     if (question == null) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          question.question,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            height: 1.2,
-            letterSpacing: -0.5,
-          ),
-        ),
-        if (question.expectedDuration > 0) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                'Expected time: ${question.expectedDuration} minutes',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ],
-        if (question.tags.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: question.tags.take(3).map((tag) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  tag,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ],
+    return Text(
+      question.question,
+      style: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        height: 1.2,
+        letterSpacing: -0.5,
+      ),
     );
   }
 
