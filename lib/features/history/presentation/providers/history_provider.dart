@@ -9,6 +9,7 @@ class HistoryProvider extends ChangeNotifier {
   HistoryProvider(this._interviewRepository);
 
   bool _isLoading = false;
+  String? _error;
   int _selectedFilterIndex = 0;
   List<Interview> _allInterviews = [];
   List<Interview> _filteredInterviews = [];
@@ -20,6 +21,7 @@ class HistoryProvider extends ChangeNotifier {
 
   // Getters
   bool get isLoading => _isLoading;
+  String? get error => _error;
   int get selectedFilterIndex => _selectedFilterIndex;
   List<Interview> get filteredInterviews => _filteredInterviews;
   int get totalInterviews => _totalInterviews;
@@ -39,13 +41,19 @@ class HistoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads interview history data
+  /// Loads interview history data with enhanced error handling
   Future<void> loadHistoryData() async {
     setLoading(true);
+    _error = null;
 
     try {
-      // Load all interviews
-      _allInterviews = await _interviewRepository.getAllInterviews();
+      // Load all interviews with timeout
+      _allInterviews = await _interviewRepository.getAllInterviews().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Request timeout: Unable to load interview history');
+        },
+      );
 
       // Calculate statistics
       await _calculateStatistics();
@@ -55,13 +63,17 @@ class HistoryProvider extends ChangeNotifier {
 
       debugPrint('✅ Loaded ${_allInterviews.length} interviews for history');
     } catch (e) {
-      debugPrint('❌ Error loading history data: $e');
+      _error = _getErrorMessage(e);
+      debugPrint('❌ Error loading history data: $_error');
+
+      // Set fallback data
+      _setFallbackData();
     } finally {
       setLoading(false);
     }
   }
 
-  /// Calculate statistics from all interviews
+  /// Calculate statistics from all interviews with error handling
   Future<void> _calculateStatistics() async {
     try {
       _totalInterviews = _allInterviews.length;
@@ -70,13 +82,18 @@ class HistoryProvider extends ChangeNotifier {
       final completedWithScores = _allInterviews
           .where(
             (interview) =>
-                interview.isCompleted && interview.overallScore != null,
+                interview.isCompleted &&
+                (interview.overallScore != null ||
+                    interview.technicalScore != null),
           )
           .toList();
 
       if (completedWithScores.isNotEmpty) {
         final totalScore = completedWithScores
-            .map((interview) => interview.overallScore!)
+            .map(
+              (interview) =>
+                  interview.overallScore ?? interview.technicalScore ?? 0.0,
+            )
             .reduce((a, b) => a + b);
         _averageScore = totalScore / completedWithScores.length;
       } else {
@@ -85,8 +102,16 @@ class HistoryProvider extends ChangeNotifier {
 
       // Calculate hired count (interviews with score >= 70%)
       _hiredCount = completedWithScores
-          .where((interview) => interview.overallScore! >= 70.0)
+          .where(
+            (interview) =>
+                (interview.overallScore ?? interview.technicalScore ?? 0.0) >=
+                70.0,
+          )
           .length;
+
+      debugPrint(
+        '✅ Statistics calculated: Total=$_totalInterviews, Avg=${_averageScore.toStringAsFixed(1)}, Hired=$_hiredCount',
+      );
     } catch (e) {
       debugPrint('❌ Error calculating statistics: $e');
       _totalInterviews = 0;
@@ -95,58 +120,108 @@ class HistoryProvider extends ChangeNotifier {
     }
   }
 
-  /// Apply filter based on selected index
+  /// Apply filter based on selected index with error handling
   void _applyFilter() {
-    final now = DateTime.now();
+    try {
+      final now = DateTime.now();
 
-    switch (_selectedFilterIndex) {
-      case 0: // All
-        _filteredInterviews = List.from(_allInterviews);
-        break;
-      case 1: // This Week
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        _filteredInterviews = _allInterviews
-            .where(
-              (interview) =>
-                  interview.startTime.isAfter(startOfWeek) &&
-                  interview.startTime.isBefore(endOfWeek),
-            )
-            .toList();
-        break;
-      case 2: // This Month
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        final endOfMonth = DateTime(now.year, now.month + 1, 0);
-        _filteredInterviews = _allInterviews
-            .where(
-              (interview) =>
-                  interview.startTime.isAfter(startOfMonth) &&
-                  interview.startTime.isBefore(endOfMonth),
-            )
-            .toList();
-        break;
-      default:
-        _filteredInterviews = List.from(_allInterviews);
+      switch (_selectedFilterIndex) {
+        case 0: // All
+          _filteredInterviews = List.from(_allInterviews);
+          break;
+        case 1: // This Week
+          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          final endOfWeek = startOfWeek.add(const Duration(days: 7));
+          _filteredInterviews = _allInterviews
+              .where(
+                (interview) =>
+                    interview.startTime.isAfter(startOfWeek) &&
+                    interview.startTime.isBefore(endOfWeek),
+              )
+              .toList();
+          break;
+        case 2: // This Month
+          final startOfMonth = DateTime(now.year, now.month, 1);
+          final endOfMonth = DateTime(now.year, now.month + 1, 0);
+          _filteredInterviews = _allInterviews
+              .where(
+                (interview) =>
+                    interview.startTime.isAfter(startOfMonth) &&
+                    interview.startTime.isBefore(endOfMonth),
+              )
+              .toList();
+          break;
+        default:
+          _filteredInterviews = List.from(_allInterviews);
+      }
+
+      // Sort by start time (most recent first)
+      _filteredInterviews.sort((a, b) => b.startTime.compareTo(a.startTime));
+
+      debugPrint(
+        '✅ Filter applied: ${_filteredInterviews.length} interviews shown',
+      );
+    } catch (e) {
+      debugPrint('❌ Error applying filter: $e');
+      _filteredInterviews = [];
     }
-
-    // Sort by start time (most recent first)
-    _filteredInterviews.sort((a, b) => b.startTime.compareTo(a.startTime));
   }
 
-  /// Refreshes the interview history data
-  Future<void> refreshData() async {
-    await loadHistoryData();
+  /// Set fallback data when loading fails
+  void _setFallbackData() {
+    _allInterviews = [];
+    _filteredInterviews = [];
+    _totalInterviews = 0;
+    _averageScore = 0.0;
+    _hiredCount = 0;
   }
 
-  /// Delete an interview and refresh data
+  /// Get user-friendly error message
+  String _getErrorMessage(dynamic error) {
+    if (error.toString().contains('timeout')) {
+      return 'Connection timeout. Please check your internet connection.';
+    } else if (error.toString().contains('network')) {
+      return 'Network error. Please try again later.';
+    } else if (error.toString().contains('permission')) {
+      return 'Permission denied. Please check your access rights.';
+    } else {
+      return 'Unable to load interview history. Please try again.';
+    }
+  }
+
+  /// Refreshes the interview history data with retry mechanism
+  Future<void> refreshData({int retryCount = 0}) async {
+    const maxRetries = 2;
+
+    try {
+      await loadHistoryData();
+    } catch (e) {
+      if (retryCount < maxRetries) {
+        debugPrint('Retrying history refresh (${retryCount + 1}/$maxRetries)');
+        await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+        return refreshData(retryCount: retryCount + 1);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  /// Delete an interview and refresh data with error handling
   Future<void> deleteInterview(String interviewId) async {
     try {
       await _interviewRepository.deleteInterview(interviewId);
       await refreshData();
+      debugPrint('✅ Interview deleted successfully');
     } catch (e) {
       debugPrint('❌ Error deleting interview: $e');
       rethrow;
     }
+  }
+
+  /// Clear error state
+  void clearError() {
+    _error = null;
+    notifyListeners();
   }
 
   /// Get filter display name

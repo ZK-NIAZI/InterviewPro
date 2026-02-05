@@ -413,6 +413,14 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         }
 
+        // Show error state with retry option
+        if (provider.error != null) {
+          return _buildErrorState(provider.error!, () {
+            provider.clearError();
+            provider.refresh();
+          });
+        }
+
         if (provider.recentInterviews.isEmpty) {
           return _buildEmptyInterviewsState();
         }
@@ -471,14 +479,61 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildErrorState(String error, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Unable to Load Interviews',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton(
+                onPressed: onRetry,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                ),
+                child: const Text('Retry'),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () => context.push(AppRouter.interview),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Start New Interview'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRealInterviewCard(Interview interview) {
     return GestureDetector(
-      onTap: () {
-        // Navigate to interview report with real data
-        context.push(
-          '${AppRouter.interviewReport}?candidateName=${Uri.encodeComponent(interview.candidateName)}&role=${Uri.encodeComponent(_getRoleDisplayName(interview.role))}&level=${Uri.encodeComponent(_getLevelDisplayName(interview.level))}&overallScore=${interview.overallScore ?? interview.technicalScore ?? 0.0}&communicationSkills=${interview.softSkillsScore?.round() ?? 3}&problemSolvingApproach=${interview.technicalScore?.round() ?? 3}&culturalFit=${interview.softSkillsScore?.round() ?? 3}&overallImpression=${interview.overallScore?.round() ?? 3}&additionalComments=${Uri.encodeComponent('Generated from interview session')}&interviewId=${interview.id}',
-        );
-      },
+      onTap: () => _navigateToInterviewReport(interview),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -760,6 +815,57 @@ class _DashboardPageState extends State<DashboardPage> {
             child: const Text('Search'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Navigate to interview report with enhanced error handling
+  void _navigateToInterviewReport(Interview interview) {
+    try {
+      // Validate interview data before navigation
+      if (interview.candidateName.isEmpty) {
+        _showErrorSnackBar('Invalid interview data: Missing candidate name');
+        return;
+      }
+
+      // Build navigation URL with proper encoding
+      final candidateName = Uri.encodeComponent(interview.candidateName);
+      final role = Uri.encodeComponent(_getRoleDisplayName(interview.role));
+      final level = Uri.encodeComponent(_getLevelDisplayName(interview.level));
+      final overallScore =
+          interview.overallScore ?? interview.technicalScore ?? 0.0;
+      final communicationSkills = interview.softSkillsScore?.round() ?? 3;
+      final problemSolvingApproach = interview.technicalScore?.round() ?? 3;
+      final culturalFit = interview.softSkillsScore?.round() ?? 3;
+      final overallImpression = interview.overallScore?.round() ?? 3;
+      final additionalComments = Uri.encodeComponent(
+        'Generated from interview session',
+      );
+      final interviewId = interview.id;
+
+      // Navigate to report page
+      context.push(
+        '${AppRouter.interviewReport}?candidateName=$candidateName&role=$role&level=$level&overallScore=$overallScore&communicationSkills=$communicationSkills&problemSolvingApproach=$problemSolvingApproach&culturalFit=$culturalFit&overallImpression=$overallImpression&additionalComments=$additionalComments&interviewId=$interviewId',
+      );
+    } catch (e) {
+      _showErrorSnackBar('Failed to open interview report: ${e.toString()}');
+    }
+  }
+
+  /// Show error message to user
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'Dismiss',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }

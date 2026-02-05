@@ -185,6 +185,14 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
             );
           }
 
+          // Show error state with retry option
+          if (provider.error != null) {
+            return _buildErrorState(provider.error!, () {
+              provider.clearError();
+              provider.refreshData();
+            });
+          }
+
           if (provider.filteredInterviews.isEmpty) {
             return _buildEmptyState();
           }
@@ -199,6 +207,10 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
                 ),
               );
             },
+            // Performance optimization: cache extent for smooth scrolling
+            cacheExtent: 500.0,
+            // Add physics for better scrolling experience
+            physics: const BouncingScrollPhysics(),
           );
         },
       ),
@@ -226,6 +238,45 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
             'Start conducting interviews to see them here',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds error state with retry option
+  Widget _buildErrorState(String error, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Unable to Load History',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: onRetry,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
           ),
         ],
       ),
