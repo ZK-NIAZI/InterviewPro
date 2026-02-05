@@ -76,8 +76,6 @@ flutter:
   # Application assets
   assets:
     - assets/data/
-    - assets/images/
-    - assets/icons/
 
   # Custom fonts for professional appearance
   # fonts:

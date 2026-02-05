@@ -160,6 +160,7 @@ class AppRouter {
               0;
           final additionalComments =
               state.uri.queryParameters['additionalComments'] ?? '';
+          final interviewId = state.uri.queryParameters['interviewId'];
 
           return ReportPreviewPage(
             candidateName: candidateName,
@@ -171,6 +172,7 @@ class AppRouter {
             culturalFit: culturalFit,
             overallImpression: overallImpression,
             additionalComments: additionalComments,
+            interviewId: interviewId,
           );
         },
       ),

@@ -19,6 +19,7 @@ class ReportPreviewPage extends StatelessWidget {
   final int culturalFit;
   final int overallImpression;
   final String additionalComments;
+  final String? interviewId; // Add interview ID for data loading
 
   const ReportPreviewPage({
     super.key,
@@ -31,6 +32,7 @@ class ReportPreviewPage extends StatelessWidget {
     required this.culturalFit,
     required this.overallImpression,
     required this.additionalComments,
+    this.interviewId, // Optional interview ID
   });
 
   @override
