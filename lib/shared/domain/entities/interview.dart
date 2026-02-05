@@ -111,125 +111,18 @@ class Interview extends Equatable {
   bool get isInProgress => status == InterviewStatus.inProgress;
 
   /// Calculate technical score from question responses
-  /// Uses weighted scoring: 50% Programming, 25% Soft Skills, 25% System Design
+  /// Simple calculation: (correct answers / total questions) * 100
   double calculateTechnicalScore() {
     if (responses.isEmpty) return 0.0;
 
-    // Group responses by category
-    final programmingResponses = <QuestionResponse>[];
-    final softSkillsResponses = <QuestionResponse>[];
-    final systemDesignResponses = <QuestionResponse>[];
-    final otherResponses = <QuestionResponse>[];
+    // Count correct answers
+    final correctAnswers = responses.where((r) => r.isCorrect == true).length;
+    final totalQuestions = responses.length;
 
-    for (final response in responses) {
-      final category = response.questionCategory?.toLowerCase() ?? '';
+    // Calculate percentage
+    final score = (correctAnswers / totalQuestions) * 100;
 
-      if (category.contains('programming') ||
-          category.contains('coding') ||
-          category.contains('algorithm') ||
-          category.contains('data structure')) {
-        programmingResponses.add(response);
-      } else if (category.contains('soft') ||
-          category.contains('communication') ||
-          category.contains('behavioral')) {
-        softSkillsResponses.add(response);
-      } else if (category.contains('system') ||
-          category.contains('design') ||
-          category.contains('architecture')) {
-        systemDesignResponses.add(response);
-      } else {
-        otherResponses.add(response);
-      }
-    }
-
-    // Calculate category scores (percentage of correct answers)
-    double programmingScore = _calculateCategoryScore(programmingResponses);
-    double softSkillsScore = _calculateCategoryScore(softSkillsResponses);
-    double systemDesignScore = _calculateCategoryScore(systemDesignResponses);
-    double otherScore = _calculateCategoryScore(otherResponses);
-
-    // If no questions in specific categories, distribute to "other"
-    if (programmingResponses.isEmpty &&
-        softSkillsResponses.isEmpty &&
-        systemDesignResponses.isEmpty) {
-      return otherScore;
-    }
-
-    // Apply weighted scoring: 50% Programming, 25% Soft Skills, 25% System Design
-    double weightedScore = 0.0;
-    double totalWeight = 0.0;
-
-    if (programmingResponses.isNotEmpty) {
-      weightedScore += programmingScore * 0.5;
-      totalWeight += 0.5;
-    }
-
-    if (softSkillsResponses.isNotEmpty) {
-      weightedScore += softSkillsScore * 0.25;
-      totalWeight += 0.25;
-    }
-
-    if (systemDesignResponses.isNotEmpty) {
-      weightedScore += systemDesignScore * 0.25;
-      totalWeight += 0.25;
-    }
-
-    // If some categories are missing, redistribute weight to others
-    if (totalWeight < 1.0 && otherResponses.isNotEmpty) {
-      weightedScore += otherScore * (1.0 - totalWeight);
-    } else if (totalWeight > 0) {
-      weightedScore = weightedScore / totalWeight;
-    }
-
-    return weightedScore.clamp(0.0, 100.0);
-  }
-
-  /// Calculate category performance scores
-  Map<String, double> calculateCategoryPerformance() {
-    if (responses.isEmpty) {
-      return {'Programming': 0.0, 'Soft Skills': 0.0, 'System Design': 0.0};
-    }
-
-    // Group responses by category
-    final programmingResponses = <QuestionResponse>[];
-    final softSkillsResponses = <QuestionResponse>[];
-    final systemDesignResponses = <QuestionResponse>[];
-
-    for (final response in responses) {
-      final category = response.questionCategory?.toLowerCase() ?? '';
-
-      if (category.contains('programming') ||
-          category.contains('coding') ||
-          category.contains('algorithm') ||
-          category.contains('data structure')) {
-        programmingResponses.add(response);
-      } else if (category.contains('soft') ||
-          category.contains('communication') ||
-          category.contains('behavioral')) {
-        softSkillsResponses.add(response);
-      } else if (category.contains('system') ||
-          category.contains('design') ||
-          category.contains('architecture')) {
-        systemDesignResponses.add(response);
-      } else {
-        // Default to programming for uncategorized questions
-        programmingResponses.add(response);
-      }
-    }
-
-    return {
-      'Programming': _calculateCategoryScore(programmingResponses),
-      'Soft Skills': _calculateCategoryScore(softSkillsResponses),
-      'System Design': _calculateCategoryScore(systemDesignResponses),
-    };
-  }
-
-  /// Helper method to calculate score for a category
-  double _calculateCategoryScore(List<QuestionResponse> categoryResponses) {
-    if (categoryResponses.isEmpty) return 0.0;
-
-    final correctCount = categoryResponses.where((r) => r.isCorrect).length;
-    return (correctCount / categoryResponses.length) * 100.0;
+    return score.clamp(0.0, 100.0);
   }
 
   /// Calculate final overall score combining technical (70%) and soft skills (30%)
@@ -258,7 +151,6 @@ class Interview extends Equatable {
 
   /// Get detailed performance stats
   Map<String, dynamic> getPerformanceStats() {
-    final categoryPerformance = calculateCategoryPerformance();
     final correctAnswers = responses.where((r) => r.isCorrect).length;
     final totalAnswered = responses.length;
 
@@ -269,7 +161,6 @@ class Interview extends Equatable {
       'incorrectAnswers': totalAnswered - correctAnswers,
       'completionPercentage': completionPercentage,
       'technicalScore': technicalScore ?? calculateTechnicalScore(),
-      'categoryPerformance': categoryPerformance,
       'duration': duration?.inMinutes ?? 0,
     };
   }

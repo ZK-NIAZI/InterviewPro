@@ -67,7 +67,6 @@ class ReportDataProvider extends ChangeNotifier {
   /// Generate comprehensive report data from interview
   ReportData _generateReportData(Interview interview) {
     final stats = interview.getPerformanceStats();
-    final categoryPerformance = interview.calculateCategoryPerformance();
 
     // Calculate overall score (70% technical + 30% soft skills if available)
     final technicalScore =
@@ -91,7 +90,6 @@ class ReportDataProvider extends ChangeNotifier {
       correctAnswers: stats['correctAnswers'] as int,
       incorrectAnswers: stats['incorrectAnswers'] as int,
       completionPercentage: stats['completionPercentage'] as double,
-      categoryPerformance: categoryPerformance,
       questionBreakdown: questionBreakdown,
       duration: interview.duration?.inMinutes ?? 0,
     );
@@ -149,7 +147,6 @@ class ReportData {
   final int correctAnswers;
   final int incorrectAnswers;
   final double completionPercentage;
-  final Map<String, double> categoryPerformance;
   final List<QuestionBreakdownItem> questionBreakdown;
   final int duration;
 
@@ -164,18 +161,9 @@ class ReportData {
     required this.correctAnswers,
     required this.incorrectAnswers,
     required this.completionPercentage,
-    required this.categoryPerformance,
     required this.questionBreakdown,
     required this.duration,
   });
-
-  /// Get category performance as list for widgets
-  List<CategoryPerformanceData> get categoryPerformanceList {
-    return categoryPerformance.entries
-        .map((entry) => CategoryPerformanceData(entry.key, entry.value))
-        .toList()
-      ..sort((a, b) => b.percentage.compareTo(a.percentage));
-  }
 }
 
 /// Question breakdown by category
@@ -194,14 +182,7 @@ class QuestionBreakdownItem {
     required this.responses,
   });
 
+
   double get accuracy =>
       totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0.0;
-}
-
-/// Category performance data for widgets
-class CategoryPerformanceData {
-  final String name;
-  final double percentage;
-
-  const CategoryPerformanceData(this.name, this.percentage);
 }

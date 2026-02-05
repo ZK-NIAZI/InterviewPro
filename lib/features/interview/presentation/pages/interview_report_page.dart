@@ -6,7 +6,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
 import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
-import '../widgets/category_performance_widget.dart';
 import '../widgets/quick_stats_widget.dart';
 import '../widgets/question_breakdown_widget.dart';
 import '../widgets/candidate_info_card.dart';
@@ -204,9 +203,6 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
               // Score hero section
               _buildScoreHero(provider.reportData),
 
-              // Category performance
-              _buildCategoryPerformance(provider.reportData),
-
               // Quick stats
               _buildQuickStats(provider.reportData),
 
@@ -317,32 +313,6 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     );
   }
 
-  Widget _buildCategoryPerformance(ReportData? reportData) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Category Performance',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 16),
-          CategoryPerformanceWidget(
-            categories:
-                reportData?.categoryPerformanceList ??
-                _getFallbackCategoryData(),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickStats(ReportData? reportData) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -402,16 +372,16 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
         ),
         padding: EdgeInsets.fromLTRB(
           20,
-          16, // Reduced from 20
+          16,
           20,
-          MediaQuery.of(context).padding.bottom + 20, // Reduced from 32
+          MediaQuery.of(context).padding.bottom + 20,
         ),
         child: Column(
           children: [
-            // Download PDF button (reduced height)
+            // Download PDF button
             SizedBox(
               width: double.infinity,
-              height: 44, // Reduced from 48
+              height: 44,
               child: ElevatedButton(
                 onPressed: () => _onDownloadPDF(context),
                 style: ElevatedButton.styleFrom(
@@ -440,11 +410,11 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
               ),
             ),
 
-            const SizedBox(height: 8), // Reduced from 12
-            // Share report button (reduced height)
+            const SizedBox(height: 8),
+            // Share report button
             SizedBox(
               width: double.infinity,
-              height: 44, // Reduced from 48
+              height: 44,
               child: OutlinedButton(
                 onPressed: _onShareReport,
                 style: OutlinedButton.styleFrom(
@@ -474,39 +444,6 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
         ),
       ),
     );
-  }
-
-  /// Get fallback category performance data when no real data is available
-  List<CategoryPerformanceData> _getFallbackCategoryData() {
-    return [
-      CategoryPerformanceData(
-        'Programming',
-        _calculateCategoryScore([
-          widget.communicationSkills,
-          widget.problemSolvingApproach,
-        ]),
-      ),
-      CategoryPerformanceData(
-        'Soft Skills',
-        _calculateCategoryScore([
-          widget.communicationSkills,
-          widget.culturalFit,
-        ]),
-      ),
-      CategoryPerformanceData(
-        'System Design',
-        _calculateCategoryScore([
-          widget.problemSolvingApproach,
-          widget.overallImpression,
-        ]),
-      ),
-    ];
-  }
-
-  double _calculateCategoryScore(List<int> ratings) {
-    if (ratings.isEmpty) return 0.0;
-    final average = ratings.reduce((a, b) => a + b) / ratings.length;
-    return (average / 5.0) * 100.0;
   }
 
   int _calculateCorrectAnswers() {

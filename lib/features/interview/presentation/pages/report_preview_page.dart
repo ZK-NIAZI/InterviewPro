@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/document_header_widget.dart';
 import '../widgets/candidate_info_box_widget.dart';
-import '../widgets/category_table_widget.dart';
 import '../widgets/technical_questions_widget.dart';
 import '../widgets/soft_skills_grid_widget.dart';
 import '../widgets/recommendation_box_widget.dart';
@@ -183,11 +182,6 @@ class ReportPreviewPage extends StatelessWidget {
 
               // Overall score section
               _buildOverallScoreSection(),
-
-              const SizedBox(height: 24),
-
-              // Category performance table
-              CategoryTableWidget(categories: _generateCategoryData()),
 
               const SizedBox(height: 24),
 
@@ -445,14 +439,6 @@ class ReportPreviewPage extends StatelessWidget {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  List<CategoryData> _generateCategoryData() {
-    return [
-      CategoryData('Technical Knowledge', '4/5', _calculateTechnicalScore()),
-      CategoryData('Problem Solving', '3/5', _calculateProblemSolvingScore()),
-      CategoryData('System Design', '2/2', _calculateSystemDesignScore()),
-      CategoryData('Communication', '5/5', _calculateCommunicationScore()),
-    ];
-  }
 
   List<TechnicalQuestion> _generateTechnicalQuestions() {
     return [
@@ -474,12 +460,6 @@ class ReportPreviewPage extends StatelessWidget {
     ];
   }
 
-  int _calculateTechnicalScore() =>
-      ((communicationSkills + problemSolvingApproach) / 2 * 20).round();
-  int _calculateProblemSolvingScore() => (problemSolvingApproach * 20).round();
-  int _calculateSystemDesignScore() =>
-      ((overallImpression + culturalFit) / 2 * 20).round();
-  int _calculateCommunicationScore() => (communicationSkills * 20).round();
 
   void _onDownloadPDF() {}
 
@@ -490,15 +470,8 @@ class ReportPreviewPage extends StatelessWidget {
   void _onShare() {}
 }
 
+
 // Data classes
-class CategoryData {
-  final String name;
-  final String questions;
-  final int score;
-
-  CategoryData(this.name, this.questions, this.score);
-}
-
 class TechnicalQuestion {
   final String question;
   final String feedback;

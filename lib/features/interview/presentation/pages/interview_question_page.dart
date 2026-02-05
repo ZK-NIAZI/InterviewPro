@@ -780,7 +780,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   /// Complete interview session and navigate to evaluation
   Future<void> _completeInterviewAndNavigate() async {
     String candidateName = 'John Doe'; // Default fallback
-    String interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
+    String? interviewId;
 
     debugPrint('🚀 Starting interview completion and navigation...');
 
@@ -805,6 +805,12 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
       }
     } else {
       debugPrint('⚠️ No active session, using fallback data');
+    }
+
+    // Generate fallback ID only if we don't have one from the session
+    if (interviewId == null) {
+      interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
+      debugPrint('⚠️ Using fallback interview ID: $interviewId');
     }
 
     // Navigate to candidate evaluation

@@ -207,7 +207,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   Widget _buildInterviewPerformanceSummary() {
     final interview = _completedInterview!;
     final stats = interview.getPerformanceStats();
-    final categoryPerformance = interview.calculateCategoryPerformance();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -282,42 +281,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 ),
               ),
             ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Category breakdown
-          const Text(
-            'Category Performance',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          ...categoryPerformance.entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    entry.key,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  Text(
-                    '${entry.value.toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
