@@ -114,6 +114,34 @@ class QuestionResponse extends Equatable {
     );
   }
 
+  /// Creates a QuestionResponse from JSON data
+  factory QuestionResponse.fromJson(Map<String, dynamic> json) {
+    return QuestionResponse(
+      questionId: json['questionId'] ?? '',
+      questionText: json['questionText'] ?? '',
+      questionCategory: json['questionCategory'],
+      questionDifficulty: json['questionDifficulty'],
+      isCorrect: json['isCorrect'] ?? false,
+      notes: json['notes'],
+      timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
+      responseTimeSeconds: json['responseTimeSeconds'],
+    );
+  }
+
+  /// Converts this QuestionResponse to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'questionId': questionId,
+      'questionText': questionText,
+      'questionCategory': questionCategory,
+      'questionDifficulty': questionDifficulty,
+      'isCorrect': isCorrect,
+      'notes': notes,
+      'timestamp': timestamp.toIso8601String(),
+      'responseTimeSeconds': responseTimeSeconds,
+    };
+  }
+
   @override
   List<Object?> get props => [
     questionId,

@@ -210,8 +210,13 @@ class InterviewSessionManager extends ChangeNotifier {
     }
 
     try {
+      debugPrint(
+        '🏁 Starting interview completion for: ${_currentInterview!.id}',
+      );
+
       // Calculate final technical score
       final finalTechnicalScore = _currentInterview!.calculateTechnicalScore();
+      debugPrint('📊 Calculated technical score: $finalTechnicalScore');
 
       // Update interview status
       _currentInterview = _currentInterview!.copyWith(
@@ -220,10 +225,17 @@ class InterviewSessionManager extends ChangeNotifier {
         technicalScore: finalTechnicalScore,
       );
 
+      debugPrint('✅ Interview updated with completion data');
+      debugPrint('🆔 Interview ID: ${_currentInterview!.id}');
+      debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
+      debugPrint('📊 Status: ${_currentInterview!.status}');
+
       // Save to repository with retry
+      debugPrint('💾 Saving completed interview to repository...');
       await _saveWithRetry(
         () => _interviewRepository.updateInterview(_currentInterview!),
       );
+      debugPrint('✅ Interview saved to repository successfully');
 
       // Clear session cache
       _clearSessionCache();
@@ -234,6 +246,7 @@ class InterviewSessionManager extends ChangeNotifier {
 
       // Clear current session
       _clearSession();
+      debugPrint('🧹 Session cleared from memory');
 
       return completedInterview;
     } catch (e) {

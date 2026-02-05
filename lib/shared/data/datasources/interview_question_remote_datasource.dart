@@ -285,9 +285,6 @@ class InterviewQuestionRemoteDatasourceImpl
           question: questionData['question'],
           category: questionData['category'],
           difficulty: questionData['difficulty'],
-          expectedDuration: questionData['expectedDuration'],
-          tags: List<String>.from(questionData['tags']),
-          sampleAnswer: questionData['sampleAnswer'],
           evaluationCriteria: List<String>.from(
             questionData['evaluationCriteria'],
           ),
@@ -348,11 +345,9 @@ class InterviewQuestionRemoteDatasourceImpl
         'totalQuestions': allQuestions.length,
         'byCategory': <String, int>{},
         'byDifficulty': <String, int>{},
-        'averageDuration': 0.0,
       };
 
       // Calculate statistics
-      var totalDuration = 0;
       for (final question in allQuestions) {
         // Count by category
         stats['byCategory'][question.category] =
@@ -361,13 +356,6 @@ class InterviewQuestionRemoteDatasourceImpl
         // Count by difficulty
         stats['byDifficulty'][question.difficulty] =
             (stats['byDifficulty'][question.difficulty] ?? 0) + 1;
-
-        totalDuration += question.expectedDuration;
-      }
-
-      // Calculate average duration
-      if (allQuestions.isNotEmpty) {
-        stats['averageDuration'] = totalDuration / allQuestions.length;
       }
 
       return stats;
@@ -377,7 +365,6 @@ class InterviewQuestionRemoteDatasourceImpl
         'totalQuestions': 0,
         'byCategory': <String, int>{},
         'byDifficulty': <String, int>{},
-        'averageDuration': 0.0,
       };
     }
   }

@@ -1,25 +1,149 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/repositories/interview_repository.dart';
 
-/// Simple in-memory implementation of InterviewRepository
-/// Can be easily replaced with Appwrite implementation later
+/// Enhanced implementation of InterviewRepository with SharedPreferences persistence
+/// Combines in-memory storage for performance with persistent storage for reliability
 class InterviewRepositoryImpl implements InterviewRepository {
-  // In-memory storage
+  // In-memory storage for performance
   final Map<String, Interview> _interviews = {};
   final Map<String, List<QuestionResponse>> _responses = {};
 
+  // SharedPreferences keys
+  static const String _interviewsKey = 'stored_interviews';
+  static const String _responsesKey = 'stored_responses';
+
+  // Initialization flag
+  bool _isInitialized = false;
+
   InterviewRepositoryImpl();
+
+  /// Initialize the repository by loading data from SharedPreferences
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    try {
+      debugPrint(
+        '🔄 Initializing InterviewRepository with persistent storage...',
+      );
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load interviews from SharedPreferences
+      final interviewsJson = prefs.getString(_interviewsKey);
+      if (interviewsJson != null) {
+        final Map<String, dynamic> interviewsMap = json.decode(interviewsJson);
+        for (final entry in interviewsMap.entries) {
+          try {
+            final interview = Interview.fromJson(entry.value);
+            _interviews[entry.key] = interview;
+          } catch (e) {
+            debugPrint('⚠️ Failed to load interview ${entry.key}: $e');
+          }
+        }
+        debugPrint(
+          '✅ Loaded ${_interviews.length} interviews from persistent storage',
+        );
+      }
+
+      // Load responses from SharedPreferences
+      final responsesJson = prefs.getString(_responsesKey);
+      if (responsesJson != null) {
+        final Map<String, dynamic> responsesMap = json.decode(responsesJson);
+        for (final entry in responsesMap.entries) {
+          try {
+            final responsesList = (entry.value as List)
+                .map((r) => QuestionResponse.fromJson(r))
+                .toList();
+            _responses[entry.key] = responsesList;
+          } catch (e) {
+            debugPrint('⚠️ Failed to load responses for ${entry.key}: $e');
+          }
+        }
+        debugPrint(
+          '✅ Loaded responses for ${_responses.length} interviews from persistent storage',
+        );
+      }
+
+      _isInitialized = true;
+      debugPrint('✅ InterviewRepository initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Error initializing InterviewRepository: $e');
+      _isInitialized = true; // Continue with empty state
+    }
+  }
+
+  /// Save interviews to SharedPreferences
+  Future<void> _persistInterviews() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final interviewsMap = <String, dynamic>{};
+
+      for (final entry in _interviews.entries) {
+        try {
+          interviewsMap[entry.key] = entry.value.toJson();
+        } catch (e) {
+          debugPrint('⚠️ Failed to serialize interview ${entry.key}: $e');
+        }
+      }
+
+      await prefs.setString(_interviewsKey, json.encode(interviewsMap));
+      debugPrint('💾 Persisted ${_interviews.length} interviews to storage');
+    } catch (e) {
+      debugPrint('❌ Error persisting interviews: $e');
+    }
+  }
+
+  /// Save responses to SharedPreferences
+  Future<void> _persistResponses() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final responsesMap = <String, dynamic>{};
+
+      for (final entry in _responses.entries) {
+        try {
+          responsesMap[entry.key] = entry.value.map((r) => r.toJson()).toList();
+        } catch (e) {
+          debugPrint('⚠️ Failed to serialize responses for ${entry.key}: $e');
+        }
+      }
+
+      await prefs.setString(_responsesKey, json.encode(responsesMap));
+      debugPrint(
+        '💾 Persisted responses for ${_responses.length} interviews to storage',
+      );
+    } catch (e) {
+      debugPrint('❌ Error persisting responses: $e');
+    }
+  }
 
   /// Clear all interviews (for testing)
   void clearAllInterviews() {
     _interviews.clear();
     _responses.clear();
     debugPrint('🧹 Cleared all interviews from memory');
+
+    // Also clear from persistent storage
+    _clearPersistentStorage();
+  }
+
+  /// Clear persistent storage (for testing)
+  Future<void> _clearPersistentStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_interviewsKey);
+      await prefs.remove(_responsesKey);
+      debugPrint('🧹 Cleared persistent storage');
+    } catch (e) {
+      debugPrint('❌ Error clearing persistent storage: $e');
+    }
   }
 
   @override
   Future<List<Interview>> getAllInterviews() async {
+    await _ensureInitialized();
+
     final interviews = _interviews.values.toList();
     interviews.sort((a, b) => b.startTime.compareTo(a.startTime));
     debugPrint('✅ Loaded ${interviews.length} interviews from memory');
@@ -28,19 +152,51 @@ class InterviewRepositoryImpl implements InterviewRepository {
 
   @override
   Future<Interview?> getInterviewById(String id) async {
-    return _interviews[id];
+    await _ensureInitialized();
+
+    final interview = _interviews[id];
+    debugPrint('🔍 Looking for interview ID: $id');
+    debugPrint('📊 Current interviews in memory: ${_interviews.keys.toList()}');
+    debugPrint('📋 Total interviews stored: ${_interviews.length}');
+
+    if (interview != null) {
+      debugPrint(
+        '✅ Found interview: ${interview.candidateName} (${interview.status})',
+      );
+    } else {
+      debugPrint('❌ Interview not found in memory storage');
+    }
+
+    return interview;
   }
 
   @override
   Future<void> saveInterview(Interview interview) async {
+    await _ensureInitialized();
+
     _interviews[interview.id] = interview;
     debugPrint('✅ Saved interview: ${interview.id}');
+    debugPrint('👤 Candidate: ${interview.candidateName}');
+    debugPrint('📊 Status: ${interview.status}');
+    debugPrint('🗂️ Total interviews in memory: ${_interviews.length}');
+    debugPrint('🔑 All interview IDs: ${_interviews.keys.toList()}');
+
+    // Persist to SharedPreferences
+    await _persistInterviews();
   }
 
   @override
   Future<void> updateInterview(Interview interview) async {
+    await _ensureInitialized();
+
     _interviews[interview.id] = interview;
     debugPrint('✅ Updated interview: ${interview.id}');
+    debugPrint('👤 Candidate: ${interview.candidateName}');
+    debugPrint('📊 Status: ${interview.status}');
+    debugPrint('🗂️ Total interviews in memory: ${_interviews.length}');
+
+    // Persist to SharedPreferences
+    await _persistInterviews();
   }
 
   @override
@@ -48,6 +204,10 @@ class InterviewRepositoryImpl implements InterviewRepository {
     _interviews.remove(id);
     _responses.remove(id);
     debugPrint('✅ Deleted interview: $id');
+
+    // Persist changes to SharedPreferences
+    await _persistInterviews();
+    await _persistResponses();
   }
 
   @override
@@ -199,6 +359,9 @@ class InterviewRepositoryImpl implements InterviewRepository {
     _responses.putIfAbsent(interviewId, () => []);
     _responses[interviewId]!.add(response);
     debugPrint('✅ Saved question response for interview: $interviewId');
+
+    // Persist responses to SharedPreferences
+    await _persistResponses();
   }
 
   @override

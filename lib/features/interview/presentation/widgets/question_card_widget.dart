@@ -67,22 +67,6 @@ class QuestionCardWidget extends StatelessWidget {
                   ),
 
                   const Spacer(),
-
-                  // Duration
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${question.expectedDuration} min',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
                 ],
               ),
 
@@ -102,41 +86,11 @@ class QuestionCardWidget extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Tags and role-specific info
+              // Role-specific info
               Row(
                 children: [
-                  // Tags
-                  if (question.tags.isNotEmpty) ...[
-                    Expanded(
-                      child: Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: question.tags.take(3).map((tag) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-
                   // Role-specific indicator
                   if (question.roleSpecific != null) ...[
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,

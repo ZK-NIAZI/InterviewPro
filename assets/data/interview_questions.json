@@ -10,9 +10,6 @@
           "question": "Explain the difference between abstract classes and interfaces in your preferred programming language.",
           "category": "technical",
           "difficulty": "intermediate",
-          "expectedDuration": 5,
-          "tags": ["oop", "programming", "concepts"],
-          "sampleAnswer": "Abstract classes can have implementation while interfaces define contracts. Abstract classes support inheritance hierarchy while interfaces support multiple inheritance.",
           "evaluationCriteria": [
             "Understanding of OOP concepts",
             "Clear explanation of differences",
@@ -24,9 +21,6 @@
           "question": "How would you optimize a slow database query?",
           "category": "technical",
           "difficulty": "advanced",
-          "expectedDuration": 8,
-          "tags": ["database", "performance", "optimization"],
-          "sampleAnswer": "Analyze execution plan, add appropriate indexes, optimize WHERE clauses, consider query restructuring, check for N+1 problems.",
           "evaluationCriteria": [
             "Knowledge of database optimization techniques",
             "Understanding of indexing strategies",
@@ -38,9 +32,6 @@
           "question": "Describe the SOLID principles and give an example of each.",
           "category": "technical",
           "difficulty": "intermediate",
-          "expectedDuration": 10,
-          "tags": ["solid", "design-patterns", "architecture"],
-          "sampleAnswer": "Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion - each with practical examples.",
           "evaluationCriteria": [
             "Complete knowledge of all 5 principles",
             "Practical examples provided",
@@ -52,9 +43,6 @@
           "question": "What is the difference between synchronous and asynchronous programming?",
           "category": "technical",
           "difficulty": "beginner",
-          "expectedDuration": 5,
-          "tags": ["async", "programming", "concepts"],
-          "sampleAnswer": "Synchronous blocks execution until completion, asynchronous allows other operations to continue while waiting for completion.",
           "evaluationCriteria": [
             "Clear understanding of concepts",
             "Examples of use cases",
@@ -66,9 +54,6 @@
           "question": "Explain RESTful API design principles and HTTP methods.",
           "category": "technical",
           "difficulty": "intermediate",
-          "expectedDuration": 7,
-          "tags": ["rest", "api", "http"],
-          "sampleAnswer": "REST principles include statelessness, uniform interface, cacheable responses. HTTP methods: GET, POST, PUT, DELETE, PATCH with proper usage.",
           "evaluationCriteria": [
             "Understanding of REST principles",
             "Correct HTTP method usage",
@@ -87,9 +72,6 @@
           "question": "Tell me about a time when you had to work with a difficult team member. How did you handle it?",
           "category": "behavioral",
           "difficulty": "intermediate",
-          "expectedDuration": 5,
-          "tags": ["teamwork", "conflict-resolution", "communication"],
-          "sampleAnswer": "STAR method response focusing on situation, task, action taken, and positive result achieved through communication and collaboration.",
           "evaluationCriteria": [
             "Uses structured response (STAR method)",
             "Shows emotional intelligence",
@@ -101,9 +83,6 @@
           "question": "Describe a challenging project you worked on and how you overcame obstacles.",
           "category": "behavioral",
           "difficulty": "intermediate",
-          "expectedDuration": 6,
-          "tags": ["problem-solving", "resilience", "project-management"],
-          "sampleAnswer": "Specific project example with clear obstacles, systematic approach to solutions, lessons learned, and successful outcome.",
           "evaluationCriteria": [
             "Specific examples provided",
             "Problem-solving methodology",
@@ -115,9 +94,6 @@
           "question": "How do you prioritize tasks when you have multiple deadlines?",
           "category": "behavioral",
           "difficulty": "beginner",
-          "expectedDuration": 4,
-          "tags": ["time-management", "prioritization", "organization"],
-          "sampleAnswer": "Assessment of urgency vs importance, stakeholder communication, breaking down tasks, using prioritization frameworks like Eisenhower Matrix.",
           "evaluationCriteria": [
             "Systematic approach to prioritization",
             "Consideration of stakeholder needs",
@@ -129,9 +105,6 @@
           "question": "Give an example of when you had to learn a new technology quickly.",
           "category": "behavioral",
           "difficulty": "intermediate",
-          "expectedDuration": 5,
-          "tags": ["learning", "adaptability", "growth-mindset"],
-          "sampleAnswer": "Specific technology, learning approach used, resources utilized, timeline, and successful application in project.",
           "evaluationCriteria": [
             "Demonstrates learning agility",
             "Structured learning approach",
@@ -143,9 +116,6 @@
           "question": "How do you handle feedback and criticism?",
           "category": "behavioral",
           "difficulty": "beginner",
-          "expectedDuration": 4,
-          "tags": ["feedback", "growth-mindset", "professionalism"],
-          "sampleAnswer": "Open to feedback, active listening, asking clarifying questions, implementing suggestions, following up on improvements.",
           "evaluationCriteria": [
             "Positive attitude toward feedback",
             "Examples of acting on feedback",
@@ -164,9 +134,6 @@
           "question": "How do you motivate a team during challenging times?",
           "category": "leadership",
           "difficulty": "advanced",
-          "expectedDuration": 6,
-          "tags": ["motivation", "team-management", "crisis-management"],
-          "sampleAnswer": "Clear communication, transparency about challenges, focusing on purpose, recognizing contributions, providing support and resources.",
           "evaluationCriteria": [
             "Understanding of motivation principles",
             "Practical leadership experience",
@@ -178,9 +145,6 @@
           "question": "Describe your approach to making difficult decisions with incomplete information.",
           "category": "leadership",
           "difficulty": "advanced",
-          "expectedDuration": 7,
-          "tags": ["decision-making", "risk-management", "strategic-thinking"],
-          "sampleAnswer": "Gather available data, consult stakeholders, assess risks, make informed assumptions, create contingency plans, communicate rationale.",
           "evaluationCriteria": [
             "Systematic decision-making process",
             "Risk assessment capabilities",
@@ -192,9 +156,6 @@
           "question": "How do you handle underperforming team members?",
           "category": "leadership",
           "difficulty": "advanced",
-          "expectedDuration": 6,
-          "tags": ["performance-management", "coaching", "difficult-conversations"],
-          "sampleAnswer": "Identify root causes, provide clear expectations, offer support and training, create improvement plan, regular check-ins, document progress.",
           "evaluationCriteria": [
             "Structured performance management approach",
             "Balance of support and accountability",
@@ -213,10 +174,7 @@
           "question": "Explain the Flutter widget lifecycle and state management approaches.",
           "category": "role-specific",
           "difficulty": "intermediate",
-          "expectedDuration": 8,
-          "tags": ["flutter", "mobile-development", "state-management"],
           "roleSpecific": "Flutter Developer",
-          "sampleAnswer": "Widget lifecycle: createState, initState, build, setState, dispose. State management: Provider, Bloc, Riverpod, setState for local state.",
           "evaluationCriteria": [
             "Complete understanding of widget lifecycle",
             "Knowledge of state management patterns",
@@ -228,10 +186,7 @@
           "question": "How do you prioritize features in a product roadmap?",
           "category": "role-specific",
           "difficulty": "intermediate",
-          "expectedDuration": 7,
-          "tags": ["product-management", "prioritization", "strategy"],
           "roleSpecific": "Product Manager",
-          "sampleAnswer": "User impact analysis, business value assessment, technical feasibility, resource requirements, market timing, stakeholder input.",
           "evaluationCriteria": [
             "Systematic prioritization framework",
             "Balance of user and business needs",
@@ -243,10 +198,7 @@
           "question": "Walk me through your design process from research to final design.",
           "category": "role-specific",
           "difficulty": "intermediate",
-          "expectedDuration": 8,
-          "tags": ["ux-design", "design-process", "user-research"],
           "roleSpecific": "UI/UX Designer",
-          "sampleAnswer": "User research, persona creation, user journey mapping, wireframing, prototyping, usability testing, iteration, final design, handoff.",
           "evaluationCriteria": [
             "Comprehensive design process knowledge",
             "User-centered approach",
@@ -257,11 +209,11 @@
     }
   ],
   "metadata": {
-    "version": "1.0.0",
-    "lastUpdated": "2024-02-04",
+    "version": "2.0.0",
+    "lastUpdated": "2025-02-05",
     "totalQuestions": 16,
     "categories": 4,
     "difficultyLevels": ["beginner", "intermediate", "advanced"],
-    "averageDuration": 6
+    "removedFields": ["expectedDuration", "tags", "sampleAnswer"]
   }
 }

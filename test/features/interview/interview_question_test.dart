@@ -18,9 +18,6 @@ void main() {
         question: 'What is Flutter?',
         category: 'technical',
         difficulty: 'beginner',
-        expectedDuration: 5,
-        tags: ['flutter', 'mobile'],
-        sampleAnswer: 'Flutter is a UI toolkit',
         evaluationCriteria: ['Clear explanation', 'Technical accuracy'],
         roleSpecific: 'Flutter Developer',
         createdAt: DateTime.now(),
@@ -31,8 +28,6 @@ void main() {
       expect(question.question, 'What is Flutter?');
       expect(question.category, 'technical');
       expect(question.difficulty, 'beginner');
-      expect(question.expectedDuration, 5);
-      expect(question.tags, ['flutter', 'mobile']);
       expect(question.isActive, true);
     });
 
@@ -42,8 +37,6 @@ void main() {
         question: 'Test question',
         category: 'technical',
         difficulty: 'intermediate',
-        expectedDuration: 5,
-        tags: [],
         evaluationCriteria: [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -60,8 +53,6 @@ void main() {
         question: 'Test question',
         category: 'technical',
         difficulty: 'intermediate',
-        expectedDuration: 5,
-        tags: [],
         evaluationCriteria: [],
         roleSpecific: 'Flutter Developer',
         createdAt: DateTime.now(),
@@ -80,8 +71,6 @@ void main() {
         question: 'Test question',
         category: 'technical',
         difficulty: 'intermediate',
-        expectedDuration: 5,
-        tags: ['flutter', 'mobile'],
         evaluationCriteria: [],
         roleSpecific: 'Flutter Developer',
         createdAt: DateTime.now(),
@@ -93,7 +82,6 @@ void main() {
           categoryFilter: 'technical',
           difficultyFilter: 'intermediate',
           roleFilter: 'Flutter Developer',
-          tagFilters: ['flutter'],
         ),
         true,
       );
@@ -110,9 +98,6 @@ void main() {
         question: 'What is Flutter?',
         category: 'technical',
         difficulty: 'beginner',
-        expectedDuration: 5,
-        tags: ['flutter', 'mobile'],
-        sampleAnswer: 'Flutter is a UI toolkit',
         evaluationCriteria: ['Clear explanation'],
         roleSpecific: 'Flutter Developer',
         createdAt: DateTime(2024, 1, 1),
@@ -127,7 +112,6 @@ void main() {
       expect(reconstructedQuestion.question, originalQuestion.question);
       expect(reconstructedQuestion.category, originalQuestion.category);
       expect(reconstructedQuestion.difficulty, originalQuestion.difficulty);
-      expect(reconstructedQuestion.tags, originalQuestion.tags);
       expect(reconstructedQuestion.roleSpecific, originalQuestion.roleSpecific);
     });
   });
@@ -199,8 +183,6 @@ void main() {
           question: 'What is Flutter?',
           category: 'technical',
           difficulty: 'beginner',
-          expectedDuration: 5,
-          tags: ['flutter'],
           evaluationCriteria: [],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -245,8 +227,6 @@ void main() {
           question: 'Technical question',
           category: 'technical',
           difficulty: 'beginner',
-          expectedDuration: 5,
-          tags: ['flutter'],
           evaluationCriteria: [],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -256,8 +236,6 @@ void main() {
           question: 'Behavioral question',
           category: 'behavioral',
           difficulty: 'intermediate',
-          expectedDuration: 5,
-          tags: ['communication'],
           evaluationCriteria: [],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

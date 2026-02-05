@@ -14,15 +14,6 @@ class InterviewQuestion extends Equatable {
   /// Difficulty level (beginner, intermediate, advanced)
   final String difficulty;
 
-  /// Expected duration in minutes
-  final int expectedDuration;
-
-  /// Tags for categorization and filtering
-  final List<String> tags;
-
-  /// Sample answer or guidance for the interviewer
-  final String? sampleAnswer;
-
   /// Evaluation criteria for scoring
   final List<String> evaluationCriteria;
 
@@ -43,9 +34,6 @@ class InterviewQuestion extends Equatable {
     required this.question,
     required this.category,
     required this.difficulty,
-    required this.expectedDuration,
-    required this.tags,
-    this.sampleAnswer,
     required this.evaluationCriteria,
     this.roleSpecific,
     required this.createdAt,
@@ -59,9 +47,6 @@ class InterviewQuestion extends Equatable {
     String? question,
     String? category,
     String? difficulty,
-    int? expectedDuration,
-    List<String>? tags,
-    String? sampleAnswer,
     List<String>? evaluationCriteria,
     String? roleSpecific,
     DateTime? createdAt,
@@ -73,9 +58,6 @@ class InterviewQuestion extends Equatable {
       question: question ?? this.question,
       category: category ?? this.category,
       difficulty: difficulty ?? this.difficulty,
-      expectedDuration: expectedDuration ?? this.expectedDuration,
-      tags: tags ?? this.tags,
-      sampleAnswer: sampleAnswer ?? this.sampleAnswer,
       evaluationCriteria: evaluationCriteria ?? this.evaluationCriteria,
       roleSpecific: roleSpecific ?? this.roleSpecific,
       createdAt: createdAt ?? this.createdAt,
@@ -99,11 +81,8 @@ class InterviewQuestion extends Equatable {
 
   /// Checks if this question contains any of the given tags
   bool hasAnyTag(List<String> searchTags) {
-    return tags.any(
-      (tag) => searchTags.any(
-        (searchTag) => tag.toLowerCase().contains(searchTag.toLowerCase()),
-      ),
-    );
+    // Since tags are removed, return false for tag-based searches
+    return false;
   }
 
   /// Checks if this question matches the search criteria
@@ -184,9 +163,6 @@ class InterviewQuestion extends Equatable {
       'question': question,
       'category': category,
       'difficulty': difficulty,
-      'expectedDuration': expectedDuration,
-      'tags': tags,
-      'sampleAnswer': sampleAnswer,
       'evaluationCriteria': evaluationCriteria,
       'roleSpecific': roleSpecific,
       'createdAt': createdAt.toIso8601String(),
@@ -202,9 +178,6 @@ class InterviewQuestion extends Equatable {
       'question': question,
       'category': category,
       'difficulty': difficulty,
-      'expectedDuration': expectedDuration,
-      'tags': tags,
-      'sampleAnswer': sampleAnswer,
       'evaluationCriteria': evaluationCriteria,
       'roleSpecific': roleSpecific,
       'createdAt': createdAt.toIso8601String(),
@@ -220,9 +193,6 @@ class InterviewQuestion extends Equatable {
       question: json['question'] ?? '',
       category: json['category'] ?? '',
       difficulty: json['difficulty'] ?? '',
-      expectedDuration: json['expectedDuration'] ?? 5,
-      tags: List<String>.from(json['tags'] ?? []),
-      sampleAnswer: json['sampleAnswer'],
       evaluationCriteria: List<String>.from(json['evaluationCriteria'] ?? []),
       roleSpecific: json['roleSpecific'],
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
@@ -237,9 +207,6 @@ class InterviewQuestion extends Equatable {
     question,
     category,
     difficulty,
-    expectedDuration,
-    tags,
-    sampleAnswer,
     evaluationCriteria,
     roleSpecific,
     createdAt,

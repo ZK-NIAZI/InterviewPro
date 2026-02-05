@@ -274,6 +274,90 @@ class Interview extends Equatable {
     };
   }
 
+  /// Creates an Interview from JSON data
+  factory Interview.fromJson(Map<String, dynamic> json) {
+    return Interview(
+      id: json['id'] ?? '',
+      candidateName: json['candidateName'] ?? '',
+      role: _parseRole(json['role']),
+      level: _parseLevel(json['level']),
+      startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
+      endTime: json['endTime'] != null
+          ? DateTime.tryParse(json['endTime'])
+          : null,
+      responses: (json['responses'] as List<dynamic>? ?? [])
+          .map((r) => QuestionResponse.fromJson(r))
+          .toList(),
+      status: _parseInterviewStatus(json['status']),
+      overallScore: json['overallScore']?.toDouble(),
+      technicalScore: json['technicalScore']?.toDouble(),
+      softSkillsScore: json['softSkillsScore']?.toDouble(),
+      currentQuestionIndex: json['currentQuestionIndex'] ?? 0,
+      totalQuestions: json['totalQuestions'] ?? 25,
+    );
+  }
+
+  /// Converts this Interview to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'candidateName': candidateName,
+      'role': role.toString(),
+      'level': level.toString(),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+      'responses': responses.map((r) => r.toJson()).toList(),
+      'status': status.toString(),
+      'overallScore': overallScore,
+      'technicalScore': technicalScore,
+      'softSkillsScore': softSkillsScore,
+      'currentQuestionIndex': currentQuestionIndex,
+      'totalQuestions': totalQuestions,
+    };
+  }
+
+  /// Helper method to parse Role from string
+  static Role _parseRole(dynamic roleValue) {
+    if (roleValue == null) return Role.flutter;
+
+    final roleStr = roleValue.toString().toLowerCase();
+    for (final role in Role.values) {
+      if (role.toString().toLowerCase().contains(roleStr) ||
+          roleStr.contains(role.toString().toLowerCase())) {
+        return role;
+      }
+    }
+    return Role.flutter; // Default fallback
+  }
+
+  /// Helper method to parse Level from string
+  static Level _parseLevel(dynamic levelValue) {
+    if (levelValue == null) return Level.associate;
+
+    final levelStr = levelValue.toString().toLowerCase();
+    for (final level in Level.values) {
+      if (level.toString().toLowerCase().contains(levelStr) ||
+          levelStr.contains(level.toString().toLowerCase())) {
+        return level;
+      }
+    }
+    return Level.associate; // Default fallback
+  }
+
+  /// Helper method to parse InterviewStatus from string
+  static InterviewStatus _parseInterviewStatus(dynamic statusValue) {
+    if (statusValue == null) return InterviewStatus.inProgress;
+
+    final statusStr = statusValue.toString().toLowerCase();
+    for (final status in InterviewStatus.values) {
+      if (status.toString().toLowerCase().contains(statusStr) ||
+          statusStr.contains(status.toString().toLowerCase())) {
+        return status;
+      }
+    }
+    return InterviewStatus.inProgress; // Default fallback
+  }
+
   @override
   List<Object?> get props => [
     id,

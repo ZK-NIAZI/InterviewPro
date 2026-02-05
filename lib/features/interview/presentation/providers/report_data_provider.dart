@@ -21,20 +21,35 @@ class ReportDataProvider extends ChangeNotifier {
 
   /// Load interview data and generate report data
   Future<void> loadInterviewData(String interviewId) async {
+    debugPrint('🔄 Starting to load interview data for ID: $interviewId');
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      debugPrint('📞 Calling repository.getInterviewById($interviewId)');
+
       // Load interview from repository
       _currentInterview = await _interviewRepository.getInterviewById(
         interviewId,
       );
 
+      debugPrint(
+        '📋 Repository returned: ${_currentInterview != null ? 'Interview found' : 'null'}',
+      );
+
       if (_currentInterview == null) {
         _error = 'Interview not found';
+        debugPrint('❌ Interview not found in repository for ID: $interviewId');
         return;
       }
+
+      debugPrint('✅ Interview found: ${_currentInterview!.candidateName}');
+      debugPrint('📊 Interview status: ${_currentInterview!.status}');
+      debugPrint(
+        '🎯 Interview responses: ${_currentInterview!.responses.length}',
+      );
 
       // Generate comprehensive report data
       _reportData = _generateReportData(_currentInterview!);

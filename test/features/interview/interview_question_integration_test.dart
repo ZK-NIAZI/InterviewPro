@@ -1,247 +1,212 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:interview_pro_app/shared/domain/entities/interview_question.dart';
+import 'package:interview_pro_app/shared/data/repositories/interview_question_repository_impl.dart';
+import 'package:interview_pro_app/features/interview/presentation/providers/interview_question_provider.dart';
+import 'package:interview_pro_app/core/services/service_locator.dart';
+
+import '../../helpers/test_helper.dart';
 
 void main() {
-  group('Interview Question Entity Tests', () {
-    group('Question Entity Functionality', () {
-      test('should create interview question with all properties', () {
-        // Arrange & Act
-        final question = InterviewQuestion(
-          id: 'test_001',
-          question: 'What is Flutter?',
-          category: 'technical',
-          difficulty: 'beginner',
-          expectedDuration: 5,
-          tags: ['flutter', 'mobile'],
-          evaluationCriteria: ['Basic knowledge'],
-          roleSpecific: 'Flutter Developer',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
+  group('Interview Question Integration Tests', () {
+    late InterviewQuestionProvider provider;
 
-        // Assert
-        expect(question.id, equals('test_001'));
-        expect(question.question, equals('What is Flutter?'));
-        expect(question.category, equals('technical'));
-        expect(question.difficulty, equals('beginner'));
-        expect(question.roleSpecific, equals('Flutter Developer'));
-      });
-
-      test('should match difficulty correctly', () {
-        // Arrange
-        final question = InterviewQuestion(
-          id: 'test_001',
-          question: 'Test question',
-          category: 'technical',
-          difficulty: 'intermediate',
-          expectedDuration: 5,
-          tags: ['test'],
-          evaluationCriteria: ['Knowledge'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-
-        // Act & Assert
-        expect(question.matchesDifficulty('intermediate'), isTrue);
-        expect(question.matchesDifficulty('beginner'), isFalse);
-        expect(
-          question.matchesDifficulty('INTERMEDIATE'),
-          isTrue,
-        ); // Case insensitive
-      });
-
-      test('should check role suitability correctly', () {
-        // Arrange
-        final question = InterviewQuestion(
-          id: 'test_001',
-          question: 'Test question',
-          category: 'role-specific',
-          difficulty: 'intermediate',
-          expectedDuration: 5,
-          tags: ['flutter'],
-          evaluationCriteria: ['Knowledge'],
-          roleSpecific: 'Flutter Developer',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-
-        // Act & Assert
-        expect(question.isSuitableForRole('Flutter Developer'), isTrue);
-        expect(question.isSuitableForRole('Flutter'), isTrue);
-        expect(question.isSuitableForRole('React Developer'), isFalse);
-        expect(
-          question.isSuitableForRole(null),
-          isTrue,
-        ); // Null role should match
-      });
-
-      test('should match search criteria correctly', () {
-        // Arrange
-        final question = InterviewQuestion(
-          id: 'test_001',
-          question: 'Test question',
-          category: 'technical',
-          difficulty: 'intermediate',
-          expectedDuration: 5,
-          tags: ['flutter', 'mobile', 'dart'],
-          evaluationCriteria: ['Knowledge'],
-          roleSpecific: 'Flutter Developer',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-
-        // Act & Assert
-        expect(
-          question.matchesSearchCriteria(
-            categoryFilter: 'technical',
-            difficultyFilter: 'intermediate',
-            roleFilter: 'Flutter Developer',
-            tagFilters: ['flutter'],
-          ),
-          isTrue,
-        );
-
-        expect(
-          question.matchesSearchCriteria(categoryFilter: 'behavioral'),
-          isFalse,
-        );
-      });
-
-      test('should convert to and from JSON correctly', () {
-        // Arrange
-        final originalQuestion = InterviewQuestion(
-          id: 'test_001',
-          question: 'What is Flutter?',
-          category: 'technical',
-          difficulty: 'beginner',
-          expectedDuration: 5,
-          tags: ['flutter', 'mobile'],
-          sampleAnswer: 'Flutter is a UI toolkit',
-          evaluationCriteria: ['Basic knowledge', 'Clear explanation'],
-          roleSpecific: 'Flutter Developer',
-          createdAt: DateTime(2024, 1, 1),
-          updatedAt: DateTime(2024, 1, 2),
-          isActive: true,
-        );
-
-        // Act
-        final json = originalQuestion
-            .toTestJson(); // Use toTestJson for complete serialization
-        final reconstructedQuestion = InterviewQuestion.fromJson(json);
-
-        // Assert
-        expect(reconstructedQuestion.id, equals(originalQuestion.id));
-        expect(
-          reconstructedQuestion.question,
-          equals(originalQuestion.question),
-        );
-        expect(
-          reconstructedQuestion.category,
-          equals(originalQuestion.category),
-        );
-        expect(
-          reconstructedQuestion.difficulty,
-          equals(originalQuestion.difficulty),
-        );
-        expect(reconstructedQuestion.tags, equals(originalQuestion.tags));
-        expect(
-          reconstructedQuestion.sampleAnswer,
-          equals(originalQuestion.sampleAnswer),
-        );
-        expect(
-          reconstructedQuestion.evaluationCriteria,
-          equals(originalQuestion.evaluationCriteria),
-        );
-        expect(
-          reconstructedQuestion.roleSpecific,
-          equals(originalQuestion.roleSpecific),
-        );
-        expect(
-          reconstructedQuestion.isActive,
-          equals(originalQuestion.isActive),
-        );
-      });
+    setUpAll(() async {
+      await TestHelper.setupTest();
     });
 
-    group('Display Properties', () {
-      test('should return correct category display names', () {
-        // Test cases for different categories
-        final testCases = [
-          {'category': 'technical', 'expected': 'Technical Skills'},
-          {'category': 'behavioral', 'expected': 'Behavioral & Soft Skills'},
-          {'category': 'leadership', 'expected': 'Leadership & Management'},
-          {'category': 'role-specific', 'expected': 'Role-Specific Questions'},
-          {'category': 'custom', 'expected': 'custom'},
-        ];
+    tearDownAll(() async {
+      await TestHelper.teardownTest();
+    });
 
-        for (final testCase in testCases) {
-          final question = InterviewQuestion(
-            id: 'test',
-            question: 'Test',
-            category: testCase['category']!,
-            difficulty: 'intermediate',
-            expectedDuration: 5,
-            tags: [],
-            evaluationCriteria: [],
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
+    setUp(() async {
+      // Initialize service locator for each test
+      await initializeDependencies();
+      provider = InterviewQuestionProvider(sl());
+    });
 
-          expect(question.categoryDisplayName, equals(testCase['expected']));
-        }
-      });
+    tearDown(() async {
+      // Clean up after each test
+      TestHelper.clearTestCaches();
+    });
 
-      test('should return correct difficulty display names', () {
-        // Test cases for different difficulties
-        final testCases = [
-          {'difficulty': 'beginner', 'expected': 'Beginner'},
-          {'difficulty': 'intermediate', 'expected': 'Intermediate'},
-          {'difficulty': 'advanced', 'expected': 'Advanced'},
-          {'difficulty': 'expert', 'expected': 'expert'},
-        ];
+    test('should load questions from local JSON successfully', () async {
+      // Load questions from provider
+      await provider.loadQuestions();
 
-        for (final testCase in testCases) {
-          final question = InterviewQuestion(
-            id: 'test',
-            question: 'Test',
-            category: 'technical',
-            difficulty: testCase['difficulty']!,
-            expectedDuration: 5,
-            tags: [],
-            evaluationCriteria: [],
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
+      // Verify questions were loaded
+      expect(provider.questions, isNotEmpty);
+      expect(provider.isLoading, false);
+      expect(provider.error, null);
 
-          expect(question.difficultyDisplayName, equals(testCase['expected']));
-        }
-      });
+      // Verify question structure
+      final firstQuestion = provider.questions.first;
+      expect(firstQuestion.id, isNotEmpty);
+      expect(firstQuestion.question, isNotEmpty);
+      expect(firstQuestion.category, isNotEmpty);
+      expect(firstQuestion.difficulty, isNotEmpty);
+      expect(firstQuestion.evaluationCriteria, isNotEmpty);
+    });
 
-      test('should return correct difficulty colors', () {
-        // Test cases for difficulty colors
-        final testCases = [
-          {'difficulty': 'beginner', 'expected': '#4CAF50'},
-          {'difficulty': 'intermediate', 'expected': '#FF9800'},
-          {'difficulty': 'advanced', 'expected': '#F44336'},
-          {'difficulty': 'expert', 'expected': '#757575'},
-        ];
+    test('should filter questions by category correctly', () async {
+      await provider.loadQuestions();
 
-        for (final testCase in testCases) {
-          final question = InterviewQuestion(
-            id: 'test',
-            question: 'Test',
-            category: 'technical',
-            difficulty: testCase['difficulty']!,
-            expectedDuration: 5,
-            tags: [],
-            evaluationCriteria: [],
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
+      // Set category filter
+      provider.setSelectedCategory('technical');
 
-          expect(question.difficultyColor, equals(testCase['expected']));
-        }
-      });
+      final filteredQuestions = provider.filteredQuestions;
+
+      // Verify all filtered questions are technical
+      expect(filteredQuestions, isNotEmpty);
+      for (final question in filteredQuestions) {
+        expect(question.category, 'technical');
+      }
+    });
+
+    test('should filter questions by difficulty correctly', () async {
+      await provider.loadQuestions();
+
+      // Set difficulty filter
+      provider.setSelectedDifficulty('beginner');
+
+      final filteredQuestions = provider.filteredQuestions;
+
+      // Verify all filtered questions are beginner level
+      expect(filteredQuestions, isNotEmpty);
+      for (final question in filteredQuestions) {
+        expect(question.difficulty, 'beginner');
+      }
+    });
+
+    test('should filter questions by role correctly', () async {
+      await provider.loadQuestions();
+
+      // Set role filter
+      provider.setSelectedRole('Flutter Developer');
+
+      final filteredQuestions = provider.filteredQuestions;
+
+      // Verify filtered questions are suitable for Flutter Developer
+      for (final question in filteredQuestions) {
+        expect(question.isSuitableForRole('Flutter Developer'), true);
+      }
+    });
+
+    test('should get random questions correctly', () async {
+      final repository = InterviewQuestionRepositoryImpl(sl());
+
+      // Get random questions
+      final randomQuestions = await repository.getRandomQuestions(count: 5);
+
+      // Verify we got questions
+      expect(randomQuestions, isNotEmpty);
+      expect(randomQuestions.length, lessThanOrEqualTo(5));
+
+      // Verify question structure
+      for (final question in randomQuestions) {
+        expect(question.id, isNotEmpty);
+        expect(question.question, isNotEmpty);
+        expect(question.category, isNotEmpty);
+        expect(question.difficulty, isNotEmpty);
+      }
+    });
+
+    test('should handle search criteria correctly', () async {
+      await provider.loadQuestions();
+
+      // Apply multiple filters
+      provider.setSelectedCategory('technical');
+      provider.setSelectedDifficulty('intermediate');
+
+      final filteredQuestions = provider.filteredQuestions;
+
+      // Verify all questions match criteria
+      for (final question in filteredQuestions) {
+        expect(question.category, 'technical');
+        expect(question.difficulty, 'intermediate');
+      }
+    });
+
+    test('should clear filters correctly', () async {
+      await provider.loadQuestions();
+
+      // Apply filters
+      provider.setSelectedCategory('technical');
+      provider.setSelectedDifficulty('beginner');
+      provider.setSelectedRole('Flutter Developer');
+
+      // Clear filters
+      provider.clearFilters();
+
+      // Verify filters are cleared
+      expect(provider.selectedCategory, null);
+      expect(provider.selectedDifficulty, null);
+      expect(provider.selectedRole, null);
+      expect(provider.selectedTags, isEmpty);
+
+      // Verify all questions are shown
+      expect(provider.filteredQuestions.length, provider.questions.length);
+    });
+
+    test('should handle question creation and JSON serialization', () {
+      final question = InterviewQuestion(
+        id: 'test_integration_001',
+        question: 'Integration test question',
+        category: 'technical',
+        difficulty: 'intermediate',
+        evaluationCriteria: ['Test criteria'],
+        roleSpecific: 'Flutter Developer',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Test JSON serialization
+      final json = question.toJson();
+      expect(json['question'], 'Integration test question');
+      expect(json['category'], 'technical');
+      expect(json['difficulty'], 'intermediate');
+      expect(json['evaluationCriteria'], ['Test criteria']);
+      expect(json['roleSpecific'], 'Flutter Developer');
+
+      // Test JSON deserialization
+      final reconstructed = InterviewQuestion.fromJson(json);
+      expect(reconstructed.question, question.question);
+      expect(reconstructed.category, question.category);
+      expect(reconstructed.difficulty, question.difficulty);
+      expect(reconstructed.evaluationCriteria, question.evaluationCriteria);
+      expect(reconstructed.roleSpecific, question.roleSpecific);
+    });
+
+    test('should handle provider state management correctly', () async {
+      // Initial state
+      expect(provider.isLoading, false);
+      expect(provider.questions, isEmpty);
+      expect(provider.error, null);
+
+      // Loading state
+      final loadingFuture = provider.loadQuestions();
+      expect(provider.isLoading, true);
+
+      await loadingFuture;
+
+      // Loaded state
+      expect(provider.isLoading, false);
+      expect(provider.questions, isNotEmpty);
+      expect(provider.error, null);
+    });
+
+    test('should handle question statistics correctly', () async {
+      final repository = InterviewQuestionRepositoryImpl(sl());
+
+      // Get question statistics
+      final stats = await repository.getQuestionStats();
+
+      // Verify statistics structure
+      expect(stats['totalQuestions'], isA<int>());
+      expect(stats['byCategory'], isA<Map<String, int>>());
+      expect(stats['byDifficulty'], isA<Map<String, int>>());
+
+      // Verify we have questions
+      expect(stats['totalQuestions'], greaterThan(0));
     });
   });
 }

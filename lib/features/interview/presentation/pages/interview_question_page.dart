@@ -782,6 +782,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     String candidateName = 'John Doe'; // Default fallback
     String interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
 
+    debugPrint('🚀 Starting interview completion and navigation...');
+
     if (_sessionStarted && _sessionManager.hasActiveSession) {
       try {
         // Move to next question first to complete all responses
@@ -790,22 +792,28 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
           await _sessionManager.nextQuestion();
         }
 
+        debugPrint('📝 Completing interview session...');
         // Complete the interview session
         final completedInterview = await _sessionManager.completeInterview();
         candidateName = completedInterview.candidateName;
         interviewId = completedInterview.id;
 
         debugPrint('✅ Interview completed: $interviewId');
+        debugPrint('👤 Candidate: $candidateName');
       } catch (e) {
         debugPrint('❌ Error completing interview: $e');
       }
+    } else {
+      debugPrint('⚠️ No active session, using fallback data');
     }
 
     // Navigate to candidate evaluation
     if (mounted) {
-      context.push(
-        '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId',
-      );
+      final navigationUrl =
+          '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId';
+      debugPrint('🧭 Navigating to: $navigationUrl');
+
+      context.push(navigationUrl);
     }
   }
 
