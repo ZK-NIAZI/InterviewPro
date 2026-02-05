@@ -27,8 +27,14 @@ void main() async {
     ),
   );
 
-  // Initialize dependencies
-  await initializeDependencies();
+  // Initialize dependencies with error handling (CRASH FIX)
+  try {
+    await initializeDependencies();
+    debugPrint('✅ Dependencies initialized successfully');
+  } catch (e) {
+    debugPrint('⚠️ Failed to initialize dependencies: $e');
+    // Continue with app launch - some features may not work but app won't crash
+  }
 
   runApp(const InterviewProApp());
 }

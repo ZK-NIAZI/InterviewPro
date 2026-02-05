@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.interviewpro.app"
+    namespace = "com.example.interview_pro_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,8 +20,8 @@ android {
     }
 
     defaultConfig {
-        // Professional application ID for production deployment
-        applicationId = "com.interviewpro.app"
+        // Original application ID
+        applicationId = "com.example.interview_pro_app"
         
         // Optimized SDK versions for production
         minSdk = flutter.minSdkVersion  // Android 5.0 (API level 21) for broader compatibility
