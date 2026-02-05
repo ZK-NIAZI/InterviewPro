@@ -12,6 +12,7 @@ abstract class InterviewQuestionRemoteDatasource {
     String? category,
     String? difficulty,
     String? roleSpecific,
+    String? experienceLevel,
     List<String>? tags,
     int limit = 100,
   });
@@ -92,6 +93,7 @@ class InterviewQuestionRemoteDatasourceImpl
     String? category,
     String? difficulty,
     String? roleSpecific,
+    String? experienceLevel,
     List<String>? tags,
     int limit = 100,
   }) async {
@@ -111,6 +113,9 @@ class InterviewQuestionRemoteDatasourceImpl
       }
       if (roleSpecific != null) {
         queries.add(Query.equal('roleSpecific', roleSpecific));
+      }
+      if (experienceLevel != null) {
+        queries.add(Query.equal('experienceLevel', experienceLevel));
       }
 
       final response = await _databases.listDocuments(
@@ -157,6 +162,13 @@ class InterviewQuestionRemoteDatasourceImpl
     return getQuestions(roleSpecific: role);
   }
 
+  /// Get questions by experience level
+  Future<List<InterviewQuestion>> getQuestionsByExperienceLevel(
+    String experienceLevel,
+  ) async {
+    return getQuestions(experienceLevel: experienceLevel);
+  }
+
   @override
   /// Get random questions for interview
   Future<List<InterviewQuestion>> getRandomQuestions({
@@ -164,11 +176,13 @@ class InterviewQuestionRemoteDatasourceImpl
     String? category,
     String? difficulty,
     String? roleSpecific,
+    String? experienceLevel,
   }) async {
     final allQuestions = await getQuestions(
       category: category,
       difficulty: difficulty,
       roleSpecific: roleSpecific,
+      experienceLevel: experienceLevel,
       limit: 200, // Get more to have better randomization
     );
 
@@ -289,6 +303,7 @@ class InterviewQuestionRemoteDatasourceImpl
             questionData['evaluationCriteria'],
           ),
           roleSpecific: questionData['roleSpecific'],
+          experienceLevel: questionData['experienceLevel'],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );

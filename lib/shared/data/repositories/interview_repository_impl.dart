@@ -1,13 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/repositories/interview_repository.dart';
 
-/// Enhanced implementation of InterviewRepository with SharedPreferences persistence
-/// Combines in-memory storage for performance with persistent storage for reliability
+/// Enhanced implementation of InterviewRepository with multiple persistence fallbacks
+/// Primary: SharedPreferences, Fallback: File system storage
+/// Always maintains in-memory storage for performance
 class InterviewRepositoryImpl implements InterviewRepository {
-  // In-memory storage for performance
+  // In-memory storage for performance (always working)
   final Map<String, Interview> _interviews = {};
   final Map<String, List<QuestionResponse>> _responses = {};
 
@@ -15,19 +18,44 @@ class InterviewRepositoryImpl implements InterviewRepository {
   static const String _interviewsKey = 'stored_interviews';
   static const String _responsesKey = 'stored_responses';
 
+  // File system fallback
+  static const String _interviewsFileName = 'interviews_backup.json';
+  static const String _responsesFileName = 'responses_backup.json';
+
   // Initialization flag
   bool _isInitialized = false;
+  bool _sharedPrefsAvailable = true;
 
   InterviewRepositoryImpl();
 
-  /// Initialize the repository by loading data from SharedPreferences
+  /// Initialize the repository by loading data from multiple sources
   Future<void> _ensureInitialized() async {
     if (_isInitialized) return;
 
     try {
       debugPrint(
-        '🔄 Initializing InterviewRepository with persistent storage...',
+        '🔄 Initializing InterviewRepository with fallback persistence...',
       );
+
+      // Try SharedPreferences first
+      await _loadFromSharedPreferences();
+
+      // If SharedPreferences failed, try file system fallback
+      if (!_sharedPrefsAvailable) {
+        await _loadFromFileSystem();
+      }
+
+      _isInitialized = true;
+      debugPrint('✅ InterviewRepository initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Error initializing InterviewRepository: $e');
+      _isInitialized = true; // Continue with empty state
+    }
+  }
+
+  /// Load data from SharedPreferences (primary method)
+  Future<void> _loadFromSharedPreferences() async {
+    try {
       final prefs = await SharedPreferences.getInstance();
 
       // Load interviews from SharedPreferences
@@ -43,7 +71,7 @@ class InterviewRepositoryImpl implements InterviewRepository {
           }
         }
         debugPrint(
-          '✅ Loaded ${_interviews.length} interviews from persistent storage',
+          '✅ Loaded ${_interviews.length} interviews from SharedPreferences',
         );
       }
 
@@ -62,24 +90,75 @@ class InterviewRepositoryImpl implements InterviewRepository {
           }
         }
         debugPrint(
-          '✅ Loaded responses for ${_responses.length} interviews from persistent storage',
+          '✅ Loaded responses for ${_responses.length} interviews from SharedPreferences',
         );
       }
 
-      _isInitialized = true;
-      debugPrint('✅ InterviewRepository initialized successfully');
+      _sharedPrefsAvailable = true;
     } catch (e) {
-      debugPrint('❌ Error initializing InterviewRepository: $e');
-      _isInitialized = true; // Continue with empty state
+      debugPrint(
+        '⚠️ SharedPreferences unavailable, switching to file fallback: $e',
+      );
+      _sharedPrefsAvailable = false;
     }
   }
 
-  /// Save interviews to SharedPreferences
+  /// Load data from file system (fallback method)
+  Future<void> _loadFromFileSystem() async {
+    try {
+      debugPrint('📁 Loading data from file system fallback...');
+      final directory = await getApplicationDocumentsDirectory();
+
+      // Load interviews from file
+      final interviewsFile = File('${directory.path}/$_interviewsFileName');
+      if (await interviewsFile.exists()) {
+        final interviewsJson = await interviewsFile.readAsString();
+        final Map<String, dynamic> interviewsMap = json.decode(interviewsJson);
+        for (final entry in interviewsMap.entries) {
+          try {
+            final interview = Interview.fromJson(entry.value);
+            _interviews[entry.key] = interview;
+          } catch (e) {
+            debugPrint(
+              '⚠️ Failed to load interview ${entry.key} from file: $e',
+            );
+          }
+        }
+        debugPrint(
+          '✅ Loaded ${_interviews.length} interviews from file system',
+        );
+      }
+
+      // Load responses from file
+      final responsesFile = File('${directory.path}/$_responsesFileName');
+      if (await responsesFile.exists()) {
+        final responsesJson = await responsesFile.readAsString();
+        final Map<String, dynamic> responsesMap = json.decode(responsesJson);
+        for (final entry in responsesMap.entries) {
+          try {
+            final responsesList = (entry.value as List)
+                .map((r) => QuestionResponse.fromJson(r))
+                .toList();
+            _responses[entry.key] = responsesList;
+          } catch (e) {
+            debugPrint(
+              '⚠️ Failed to load responses for ${entry.key} from file: $e',
+            );
+          }
+        }
+        debugPrint(
+          '✅ Loaded responses for ${_responses.length} interviews from file system',
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ File system fallback also failed: $e');
+    }
+  }
+
+  /// Save interviews with fallback mechanism
   Future<void> _persistInterviews() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final interviewsMap = <String, dynamic>{};
-
       for (final entry in _interviews.entries) {
         try {
           interviewsMap[entry.key] = entry.value.toJson();
@@ -88,19 +167,32 @@ class InterviewRepositoryImpl implements InterviewRepository {
         }
       }
 
-      await prefs.setString(_interviewsKey, json.encode(interviewsMap));
-      debugPrint('💾 Persisted ${_interviews.length} interviews to storage');
+      // Try SharedPreferences first
+      if (_sharedPrefsAvailable) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_interviewsKey, json.encode(interviewsMap));
+          debugPrint(
+            '💾 Persisted ${_interviews.length} interviews to SharedPreferences',
+          );
+          return; // Success, no need for fallback
+        } catch (e) {
+          debugPrint('⚠️ SharedPreferences failed, using file fallback: $e');
+          _sharedPrefsAvailable = false;
+        }
+      }
+
+      // File system fallback
+      await _persistInterviewsToFile(interviewsMap);
     } catch (e) {
-      debugPrint('❌ Error persisting interviews: $e');
+      debugPrint('❌ All persistence methods failed for interviews: $e');
     }
   }
 
-  /// Save responses to SharedPreferences
+  /// Save responses with fallback mechanism
   Future<void> _persistResponses() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final responsesMap = <String, dynamic>{};
-
       for (final entry in _responses.entries) {
         try {
           responsesMap[entry.key] = entry.value.map((r) => r.toJson()).toList();
@@ -109,12 +201,57 @@ class InterviewRepositoryImpl implements InterviewRepository {
         }
       }
 
-      await prefs.setString(_responsesKey, json.encode(responsesMap));
+      // Try SharedPreferences first
+      if (_sharedPrefsAvailable) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_responsesKey, json.encode(responsesMap));
+          debugPrint(
+            '💾 Persisted responses for ${_responses.length} interviews to SharedPreferences',
+          );
+          return; // Success, no need for fallback
+        } catch (e) {
+          debugPrint('⚠️ SharedPreferences failed, using file fallback: $e');
+          _sharedPrefsAvailable = false;
+        }
+      }
+
+      // File system fallback
+      await _persistResponsesToFile(responsesMap);
+    } catch (e) {
+      debugPrint('❌ All persistence methods failed for responses: $e');
+    }
+  }
+
+  /// File system fallback for interviews
+  Future<void> _persistInterviewsToFile(
+    Map<String, dynamic> interviewsMap,
+  ) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_interviewsFileName');
+      await file.writeAsString(json.encode(interviewsMap));
       debugPrint(
-        '💾 Persisted responses for ${_responses.length} interviews to storage',
+        '💾 Persisted ${_interviews.length} interviews to file system',
       );
     } catch (e) {
-      debugPrint('❌ Error persisting responses: $e');
+      debugPrint('❌ File system persistence failed for interviews: $e');
+    }
+  }
+
+  /// File system fallback for responses
+  Future<void> _persistResponsesToFile(
+    Map<String, dynamic> responsesMap,
+  ) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$_responsesFileName');
+      await file.writeAsString(json.encode(responsesMap));
+      debugPrint(
+        '💾 Persisted responses for ${_responses.length} interviews to file system',
+      );
+    } catch (e) {
+      debugPrint('❌ File system persistence failed for responses: $e');
     }
   }
 
@@ -128,13 +265,38 @@ class InterviewRepositoryImpl implements InterviewRepository {
     _clearPersistentStorage();
   }
 
-  /// Clear persistent storage (for testing)
+  /// Clear persistent storage with fallback handling
   Future<void> _clearPersistentStorage() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_interviewsKey);
-      await prefs.remove(_responsesKey);
-      debugPrint('🧹 Cleared persistent storage');
+      // Try SharedPreferences first
+      if (_sharedPrefsAvailable) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(_interviewsKey);
+          await prefs.remove(_responsesKey);
+          debugPrint('🧹 Cleared SharedPreferences storage');
+        } catch (e) {
+          debugPrint('⚠️ SharedPreferences clear failed: $e');
+          _sharedPrefsAvailable = false;
+        }
+      }
+
+      // Clear file system fallback
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final interviewsFile = File('${directory.path}/$_interviewsFileName');
+        final responsesFile = File('${directory.path}/$_responsesFileName');
+
+        if (await interviewsFile.exists()) {
+          await interviewsFile.delete();
+        }
+        if (await responsesFile.exists()) {
+          await responsesFile.delete();
+        }
+        debugPrint('🧹 Cleared file system storage');
+      } catch (e) {
+        debugPrint('❌ Error clearing file system storage: $e');
+      }
     } catch (e) {
       debugPrint('❌ Error clearing persistent storage: $e');
     }

@@ -204,16 +204,704 @@
             "User-centered approach",
             "Practical experience with design tools"
           ]
+        },
+        {
+          "id": "role_flutter_002",
+          "question": "How do you handle state management in a complex Flutter application?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic understanding of state management",
+            "Knowledge of setState and basic patterns",
+            "Awareness of state management challenges"
+          ]
+        },
+        {
+          "id": "role_flutter_003",
+          "question": "Explain the difference between StatefulWidget and StatelessWidget with examples.",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Clear understanding of widget types",
+            "Practical examples provided",
+            "Basic Flutter concepts mastery"
+          ]
+        },
+        {
+          "id": "role_flutter_004",
+          "question": "How would you optimize Flutter app performance for production?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Knowledge of performance optimization techniques",
+            "Understanding of build modes and profiling",
+            "Practical optimization experience"
+          ]
+        },
+        {
+          "id": "role_flutter_005",
+          "question": "Describe your approach to implementing custom animations in Flutter.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Understanding of animation controllers",
+            "Knowledge of Tween and Curve classes",
+            "Practical animation implementation experience"
+          ]
+        },
+        {
+          "id": "role_flutter_006",
+          "question": "How would you architect a large-scale Flutter application with multiple teams?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Advanced architectural patterns knowledge",
+            "Understanding of modular development",
+            "Leadership and technical decision-making skills"
+          ]
+        },
+        {
+          "id": "role_flutter_007",
+          "question": "Explain your strategy for implementing CI/CD pipelines for Flutter apps.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "DevOps knowledge for mobile development",
+            "Understanding of automated testing strategies",
+            "Experience with deployment automation"
+          ]
+        },
+        {
+          "id": "role_flutter_008",
+          "question": "How do you ensure code quality and maintainability in Flutter projects?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Flutter Developer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Code review and quality assurance processes",
+            "Knowledge of testing strategies",
+            "Leadership in technical standards"
+          ]
+        },
+        {
+          "id": "role_backend_001",
+          "question": "What is the difference between SQL and NoSQL databases?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic understanding of database types",
+            "Knowledge of use cases for each",
+            "Awareness of trade-offs"
+          ]
+        },
+        {
+          "id": "role_backend_002",
+          "question": "Explain how HTTP requests work and the different HTTP methods.",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of HTTP protocol basics",
+            "Knowledge of common HTTP methods",
+            "Basic web communication concepts"
+          ]
+        },
+        {
+          "id": "role_backend_003",
+          "question": "How would you design a simple REST API for a blog application?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic API design principles",
+            "Understanding of CRUD operations",
+            "Simple endpoint structure knowledge"
+          ]
+        },
+        {
+          "id": "role_backend_004",
+          "question": "How do you handle authentication and authorization in web applications?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Understanding of auth mechanisms",
+            "Knowledge of JWT, sessions, OAuth",
+            "Security best practices awareness"
+          ]
+        },
+        {
+          "id": "role_backend_005",
+          "question": "Explain database indexing and when you would use different types of indexes.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Deep understanding of database optimization",
+            "Knowledge of index types and trade-offs",
+            "Practical performance tuning experience"
+          ]
+        },
+        {
+          "id": "role_backend_006",
+          "question": "How would you design a caching strategy for a high-traffic application?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Understanding of caching layers",
+            "Knowledge of cache invalidation strategies",
+            "Performance optimization experience"
+          ]
+        },
+        {
+          "id": "role_backend_007",
+          "question": "Design a microservices architecture for an e-commerce platform.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Advanced system design skills",
+            "Understanding of distributed systems",
+            "Knowledge of service communication patterns"
+          ]
+        },
+        {
+          "id": "role_backend_008",
+          "question": "How would you handle database migrations in a production environment?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Production deployment experience",
+            "Understanding of zero-downtime migrations",
+            "Risk management and rollback strategies"
+          ]
+        },
+        {
+          "id": "role_backend_009",
+          "question": "Explain your approach to monitoring and observability in distributed systems.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Backend Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Understanding of monitoring strategies",
+            "Knowledge of logging, metrics, and tracing",
+            "Experience with production system management"
+          ]
+        },
+        {
+          "id": "role_hr_001",
+          "question": "How do you approach screening candidates for technical roles?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic understanding of recruitment process",
+            "Knowledge of candidate evaluation methods",
+            "Awareness of technical role requirements"
+          ]
+        },
+        {
+          "id": "role_hr_002",
+          "question": "What strategies do you use to improve employee engagement?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of employee motivation factors",
+            "Knowledge of engagement measurement",
+            "Basic HR best practices awareness"
+          ]
+        },
+        {
+          "id": "role_hr_003",
+          "question": "How would you handle a workplace conflict between two employees?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Conflict resolution methodology",
+            "Understanding of mediation principles",
+            "Professional approach to sensitive situations"
+          ]
+        },
+        {
+          "id": "role_hr_004",
+          "question": "Describe your approach to developing employee performance improvement plans.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Performance management expertise",
+            "Understanding of goal-setting frameworks",
+            "Experience with employee development"
+          ]
+        },
+        {
+          "id": "role_hr_005",
+          "question": "How do you ensure compliance with employment laws and regulations?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Knowledge of employment law",
+            "Understanding of compliance frameworks",
+            "Risk management awareness"
+          ]
+        },
+        {
+          "id": "role_hr_006",
+          "question": "What metrics do you use to measure HR effectiveness and ROI?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Understanding of HR analytics",
+            "Knowledge of key performance indicators",
+            "Data-driven decision making skills"
+          ]
+        },
+        {
+          "id": "role_hr_007",
+          "question": "How would you design and implement a company-wide diversity and inclusion program?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Strategic thinking in D&I initiatives",
+            "Understanding of organizational change management",
+            "Leadership in cultural transformation"
+          ]
+        },
+        {
+          "id": "role_hr_008",
+          "question": "Describe your approach to organizational restructuring and change management.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Change management expertise",
+            "Understanding of organizational psychology",
+            "Strategic HR leadership skills"
+          ]
+        },
+        {
+          "id": "role_hr_009",
+          "question": "How do you develop and execute talent acquisition strategies for scaling organizations?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "HR Specialist",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Strategic recruitment planning",
+            "Understanding of talent market dynamics",
+            "Leadership in building recruitment teams"
+          ]
+        },
+        {
+          "id": "role_pm_002",
+          "question": "How do you gather and prioritize user requirements for a new feature?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic understanding of requirements gathering",
+            "Knowledge of user research methods",
+            "Awareness of prioritization frameworks"
+          ]
+        },
+        {
+          "id": "role_pm_003",
+          "question": "Explain the difference between user stories, epics, and tasks.",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of agile terminology",
+            "Knowledge of story writing techniques",
+            "Basic project management concepts"
+          ]
+        },
+        {
+          "id": "role_pm_004",
+          "question": "How would you measure the success of a product feature after launch?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of success metrics",
+            "Knowledge of analytics and measurement",
+            "Basic product evaluation skills"
+          ]
+        },
+        {
+          "id": "role_pm_005",
+          "question": "Describe your process for conducting competitive analysis.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Market research methodology",
+            "Competitive intelligence gathering",
+            "Strategic analysis capabilities"
+          ]
+        },
+        {
+          "id": "role_pm_006",
+          "question": "How do you balance technical debt with new feature development?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Understanding of technical concepts",
+            "Strategic prioritization skills",
+            "Stakeholder management experience"
+          ]
+        },
+        {
+          "id": "role_pm_007",
+          "question": "Explain your approach to product discovery and validation.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Product discovery methodologies",
+            "Validation techniques and frameworks",
+            "User-centered product development"
+          ]
+        },
+        {
+          "id": "role_pm_008",
+          "question": "How would you develop a go-to-market strategy for a new product?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Strategic marketing knowledge",
+            "Understanding of market positioning",
+            "Cross-functional leadership skills"
+          ]
+        },
+        {
+          "id": "role_pm_009",
+          "question": "Describe your approach to building and managing a product roadmap for multiple stakeholders.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Strategic product planning",
+            "Stakeholder management expertise",
+            "Long-term vision and execution"
+          ]
+        },
+        {
+          "id": "role_pm_010",
+          "question": "How do you handle product pivots and communicate changes to the organization?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "Product Manager",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Change management skills",
+            "Strategic communication abilities",
+            "Leadership in uncertain situations"
+          ]
+        },
+        {
+          "id": "role_qa_001",
+          "question": "What is the difference between manual testing and automated testing?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Basic understanding of testing approaches",
+            "Knowledge of when to use each method",
+            "Awareness of testing fundamentals"
+          ]
+        },
+        {
+          "id": "role_qa_002",
+          "question": "Explain the different types of software testing (unit, integration, system, acceptance).",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of testing pyramid",
+            "Knowledge of testing levels",
+            "Basic QA methodology awareness"
+          ]
+        },
+        {
+          "id": "role_qa_003",
+          "question": "How would you write a test case for a login functionality?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Test case writing skills",
+            "Understanding of test scenarios",
+            "Knowledge of edge cases and validation"
+          ]
+        },
+        {
+          "id": "role_qa_004",
+          "question": "Describe your approach to API testing and the tools you would use.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "API testing methodology",
+            "Knowledge of testing tools",
+            "Understanding of REST/GraphQL testing"
+          ]
+        },
+        {
+          "id": "role_qa_005",
+          "question": "How do you implement continuous testing in a CI/CD pipeline?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "DevOps and testing integration knowledge",
+            "Understanding of automated testing strategies",
+            "CI/CD pipeline experience"
+          ]
+        },
+        {
+          "id": "role_qa_006",
+          "question": "Explain your strategy for performance testing and load testing.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Performance testing methodology",
+            "Knowledge of load testing tools",
+            "Understanding of performance metrics"
+          ]
+        },
+        {
+          "id": "role_qa_007",
+          "question": "How would you design a comprehensive test automation framework?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Test automation architecture skills",
+            "Framework design principles",
+            "Leadership in QA strategy"
+          ]
+        },
+        {
+          "id": "role_qa_008",
+          "question": "Describe your approach to testing in microservices architecture.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Distributed systems testing knowledge",
+            "Understanding of service testing strategies",
+            "Advanced QA methodologies"
+          ]
+        },
+        {
+          "id": "role_qa_009",
+          "question": "How do you establish quality metrics and reporting for development teams?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "QA Engineer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Quality management expertise",
+            "Metrics and analytics knowledge",
+            "Leadership in quality assurance"
+          ]
+        },
+        {
+          "id": "role_ux_002",
+          "question": "What are the basic principles of user interface design?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of UI design fundamentals",
+            "Knowledge of design principles",
+            "Basic design theory awareness"
+          ]
+        },
+        {
+          "id": "role_ux_003",
+          "question": "How would you conduct user research for a new mobile app?",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "User research methodology basics",
+            "Understanding of research methods",
+            "User-centered design approach"
+          ]
+        },
+        {
+          "id": "role_ux_004",
+          "question": "Explain the difference between wireframes, mockups, and prototypes.",
+          "category": "role-specific",
+          "difficulty": "beginner",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "intern",
+          "evaluationCriteria": [
+            "Understanding of design deliverables",
+            "Knowledge of design process stages",
+            "Basic design workflow awareness"
+          ]
+        },
+        {
+          "id": "role_ux_005",
+          "question": "How do you approach responsive design for multiple screen sizes?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Responsive design methodology",
+            "Understanding of breakpoints and grids",
+            "Multi-device design experience"
+          ]
+        },
+        {
+          "id": "role_ux_006",
+          "question": "Describe your process for creating and maintaining a design system.",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Design system knowledge",
+            "Component-based design thinking",
+            "Consistency and scalability understanding"
+          ]
+        },
+        {
+          "id": "role_ux_007",
+          "question": "How do you conduct usability testing and interpret the results?",
+          "category": "role-specific",
+          "difficulty": "intermediate",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "associate",
+          "evaluationCriteria": [
+            "Usability testing methodology",
+            "Data analysis and interpretation skills",
+            "User feedback integration process"
+          ]
+        },
+        {
+          "id": "role_ux_008",
+          "question": "How would you design an accessible interface for users with disabilities?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Accessibility standards knowledge",
+            "Inclusive design principles",
+            "WCAG guidelines understanding"
+          ]
+        },
+        {
+          "id": "role_ux_009",
+          "question": "Describe your approach to leading design strategy for a product team.",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Design leadership skills",
+            "Strategic thinking in design",
+            "Cross-functional collaboration expertise"
+          ]
+        },
+        {
+          "id": "role_ux_010",
+          "question": "How do you balance user needs with business requirements in design decisions?",
+          "category": "role-specific",
+          "difficulty": "advanced",
+          "roleSpecific": "UI/UX Designer",
+          "experienceLevel": "senior",
+          "evaluationCriteria": [
+            "Strategic design thinking",
+            "Stakeholder management skills",
+            "Business acumen in design decisions"
+          ]
         }
       ]
     }
   ],
   "metadata": {
-    "version": "2.0.0",
+    "version": "3.0.0",
     "lastUpdated": "2025-02-05",
-    "totalQuestions": 16,
+    "totalQuestions": 70,
     "categories": 4,
     "difficultyLevels": ["beginner", "intermediate", "advanced"],
-    "removedFields": ["expectedDuration", "tags", "sampleAnswer"]
+    "experienceLevels": ["intern", "associate", "senior"],
+    "roles": ["Flutter Developer", "Backend Engineer", "HR Specialist", "Product Manager", "QA Engineer", "UI/UX Designer"],
+    "questionCoverage": {
+      "Flutter Developer": {"intern": 3, "associate": 3, "senior": 3},
+      "Backend Engineer": {"intern": 3, "associate": 3, "senior": 3},
+      "HR Specialist": {"intern": 3, "associate": 3, "senior": 3},
+      "Product Manager": {"intern": 3, "associate": 3, "senior": 3},
+      "QA Engineer": {"intern": 3, "associate": 3, "senior": 3},
+      "UI/UX Designer": {"intern": 3, "associate": 3, "senior": 3}
+    },
+    "removedFields": ["expectedDuration", "tags", "sampleAnswer"],
+    "phase3Completed": true,
+    "completeCoverage": "18 role-level combinations with 3+ questions each"
   }
 }

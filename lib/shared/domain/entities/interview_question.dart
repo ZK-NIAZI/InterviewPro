@@ -20,6 +20,9 @@ class InterviewQuestion extends Equatable {
   /// Role-specific identifier (optional, for role-specific questions)
   final String? roleSpecific;
 
+  /// Experience level this question is suitable for (intern, associate, senior)
+  final String? experienceLevel;
+
   /// When this question was created
   final DateTime createdAt;
 
@@ -36,6 +39,7 @@ class InterviewQuestion extends Equatable {
     required this.difficulty,
     required this.evaluationCriteria,
     this.roleSpecific,
+    this.experienceLevel,
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true,
@@ -49,6 +53,7 @@ class InterviewQuestion extends Equatable {
     String? difficulty,
     List<String>? evaluationCriteria,
     String? roleSpecific,
+    String? experienceLevel,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
@@ -60,6 +65,7 @@ class InterviewQuestion extends Equatable {
       difficulty: difficulty ?? this.difficulty,
       evaluationCriteria: evaluationCriteria ?? this.evaluationCriteria,
       roleSpecific: roleSpecific ?? this.roleSpecific,
+      experienceLevel: experienceLevel ?? this.experienceLevel,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
@@ -79,6 +85,31 @@ class InterviewQuestion extends Equatable {
         role.toLowerCase().contains(roleSpecific!.toLowerCase());
   }
 
+  /// Checks if this question is suitable for the given experience level
+  bool matchesExperienceLevel(String? level) {
+    if (level == null) return true;
+    if (experienceLevel == null) {
+      // Fallback: map difficulty to experience level for backward compatibility
+      final mappedLevel = _mapDifficultyToLevel(difficulty);
+      return mappedLevel.toLowerCase() == level.toLowerCase();
+    }
+    return experienceLevel!.toLowerCase() == level.toLowerCase();
+  }
+
+  /// Maps difficulty to experience level for backward compatibility
+  String _mapDifficultyToLevel(String diff) {
+    switch (diff.toLowerCase()) {
+      case 'beginner':
+        return 'intern';
+      case 'intermediate':
+        return 'associate';
+      case 'advanced':
+        return 'senior';
+      default:
+        return 'associate'; // Default fallback
+    }
+  }
+
   /// Checks if this question contains any of the given tags
   bool hasAnyTag(List<String> searchTags) {
     // Since tags are removed, return false for tag-based searches
@@ -90,6 +121,7 @@ class InterviewQuestion extends Equatable {
     String? categoryFilter,
     String? difficultyFilter,
     String? roleFilter,
+    String? experienceLevelFilter,
     List<String>? tagFilters,
   }) {
     if (categoryFilter != null &&
@@ -102,6 +134,11 @@ class InterviewQuestion extends Equatable {
     }
 
     if (roleFilter != null && !isSuitableForRole(roleFilter)) {
+      return false;
+    }
+
+    if (experienceLevelFilter != null &&
+        !matchesExperienceLevel(experienceLevelFilter)) {
       return false;
     }
 
@@ -165,6 +202,7 @@ class InterviewQuestion extends Equatable {
       'difficulty': difficulty,
       'evaluationCriteria': evaluationCriteria,
       'roleSpecific': roleSpecific,
+      'experienceLevel': experienceLevel,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isActive': isActive,
@@ -180,6 +218,7 @@ class InterviewQuestion extends Equatable {
       'difficulty': difficulty,
       'evaluationCriteria': evaluationCriteria,
       'roleSpecific': roleSpecific,
+      'experienceLevel': experienceLevel,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isActive': isActive,
@@ -195,6 +234,7 @@ class InterviewQuestion extends Equatable {
       difficulty: json['difficulty'] ?? '',
       evaluationCriteria: List<String>.from(json['evaluationCriteria'] ?? []),
       roleSpecific: json['roleSpecific'],
+      experienceLevel: json['experienceLevel'],
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
       isActive: json['isActive'] ?? true,
@@ -209,6 +249,7 @@ class InterviewQuestion extends Equatable {
     difficulty,
     evaluationCriteria,
     roleSpecific,
+    experienceLevel,
     createdAt,
     updatedAt,
     isActive,
