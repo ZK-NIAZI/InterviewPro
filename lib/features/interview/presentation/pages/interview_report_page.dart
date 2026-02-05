@@ -456,9 +456,9 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
   }
 
   void _onDownloadPDF(BuildContext context) {
-    // Navigate to report preview
+    // Navigate to report preview with interview ID for data loading
     context.push(
-      '${AppRouter.reportPreview}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${widget.overallScore}&communicationSkills=${widget.communicationSkills}&problemSolvingApproach=${widget.problemSolvingApproach}&culturalFit=${widget.culturalFit}&overallImpression=${widget.overallImpression}&additionalComments=${Uri.encodeComponent(widget.additionalComments)}',
+      '${AppRouter.reportPreview}?candidateName=${widget.candidateName}&role=${widget.role}&level=${widget.level}&overallScore=${widget.overallScore}&communicationSkills=${widget.communicationSkills}&problemSolvingApproach=${widget.problemSolvingApproach}&culturalFit=${widget.culturalFit}&overallImpression=${widget.overallImpression}&additionalComments=${Uri.encodeComponent(widget.additionalComments)}&interviewId=${widget.interviewId}',
     );
   }
 
