@@ -40,29 +40,17 @@ class QuickActionsWidget extends StatelessWidget {
             ),
             _buildActionCard(
               context,
-              icon: Icons.quiz_rounded,
-              title: AppStrings.questionBank,
-              subtitle: 'Browse questions',
-              color: AppColors.info,
-              onTap: () => context.push(AppRouter.questions),
-            ),
-            _buildActionCard(
-              context,
               icon: Icons.description_rounded,
               title: AppStrings.reports,
               subtitle: 'View reports',
               color: AppColors.success,
-              onTap: () => context.push(AppRouter.reports),
-            ),
-            _buildActionCard(
-              context,
-              icon: Icons.settings_rounded,
-              title: AppStrings.settings,
-              subtitle: 'App settings',
-              color: AppColors.grey600,
               onTap: () {
+                // Navigate to history tab to view reports
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings coming soon!')),
+                  const SnackBar(
+                    content: Text('View reports in History tab'),
+                    backgroundColor: AppColors.primary,
+                  ),
                 );
               },
             ),

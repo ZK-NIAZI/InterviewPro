@@ -123,27 +123,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
 
           const Spacer(),
-
-          // Debug: Config Test Button (removed - use Appwrite console)
-          IconButton(
-            onPressed: () {
-              context.push(AppRouter.questionBank);
-            },
-            icon: const Icon(Icons.quiz),
-            tooltip: 'Question Bank',
-          ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Use Appwrite console to manage configuration'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings_applications),
-            tooltip: 'Appwrite Console',
-          ),
         ],
       ),
     );
@@ -493,103 +472,111 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildRealInterviewCard(Interview interview) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.transparent),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  interview.candidateName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+    return GestureDetector(
+      onTap: () {
+        // Navigate to interview report with real data
+        context.push(
+          '${AppRouter.interviewReport}?candidateName=${Uri.encodeComponent(interview.candidateName)}&role=${Uri.encodeComponent(_getRoleDisplayName(interview.role))}&level=${Uri.encodeComponent(_getLevelDisplayName(interview.level))}&overallScore=${interview.overallScore ?? interview.technicalScore ?? 0.0}&communicationSkills=${interview.softSkillsScore?.round() ?? 3}&problemSolvingApproach=${interview.technicalScore?.round() ?? 3}&culturalFit=${interview.softSkillsScore?.round() ?? 3}&overallImpression=${interview.overallScore?.round() ?? 3}&additionalComments=${Uri.encodeComponent('Generated from interview session')}&interviewId=${interview.id}',
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.transparent),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    interview.candidateName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_getRoleDisplayName(interview.role)} - ${_getLevelDisplayName(interview.level)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_getRoleDisplayName(interview.role)} - ${_getLevelDisplayName(interview.level)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatInterviewDate(interview.startTime),
-                      style: TextStyle(
-                        fontSize: 12,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 14,
                         color: AppColors.textSecondary,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatusChip(interview.status),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatInterviewDate(interview.startTime),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatusChip(interview.status),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Score and Arrow
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      (interview.overallScore != null ||
-                          interview.technicalScore != null)
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.grey200,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  (interview.overallScore ?? interview.technicalScore)
-                          ?.toStringAsFixed(1) ??
-                      '–',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+            // Score and Arrow
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
                     color:
                         (interview.overallScore != null ||
                             interview.technicalScore != null)
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : AppColors.grey200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    (interview.overallScore ?? interview.technicalScore)
+                            ?.toStringAsFixed(1) ??
+                        '–',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          (interview.overallScore != null ||
+                              interview.technicalScore != null)
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Icon(Icons.chevron_right, color: AppColors.grey400, size: 24),
-            ],
-          ),
-        ],
+                const SizedBox(width: 12),
+                Icon(Icons.chevron_right, color: AppColors.grey400, size: 24),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
