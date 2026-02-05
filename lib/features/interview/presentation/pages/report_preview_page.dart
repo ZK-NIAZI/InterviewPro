@@ -1,75 +1,147 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/document_header_widget.dart';
 import '../widgets/candidate_info_box_widget.dart';
 import '../widgets/technical_questions_widget.dart';
 import '../widgets/soft_skills_grid_widget.dart';
 import '../widgets/recommendation_box_widget.dart';
+import '../providers/report_data_provider.dart';
 
 /// Report preview screen showing PDF-style interview evaluation report
-class ReportPreviewPage extends StatelessWidget {
-  final String candidateName;
-  final String role;
-  final String level;
-  final double overallScore;
-  final int communicationSkills;
-  final int problemSolvingApproach;
-  final int culturalFit;
-  final int overallImpression;
-  final String additionalComments;
-  final String? interviewId; // Add interview ID for data loading
+class ReportPreviewPage extends StatefulWidget {
+  final String? interviewId; // Interview ID for data loading
 
-  const ReportPreviewPage({
-    super.key,
-    required this.candidateName,
-    required this.role,
-    required this.level,
-    required this.overallScore,
-    required this.communicationSkills,
-    required this.problemSolvingApproach,
-    required this.culturalFit,
-    required this.overallImpression,
-    required this.additionalComments,
-    this.interviewId, // Optional interview ID
-  });
+  const ReportPreviewPage({super.key, this.interviewId});
+
+  @override
+  State<ReportPreviewPage> createState() => _ReportPreviewPageState();
+}
+
+class _ReportPreviewPageState extends State<ReportPreviewPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load interview data if ID is provided
+    if (widget.interviewId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ReportDataProvider>().loadInterviewData(
+          widget.interviewId!,
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Black icons for light theme
+        statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F6F6),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                // Status bar placeholder
-                Container(
-                  height: MediaQuery.of(context).padding.top,
-                  decoration: const BoxDecoration(color: Color(0xFFF8F6F6)),
-                ),
+        body: Consumer<ReportDataProvider>(
+          builder: (context, provider, child) {
+            // Show loading state
+            if (provider.isLoading) {
+              return _buildLoadingState();
+            }
 
-                // Header
-                _buildHeader(context),
+            // Show error state
+            if (provider.error != null) {
+              return _buildErrorState(provider.error!);
+            }
 
-                // Main content
-                Expanded(child: _buildMainContent()),
-              ],
-            ),
-
-            // Floating action bar
-            _buildFloatingActionBar(context),
-          ],
+            // Show PDF document with real data
+            return _buildPDFDocument(provider.reportData);
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: AppColors.primary),
+          SizedBox(height: 16),
+          Text(
+            'Loading interview data...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Error Loading Report',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.red[600]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => context.pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Go Back'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPDFDocument(ReportData? reportData) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            // Status bar placeholder
+            Container(
+              height: MediaQuery.of(context).padding.top,
+              decoration: const BoxDecoration(color: Color(0xFFF8F6F6)),
+            ),
+
+            // Header
+            _buildHeader(context),
+
+            // Main content
+            Expanded(child: _buildMainContent(reportData)),
+          ],
+        ),
+
+        // Floating action bar
+        _buildFloatingActionBar(context),
+      ],
     );
   }
 
@@ -136,19 +208,19 @@ class ReportPreviewPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(ReportData? reportData) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 595),
-          child: _buildPDFDocument(),
+          child: _buildPDFContent(reportData),
         ),
       ),
     );
   }
 
-  Widget _buildPDFDocument() {
+  Widget _buildPDFContent(ReportData? reportData) {
     return Stack(
       children: [
         Container(
@@ -174,43 +246,47 @@ class ReportPreviewPage extends StatelessWidget {
 
               // Candidate info box
               CandidateInfoBoxWidget(
-                candidateName: candidateName,
-                role: role,
-                level: level,
-                date: _formatDate(DateTime.now()),
+                candidateName: reportData?.interview.candidateName ?? 'N/A',
+                role: reportData?.interview.role.name ?? 'N/A',
+                level: reportData?.interview.level.name ?? 'N/A',
+                date: _formatDate(
+                  reportData?.interview.startTime ?? DateTime.now(),
+                ),
               ),
 
               const SizedBox(height: 24),
 
               // Overall score section
-              _buildOverallScoreSection(),
+              _buildOverallScoreSection(reportData),
 
               const SizedBox(height: 24),
 
               // Technical questions
               TechnicalQuestionsWidget(
-                questions: _generateTechnicalQuestions(),
+                questions: _generateRealTechnicalQuestions(reportData),
               ),
 
               const SizedBox(height: 24),
 
-              // Soft skills
-              SoftSkillsGridWidget(
-                communicationSkills: communicationSkills,
-                problemSolvingApproach: problemSolvingApproach,
-                culturalFit: culturalFit,
-                overallImpression: overallImpression,
+              // Soft skills (using default values as these aren't stored in Interview entity)
+              const SoftSkillsGridWidget(
+                communicationSkills: 4,
+                problemSolvingApproach: 4,
+                culturalFit: 4,
+                overallImpression: 4,
               ),
 
               const SizedBox(height: 24),
 
               // Recommendation box
-              RecommendationBoxWidget(overallScore: overallScore),
+              RecommendationBoxWidget(
+                overallScore: reportData?.overallScore ?? 0.0,
+              ),
 
               const SizedBox(height: 24),
 
               // Comments section
-              _buildCommentsSection(),
+              _buildCommentsSection(reportData),
 
               const SizedBox(height: 32),
 
@@ -226,41 +302,43 @@ class ReportPreviewPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOverallScoreSection() {
-    final percentage = (overallScore * 10).toInt();
+  Widget _buildOverallScoreSection(ReportData? reportData) {
+    final percentage = (reportData?.overallScore ?? 0.0).toInt();
 
     return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Text(
-              '$percentage%',
-              style: TextStyle(
-                fontSize: 72,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-                height: 1.0,
-                letterSpacing: -2,
-              ),
+      child: Column(
+        children: [
+          Text(
+            '$percentage%',
+            style: const TextStyle(
+              fontSize: 72,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primary,
+              height: 1.0,
+              letterSpacing: -2,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'OVERALL SCORE',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
-                letterSpacing: 2,
-              ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'OVERALL SCORE',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+              letterSpacing: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCommentsSection() {
+  Widget _buildCommentsSection(ReportData? reportData) {
+    // Note: additionalComments is not stored in Interview entity
+    // Using placeholder text for PDF preview
+    const comments =
+        'Candidate demonstrated strong technical skills and problem-solving abilities.';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -268,21 +346,27 @@ class ReportPreviewPage extends StatelessWidget {
           'INTERVIEWER COMMENTS',
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-            letterSpacing: 1,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+            letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          additionalComments.isNotEmpty
-              ? '"$additionalComments"'
-              : '"Candidate showed strong technical skills and good communication abilities. Recommended for the position based on overall performance and cultural fit."',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF4B5563),
-            fontStyle: FontStyle.italic,
-            height: 1.5,
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Text(
+            '"$comments"',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF475569),
+              fontStyle: FontStyle.italic,
+              height: 1.6,
+            ),
           ),
         ),
       ],
@@ -290,50 +374,44 @@ class ReportPreviewPage extends StatelessWidget {
   }
 
   Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.only(top: 16),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.primary, width: 1)),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Generated by InterviewPro',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF9CA3AF),
-                ),
-              ),
-              Text(
-                'Confidential Document',
-                style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
-              ),
-            ],
-          ),
-          Text(
-            'Page 1 of 1',
-            style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        const Divider(color: Color(0xFFE2E8F0)),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Generated by InterviewPro',
+              style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+            ),
+            Text(
+              _formatDate(DateTime.now()),
+              style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildWatermark() {
-    return Positioned.fill(
-      child: Center(
-        child: Opacity(
-          opacity: 0.02,
-          child: Icon(
-            Icons.fact_check,
-            size: 300,
-            color: const Color(0xFF1E293B),
+    return Positioned(
+      bottom: 100,
+      right: 40,
+      child: Opacity(
+        opacity: 0.03,
+        child: Transform.rotate(
+          angle: -0.5,
+          child: const Text(
+            'INTERVIEW\nPRO',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 120,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
+              height: 0.9,
+            ),
           ),
         ),
       ),
@@ -342,77 +420,88 @@ class ReportPreviewPage extends StatelessWidget {
 
   Widget _buildFloatingActionBar(BuildContext context) {
     return Positioned(
-      bottom: 24,
+      bottom: 0,
       left: 0,
       right: 0,
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[100]!, width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          MediaQuery.of(context).padding.bottom + 20,
+        ),
+        child: Column(
           children: [
             // Download PDF button
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => _onDownloadPDF(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _onDownloadPDF,
-                  borderRadius: BorderRadius.circular(24),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.download, size: 20, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'Download PDF',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                  shadowColor: AppColors.primary.withValues(alpha: 0.2),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.download, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Download PDF',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
 
-            const SizedBox(width: 16),
-
-            // Edit button
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFF3F4F6)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            const SizedBox(height: 8),
+            // Share report button
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: OutlinedButton(
+                onPressed: _onShare,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  side: BorderSide(color: Colors.grey[200]!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _onEdit,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Icon(Icons.edit, size: 20, color: AppColors.primary),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.ios_share, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Share Report',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -422,7 +511,6 @@ class ReportPreviewPage extends StatelessWidget {
     );
   }
 
-  // Helper methods
   String _formatDate(DateTime date) {
     final months = [
       'Jan',
@@ -441,37 +529,50 @@ class ReportPreviewPage extends StatelessWidget {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
+  List<TechnicalQuestion> _generateRealTechnicalQuestions(
+    ReportData? reportData,
+  ) {
+    if (reportData == null || reportData.questionBreakdown.isEmpty) {
+      return [];
+    }
 
-  List<TechnicalQuestion> _generateTechnicalQuestions() {
-    return [
-      TechnicalQuestion(
-        'Explain the React Virtual DOM',
-        'Candidate provided a clear explanation with examples.',
-        communicationSkills >= 4,
-      ),
-      TechnicalQuestion(
-        'Optimize a slow rendering list',
-        'Correctly identified memoization and virtualization.',
-        problemSolvingApproach >= 3,
-      ),
-      TechnicalQuestion(
-        'Implement a custom Hook for fetching',
-        'Struggled with cleanup function in useEffect.',
-        overallImpression >= 4,
-      ),
-    ];
+    final questions = <TechnicalQuestion>[];
+
+    for (final breakdown in reportData.questionBreakdown) {
+      for (final response in breakdown.responses) {
+        questions.add(
+          TechnicalQuestion(
+            response.questionText,
+            response.notes ?? 'No notes provided',
+            response.isCorrect,
+          ),
+        );
+      }
+    }
+
+    return questions.take(5).toList(); // Show top 5 questions
   }
 
-
-  void _onDownloadPDF() {}
-
-  void _onEdit() {
-    // Navigate back to previous screen
+  void _onDownloadPDF() {
+    // TODO: Implement PDF download functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('PDF download feature coming soon'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
   }
 
-  void _onShare() {}
+  void _onShare() {
+    // TODO: Implement report sharing functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Report sharing feature coming soon'),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
 }
-
 
 // Data classes
 class TechnicalQuestion {

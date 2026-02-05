@@ -131,47 +131,9 @@ class AppRouter {
         path: reportPreview,
         name: 'report-preview',
         builder: (context, state) {
-          final candidateName =
-              state.uri.queryParameters['candidateName'] ?? '';
-          final role = state.uri.queryParameters['role'] ?? '';
-          final level = state.uri.queryParameters['level'] ?? '';
-          final overallScore =
-              double.tryParse(
-                state.uri.queryParameters['overallScore'] ?? '0',
-              ) ??
-              0.0;
-          final communicationSkills =
-              int.tryParse(
-                state.uri.queryParameters['communicationSkills'] ?? '0',
-              ) ??
-              0;
-          final problemSolvingApproach =
-              int.tryParse(
-                state.uri.queryParameters['problemSolvingApproach'] ?? '0',
-              ) ??
-              0;
-          final culturalFit =
-              int.tryParse(state.uri.queryParameters['culturalFit'] ?? '0') ??
-              0;
-          final overallImpression =
-              int.tryParse(
-                state.uri.queryParameters['overallImpression'] ?? '0',
-              ) ??
-              0;
-          final additionalComments =
-              state.uri.queryParameters['additionalComments'] ?? '';
           final interviewId = state.uri.queryParameters['interviewId'];
 
           return ReportPreviewPage(
-            candidateName: candidateName,
-            role: role,
-            level: level,
-            overallScore: overallScore,
-            communicationSkills: communicationSkills,
-            problemSolvingApproach: problemSolvingApproach,
-            culturalFit: culturalFit,
-            overallImpression: overallImpression,
-            additionalComments: additionalComments,
             interviewId: interviewId,
           );
         },
