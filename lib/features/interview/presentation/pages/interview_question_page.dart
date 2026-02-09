@@ -14,11 +14,13 @@ import '../providers/interview_question_provider.dart';
 class InterviewQuestionPage extends StatefulWidget {
   final String selectedRole;
   final String selectedLevel;
+  final String candidateName;
 
   const InterviewQuestionPage({
     super.key,
     required this.selectedRole,
     required this.selectedLevel,
+    required this.candidateName,
   });
 
   @override
@@ -102,12 +104,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   /// Start interview session with loaded questions
   Future<void> _startInterviewSession() async {
     try {
-      // Generate candidate name (in real app, this would come from user input)
-      final candidateName =
-          'Candidate ${DateTime.now().millisecondsSinceEpoch}';
-
       await _sessionManager.startInterview(
-        candidateName: candidateName,
+        candidateName: widget.candidateName,
         role: widget.selectedRole,
         level: widget.selectedLevel,
         questions: _questions,

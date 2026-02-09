@@ -255,14 +255,14 @@ class InterviewRepositoryImpl implements InterviewRepository {
     }
   }
 
-  /// Clear all interviews (for testing)
-  void clearAllInterviews() {
+  @override
+  Future<void> clearAllInterviews() async {
     _interviews.clear();
     _responses.clear();
     debugPrint('🧹 Cleared all interviews from memory');
 
     // Also clear from persistent storage
-    _clearPersistentStorage();
+    await _clearPersistentStorage();
   }
 
   /// Clear persistent storage with fallback handling

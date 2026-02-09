@@ -394,14 +394,10 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     if (!mounted) return;
 
     if (success) {
-      // Calculate overall score using actual technical score
-      double overallScore = provider.calculatedScore;
-      if (_completedInterview != null) {
-        final technicalScore = _completedInterview!.technicalScore ?? 0.0;
-        final evaluationScore = provider.calculatedScore;
-        // 70% technical + 30% soft skills evaluation
-        overallScore = (technicalScore * 0.7) + (evaluationScore * 0.3);
-      }
+      // Use technical-only score as overall score per user requirement
+      double overallScore =
+          _completedInterview?.calculateOverallScore() ??
+          provider.calculatedScore;
 
       // Show report with real data
       _showReportDialog(provider, overallScore);

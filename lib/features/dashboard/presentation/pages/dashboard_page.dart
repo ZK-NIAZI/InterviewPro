@@ -734,7 +734,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.home,
               label: 'Home',
               isSelected: _selectedIndex == 0,
-              onTap: () => setState(() => _selectedIndex = 0),
+              onTap: () {
+                context.read<DashboardProvider>().refresh();
+                setState(() => _selectedIndex = 0);
+              },
             ),
             _buildNavItem(
               icon: Icons.history,

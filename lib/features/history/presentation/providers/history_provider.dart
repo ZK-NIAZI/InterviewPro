@@ -124,13 +124,16 @@ class HistoryProvider extends ChangeNotifier {
   void _applyFilter() {
     try {
       final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
 
       switch (_selectedFilterIndex) {
         case 0: // All
           _filteredInterviews = List.from(_allInterviews);
           break;
         case 1: // This Week
-          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          final startOfWeek = startOfToday.subtract(
+            Duration(days: now.weekday - 1),
+          );
           final endOfWeek = startOfWeek.add(const Duration(days: 7));
           _filteredInterviews = _allInterviews
               .where(
@@ -203,6 +206,28 @@ class HistoryProvider extends ChangeNotifier {
       } else {
         rethrow;
       }
+    }
+  }
+
+  /// Clear all interview history and reset statistics
+  Future<void> clearAllHistory() async {
+    try {
+      setLoading(true);
+      _interviewRepository.clearAllInterviews();
+      _allInterviews = [];
+      _filteredInterviews = [];
+      _totalInterviews = 0;
+      _averageScore = 0.0;
+      _hiredCount = 0;
+
+      _applyFilter();
+      notifyListeners();
+      debugPrint('✅ All interview history cleared');
+    } catch (e) {
+      debugPrint('❌ Error clearing history: $e');
+      rethrow;
+    } finally {
+      setLoading(false);
     }
   }
 

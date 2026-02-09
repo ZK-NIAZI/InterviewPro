@@ -83,4 +83,7 @@ abstract class InterviewRepository {
     double? softSkillsScore,
     double? overallScore,
   });
+
+  /// Clear all interviews from storage
+  Future<void> clearAllInterviews();
 }

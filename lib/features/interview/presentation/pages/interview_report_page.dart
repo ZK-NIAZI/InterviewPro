@@ -9,6 +9,7 @@ import '../widgets/circular_progress_widget.dart';
 import '../widgets/quick_stats_widget.dart';
 import '../widgets/question_breakdown_widget.dart';
 import '../widgets/candidate_info_card.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../core/services/report_pdf_service.dart';
 
 /// Interview report screen showing detailed evaluation results
@@ -105,7 +106,10 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () {
+              context.read<DashboardProvider>().refresh();
+              context.pop();
+            },
             child: Container(
               width: 40,
               height: 40,

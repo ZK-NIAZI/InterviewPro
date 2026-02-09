@@ -55,9 +55,12 @@ class AppRouter {
               state.uri.queryParameters['role'] ?? 'Flutter Developer';
           final selectedLevel =
               state.uri.queryParameters['level'] ?? 'Associate';
+          final candidateName =
+              state.uri.queryParameters['candidateName'] ?? 'Candidate';
           return InterviewQuestionPage(
             selectedRole: selectedRole,
             selectedLevel: selectedLevel,
+            candidateName: candidateName,
           );
         },
       ),
@@ -133,9 +136,7 @@ class AppRouter {
         builder: (context, state) {
           final interviewId = state.uri.queryParameters['interviewId'];
 
-          return ReportPreviewPage(
-            interviewId: interviewId,
-          );
+          return ReportPreviewPage(interviewId: interviewId);
         },
       ),
       //  Add other routes as features are implemented

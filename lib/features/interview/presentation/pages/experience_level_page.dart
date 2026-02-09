@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -296,15 +297,109 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
       return;
     }
 
-    final levels = _experienceLevelProvider.experienceLevels;
-    if (levels.isEmpty || selectedLevelIndex! >= levels.length) return;
+    _showCandidateNameDialog();
+  }
 
-    // Use the selected level
-    final selectedLevelName = levels[selectedLevelIndex!].title;
+  /// Shows a modern, minimal dialog with blurred background for candidate name
+  void _showCandidateNameDialog() {
+    final TextEditingController nameController = TextEditingController();
 
-    // Navigate to interview question screen
-    context.push(
-      '${AppRouter.interviewQuestion}?role=${widget.selectedRole}&level=$selectedLevelName',
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.1),
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AlertDialog(
+            backgroundColor: Colors.white.withValues(alpha: 0.8),
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: const Text(
+              'Candidate Info',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Please enter the name of the candidate to start the session.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    hintText: 'Full Name',
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                    prefixIcon: const Icon(Icons.person_outline),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.trim().isNotEmpty) {
+                    final candidateName = nameController.text.trim();
+                    Navigator.pop(context);
+
+                    final levels = _experienceLevelProvider.experienceLevels;
+                    final selectedLevelName = levels[selectedLevelIndex!].title;
+
+                    // Navigate to interview question screen with candidate name
+                    context.push(
+                      '${AppRouter.interviewQuestion}?role=${widget.selectedRole}&level=$selectedLevelName&candidateName=$candidateName',
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text('Start Interview'),
+              ),
+            ],
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
+        );
+      },
     );
   }
 }

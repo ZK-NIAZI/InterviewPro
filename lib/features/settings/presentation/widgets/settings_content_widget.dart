@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../history/presentation/providers/history_provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 
 /// Settings content widget that displays settings within the dashboard
 class SettingsContentWidget extends StatefulWidget {
@@ -640,14 +643,34 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
   }
 
   /// Clear history functionality
-  void _clearHistory() {
-    // In a real app, this would clear the interview history from database
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('History cleared successfully'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+  Future<void> _clearHistory() async {
+    try {
+      // Clear history via provider
+      await context.read<HistoryProvider>().clearAllHistory();
+
+      // Refresh dashboard statistics as well
+      if (mounted) {
+        context.read<DashboardProvider>().refresh();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('History cleared successfully'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error clearing history: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   /// Perform logout functionality

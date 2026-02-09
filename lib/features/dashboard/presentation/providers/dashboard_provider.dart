@@ -108,7 +108,11 @@ class DashboardProvider extends ChangeNotifier {
   Future<void> _loadThisWeekInterviews() async {
     try {
       final now = DateTime.now();
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      // Reset to start of day to include interviews conducted today
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      final startOfWeek = startOfToday.subtract(
+        Duration(days: now.weekday - 1),
+      );
       final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
       final thisWeekInterviews = await _interviewRepository

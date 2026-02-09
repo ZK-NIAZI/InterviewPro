@@ -193,7 +193,7 @@ class EvaluationProvider extends ChangeNotifier {
       if (interview != null) {
         final updatedInterview = interview.copyWith(
           status: InterviewStatus.completed,
-          overallScore: evaluation.calculatedScore,
+          overallScore: interview.calculateOverallScore(),
           endTime: DateTime.now(),
           softSkillsScore: evaluation.calculatedScore,
           communicationSkills: _communicationSkills,

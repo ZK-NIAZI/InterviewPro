@@ -69,9 +69,8 @@ class ReportDataProvider extends ChangeNotifier {
     final stats = interview.getPerformanceStats();
 
     // Calculate overall score (strictly technical based on new requirements)
+    final overallScore = interview.calculateOverallScore();
     final technicalScore = interview.calculateTechnicalScore();
-    // Force usage of calculated score to avoid stale data from DB and ensure consistency with "Recommended" logic
-    final overallScore = technicalScore;
 
     // Generate detailed question breakdown
     final questionBreakdown = _generateQuestionBreakdown(interview);
