@@ -1,16 +1,17 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../../presentation/providers/report_data_provider.dart';
 
 /// Service responsible for generating and downloading interview report PDFs
 class ReportPdfService {
-  /// Generate and open the PDF preview/save dialog
-  static Future<void> generateAndDownload(ReportData reportData) async {
+  /// Generate the PDF and return the saved file path
+  static Future<String> generatePdfFile(
+    ReportData reportData, {
+    bool isPreview = true,
+  }) async {
     final pdf = pw.Document();
-
-    // Load fonts or images if needed
-    // final font = await PdfGoogleFonts.interRegular();
 
     pdf.addPage(
       pw.MultiPage(
@@ -34,11 +35,15 @@ class ReportPdfService {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name:
-          'Interview_Report_${reportData.interview.candidateName.replaceAll(' ', '_')}.pdf',
-    );
+    final dir = isPreview
+        ? await getTemporaryDirectory()
+        : await getApplicationDocumentsDirectory();
+    final fileName =
+        'Interview_Report_${reportData.interview.candidateName.replaceAll(' ', '_')}.pdf';
+    final file = File('${dir.path}/$fileName');
+
+    await file.writeAsBytes(await pdf.save());
+    return file.path;
   }
 
   static pw.Widget _buildHeader(ReportData reportData) {

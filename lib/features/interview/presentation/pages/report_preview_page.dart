@@ -10,6 +10,8 @@ import '../widgets/soft_skills_grid_widget.dart';
 import '../widgets/recommendation_box_widget.dart';
 import '../providers/report_data_provider.dart';
 import '../../core/services/report_pdf_service.dart';
+import '../widgets/share_bottom_sheet.dart';
+import '../widgets/download_success_dialog.dart';
 
 /// Report preview screen showing PDF-style interview evaluation report
 class ReportPreviewPage extends StatefulWidget {
@@ -529,15 +531,75 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     return questions; // Show all questions
   }
 
-  void _onDownloadPDF() {
+  void _onDownloadPDF() async {
     final reportData = context.read<ReportDataProvider>().reportData;
-    if (reportData != null) {
-      ReportPdfService.generateAndDownload(reportData);
+    if (reportData == null) return;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    try {
+      final path = await ReportPdfService.generatePdfFile(
+        reportData,
+        isPreview: false,
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+
+        final fileName =
+            'Interview_Report_${reportData.interview.candidateName.replaceAll(' ', '_')}.pdf';
+
+        DownloadSuccessDialog.show(context, fileName: fileName, filePath: path);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving PDF: $e')));
+      }
     }
   }
 
-  void _onShare() {
-    // Report sharing functionality planned
+  void _onShare() async {
+    final reportData = context.read<ReportDataProvider>().reportData;
+    if (reportData == null) return;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    try {
+      final path = await ReportPdfService.generatePdfFile(reportData);
+
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+        ShareBottomSheet.show(
+          context,
+          path,
+          reportData.interview.candidateName,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error generating PDF: $e')));
+      }
+    }
   }
 }
 
