@@ -49,31 +49,35 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
         ),
         child: Scaffold(
           backgroundColor: Colors.white,
-          body: Stack(
-            children: [
-              // Main content
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Safe area and header
-                  SafeArea(child: _buildHeader()),
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Scrollable content area
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header Section
+                        _buildHeader(),
 
-                  // Main Content: Cards Stack
-                  Expanded(child: _buildLevelCards()),
+                        // Experience Level Cards
+                        _buildLevelCards(),
 
-                  // Bottom spacer for fixed button
-                  const SizedBox(height: 100),
-                ],
-              ),
+                        // Extra spacing at the bottom to ensure last card is accessible
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
 
-              // Fixed bottom button
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildBottomButton(),
-              ),
-            ],
+                // Fixed Bottom Button
+                _buildBottomButton(),
+              ],
+            ),
           ),
         ),
       ),
