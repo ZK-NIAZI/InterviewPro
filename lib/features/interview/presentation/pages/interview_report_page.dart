@@ -9,6 +9,7 @@ import '../widgets/circular_progress_widget.dart';
 import '../widgets/quick_stats_widget.dart';
 import '../widgets/question_breakdown_widget.dart';
 import '../widgets/candidate_info_card.dart';
+import '../../core/services/report_pdf_service.dart';
 
 /// Interview report screen showing detailed evaluation results
 class InterviewReportPage extends StatefulWidget {
@@ -463,22 +464,33 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
   }
 
   void _onShareReport() {
-    // TODO: Implement report sharing functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report sharing feature coming soon'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    final reportData = context.read<ReportDataProvider>().reportData;
+    if (reportData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait for report data to load'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // The current layoutPdf service handles sharing/saving/printing
+    ReportPdfService.generateAndDownload(reportData);
   }
 
   void _onDownloadReport() {
-    // TODO: Implement report download functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report download feature coming soon'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    final reportData = context.read<ReportDataProvider>().reportData;
+    if (reportData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait for report data to load'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    ReportPdfService.generateAndDownload(reportData);
   }
 }
