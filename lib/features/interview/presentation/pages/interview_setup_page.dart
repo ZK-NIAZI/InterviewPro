@@ -199,53 +199,33 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
   }
 
   Widget _buildRoleGrid(List<Role> roles) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Calculate dynamic spacing based on screen height and width
-        final screenHeight = MediaQuery.of(context).size.height;
-        final screenWidth = MediaQuery.of(context).size.width;
+    // Calculate dynamic spacing based on screen height and width
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-        // Calculate available space more precisely
-        final statusBarHeight = MediaQuery.of(context).padding.top;
-        final headerHeight = statusBarHeight + 68;
-        final buttonAreaHeight = 96;
-        final paddingHeight = _calculateBottomPadding(context);
+    // Adjust grid parameters based on width
+    final crossAxisSpacing = screenWidth > 400 ? 16.0 : 12.0;
+    final mainAxisSpacing = screenHeight > 650 ? 16.0 : 12.0;
 
-        final availableHeight =
-            screenHeight - headerHeight - buttonAreaHeight - paddingHeight;
+    // Use a more stable aspect ratio calculation that works across all screen sizes
+    final aspectRatio = screenHeight < 650 ? 1.0 : 1.1;
 
-        // Adjust grid parameters based on available space
-        final crossAxisSpacing = screenWidth > 400 ? 16.0 : 12.0;
-        final mainAxisSpacing = availableHeight > 500 ? 16.0 : 12.0;
-
-        // Calculate card aspect ratio to fit content properly
-        final cardWidth = (screenWidth - 40 - crossAxisSpacing) / 2;
-        final cardHeight = availableHeight / 3.2;
-        final aspectRatio = cardWidth / cardHeight;
-
-        // Ensure minimum aspect ratio for readability
-        final finalAspectRatio = aspectRatio < 0.8
-            ? 0.8
-            : (aspectRatio > 1.2 ? 1.2 : aspectRatio);
-
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: crossAxisSpacing,
-              mainAxisSpacing: mainAxisSpacing,
-              childAspectRatio: finalAspectRatio,
-            ),
-            itemCount: roles.length,
-            itemBuilder: (context, index) {
-              return _buildRoleCard(roles[index], index);
-            },
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: crossAxisSpacing,
+          mainAxisSpacing: mainAxisSpacing,
+          childAspectRatio: aspectRatio,
+        ),
+        itemCount: roles.length,
+        itemBuilder: (context, index) {
+          return _buildRoleCard(roles[index], index);
+        },
+      ),
     );
   }
 
