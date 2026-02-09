@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Enhanced Quick Statistics widget with detailed interview metrics
 class QuickStatsWidget extends StatelessWidget {
@@ -27,20 +28,20 @@ class QuickStatsWidget extends StatelessWidget {
             Expanded(
               child: _buildStatCard(
                 icon: Icons.quiz_outlined,
-                iconColor: Colors.blue,
+                iconColor: AppColors.primary,
                 value: totalQuestions.toString(),
                 label: 'Total Questions',
-                backgroundColor: Colors.blue.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withOpacity(0.05),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.check_circle_outline,
-                iconColor: Colors.green,
+                iconColor: AppColors.primary,
                 value: correctAnswers.toString(),
                 label: 'Correct Answers',
-                backgroundColor: Colors.green.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withOpacity(0.05),
               ),
             ),
           ],

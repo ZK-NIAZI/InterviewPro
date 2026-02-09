@@ -7,7 +7,6 @@ import '../../../../core/utils/app_router.dart';
 import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
 import '../widgets/quick_stats_widget.dart';
-import '../widgets/question_breakdown_widget.dart';
 import '../widgets/candidate_info_card.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../core/services/report_pdf_service.dart';
@@ -211,9 +210,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
               // Quick stats
               _buildQuickStats(provider.reportData),
 
-              // Question breakdown
-              if (provider.reportData != null)
-                _buildQuestionBreakdown(provider.reportData!),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -281,28 +278,21 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
         (isRecommended ? 'Recommended for Hire' : 'Not Recommended');
     final icon = isRecommended ? Icons.verified : Icons.cancel;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 28, color: color),
+        const SizedBox(height: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+            letterSpacing: -0.5,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -343,17 +333,6 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             duration: reportData?.duration,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildQuestionBreakdown(ReportData reportData) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      margin: const EdgeInsets.only(bottom: 32),
-      child: QuestionBreakdownWidget(
-        breakdown: reportData.questionBreakdown,
-        showDetails: true,
       ),
     );
   }

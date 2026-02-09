@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 
 /// Card widget displaying candidate information
 class CandidateInfoCard extends StatelessWidget {
@@ -51,46 +50,34 @@ class CandidateInfoCard extends StatelessWidget {
         ),
 
         const SizedBox(height: 8), // Increased spacing
-        // Role and level (more prominent)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '$role - $level',
-            style: TextStyle(
-              fontSize: 16, // Increased from 14
-              fontWeight: FontWeight.w600, // Increased weight
-              color: AppColors.primary,
-            ),
+        const SizedBox(height: 4),
+        // Role and level (cleaner styling)
+        Text(
+          '$role - $level',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700], // Use a more integrated grey
           ),
         ),
 
         const SizedBox(height: 12), // Increased spacing
-        // Interview date (better styling)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-              const SizedBox(width: 6),
-              Text(
-                _formatDate(interviewDate),
-                style: TextStyle(
-                  fontSize: 13, // Slightly increased
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
-                ),
+        const SizedBox(height: 8),
+        // Interview date (minimal styling)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
+            const SizedBox(width: 6),
+            Text(
+              _formatDate(interviewDate),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[500],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
