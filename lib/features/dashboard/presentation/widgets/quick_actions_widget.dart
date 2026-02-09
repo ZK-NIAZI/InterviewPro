@@ -45,13 +45,7 @@ class QuickActionsWidget extends StatelessWidget {
               subtitle: 'View reports',
               color: AppColors.success,
               onTap: () {
-                // Navigate to history tab to view reports
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('View reports in History tab'),
-                    backgroundColor: AppColors.primary,
-                  ),
-                );
+                // Reports are viewed in History tab
               },
             ),
           ],

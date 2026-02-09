@@ -532,24 +532,11 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     final reportData = context.read<ReportDataProvider>().reportData;
     if (reportData != null) {
       ReportPdfService.generateAndDownload(reportData);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No report data available to download'),
-          backgroundColor: AppColors.error,
-        ),
-      );
     }
   }
 
   void _onShare() {
-    // TODO: Implement report sharing functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report sharing feature coming soon'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    // Report sharing functionality planned
   }
 }
 

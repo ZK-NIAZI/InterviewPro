@@ -899,14 +899,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   void _onVoiceRecording() {
-    // Voice recording functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Voice recording feature coming soon'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // Voice recording functionality planned
   }
 
   /// Check if this is the last question

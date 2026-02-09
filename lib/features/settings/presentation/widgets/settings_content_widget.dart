@@ -604,12 +604,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
   /// Export data functionality
   void _exportData() {
     // In a real app, this would generate a CSV/JSON file and share it
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Data exported successfully'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
   }
 
   /// Clear history functionality
@@ -624,12 +618,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('History cleared successfully'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
+        // History cleared
       }
     } catch (e) {
       if (mounted) {
@@ -646,11 +635,5 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
   /// Perform logout functionality
   void _performLogout() {
     // In a real app, this would clear user session and navigate to login
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logged out successfully'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
   }
 }

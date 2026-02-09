@@ -25,16 +25,7 @@ class RecentInterviewsWidget extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('View all interviews coming soon!'),
-                  ),
-                );
-              },
-              child: const Text('View All'),
-            ),
+            TextButton(onPressed: () {}, child: const Text('View All')),
           ],
         ),
         const SizedBox(height: 12),

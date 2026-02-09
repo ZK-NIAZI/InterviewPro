@@ -288,18 +288,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   }
 
   void _onContinue() {
-    // Ensure an experience level is selected
-    if (selectedLevelIndex == null) {
-      // Show a snackbar to inform the user to select an experience level
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an experience level to continue'),
-          backgroundColor: AppColors.primary,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
+    if (selectedLevelIndex == null) return;
 
     _showCandidateNameDialog();
   }

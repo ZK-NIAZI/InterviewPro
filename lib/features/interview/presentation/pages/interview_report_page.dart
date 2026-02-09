@@ -448,15 +448,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
 
   void _onShareReport() {
     final reportData = context.read<ReportDataProvider>().reportData;
-    if (reportData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait for report data to load'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+    if (reportData == null) return;
 
     // The current layoutPdf service handles sharing/saving/printing
     ReportPdfService.generateAndDownload(reportData);
@@ -464,15 +456,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
 
   void _onDownloadReport() {
     final reportData = context.read<ReportDataProvider>().reportData;
-    if (reportData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait for report data to load'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+    if (reportData == null) return;
 
     ReportPdfService.generateAndDownload(reportData);
   }
