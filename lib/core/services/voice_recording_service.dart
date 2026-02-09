@@ -12,7 +12,35 @@ class VoiceRecordingService {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
 
-  VoiceRecordingService(this._box);
+  VoiceRecordingService(this._box) {
+    _initAudioContext();
+  }
+
+  void _initAudioContext() {
+    try {
+      AudioPlayer.global.setAudioContext(
+        AudioContext(
+          android: const AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.gain,
+          ),
+          iOS: const AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: [
+              AVAudioSessionOptions.defaultToSpeaker,
+              AVAudioSessionOptions.mixWithOthers,
+            ],
+          ),
+        ),
+      );
+      debugPrint('🎵 AudioContext initialized successfully');
+    } catch (e) {
+      debugPrint('⚠️ Error initializing AudioContext: $e');
+    }
+  }
 
   /// Check and request microphone permission
   Future<bool> checkPermission() async {
@@ -46,6 +74,8 @@ class VoiceRecordingService {
       await stopRecording();
     }
 
+    await stopPlayback();
+
     final directory = await getApplicationDocumentsDirectory();
     final fileName =
         'recording_${questionId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
@@ -54,7 +84,12 @@ class VoiceRecordingService {
     // Delete existing recording if any
     await deleteRecording(questionId);
 
-    const config = RecordConfig(); // Default config: AAC/M4A
+    // Explicitly use AAC-LC for better compatibility on emulators
+    const config = RecordConfig(
+      encoder: AudioEncoder.aacLc,
+      bitRate: 128000,
+      sampleRate: 44100,
+    );
 
     await _recorder.start(config, path: filePath);
     debugPrint('🎙️ Started recording: $filePath');
@@ -86,8 +121,31 @@ class VoiceRecordingService {
 
   /// Play audio from path
   Future<void> play(String path) async {
+    // Ensure context is set before every playback (helps if service was already alive during H.Reload)
+    _initAudioContext();
+    final file = File(path);
+    if (!await file.exists()) {
+      debugPrint('❌ Playback error: File does not exist at $path');
+      return;
+    }
+
+    final size = await file.length();
+    debugPrint('📂 File size: ${size / 1024} KB');
+
+    if (size < 100) {
+      debugPrint(
+        '⚠️ Warning: File size is very small, might be silent or corrupted.',
+      );
+    }
+
     await _player.stop();
+    await _player.setVolume(1.0); // Ensure volume is up
     await _player.play(DeviceFileSource(path));
+
+    // Add duration check
+    final duration = await _player.getDuration();
+    debugPrint('⏳ Audio duration: $duration');
+
     debugPrint('▶️ Started playback: $path');
   }
 
