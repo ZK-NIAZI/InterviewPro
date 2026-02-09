@@ -42,9 +42,9 @@ class SoftSkillsGridWidget extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  _buildSkillItem('Communication', communicationSkills),
+                  _buildSkillItem('Communication Skills', communicationSkills),
                   const SizedBox(height: 16),
-                  _buildSkillItem('Culture Fit', culturalFit),
+                  _buildSkillItem('Cultural Fit', culturalFit),
                 ],
               ),
             ),
@@ -52,9 +52,12 @@ class SoftSkillsGridWidget extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  _buildSkillItem('Leadership', overallImpression),
+                  _buildSkillItem(
+                    'Problem-Solving Approach',
+                    problemSolvingApproach,
+                  ),
                   const SizedBox(height: 16),
-                  _buildSkillItem('Adaptability', problemSolvingApproach),
+                  _buildSkillItem('Overall Impression', overallImpression),
                 ],
               ),
             ),

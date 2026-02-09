@@ -40,7 +40,7 @@ class Evaluation extends Equatable {
         problemSolvingApproach +
         culturalFit +
         overallImpression;
-    return (totalRating / 20.0) * 10.0; // Convert to 0-10 scale
+    return (totalRating / 20.0) * 100.0; // Convert to 0-100 scale
   }
 
   /// Create evaluation with calculated score

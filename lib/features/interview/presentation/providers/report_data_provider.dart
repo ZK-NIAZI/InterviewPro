@@ -81,9 +81,17 @@ class ReportDataProvider extends ChangeNotifier {
 
     return ReportData(
       interview: interview,
+      roleName: interview.roleName.isNotEmpty
+          ? interview.roleName
+          : interview.role.displayName,
       overallScore: overallScore,
       technicalScore: technicalScore,
       softSkillsScore: interview.softSkillsScore,
+      communicationSkills: interview.communicationSkills,
+      problemSolvingApproach: interview.problemSolvingApproach,
+      culturalFit: interview.culturalFit,
+      overallImpression: interview.overallImpression,
+      additionalComments: interview.additionalComments,
       recommendation: recommendation,
       totalQuestions: stats['totalQuestions'] as int,
       answeredQuestions: stats['answeredQuestions'] as int,
@@ -138,9 +146,15 @@ class ReportDataProvider extends ChangeNotifier {
 /// Comprehensive report data model
 class ReportData {
   final Interview interview;
+  final String roleName;
   final double overallScore;
   final double technicalScore;
   final double? softSkillsScore;
+  final int communicationSkills;
+  final int problemSolvingApproach;
+  final int culturalFit;
+  final int overallImpression;
+  final String additionalComments;
   final String recommendation;
   final int totalQuestions;
   final int answeredQuestions;
@@ -152,9 +166,15 @@ class ReportData {
 
   const ReportData({
     required this.interview,
+    required this.roleName,
     required this.overallScore,
     required this.technicalScore,
     this.softSkillsScore,
+    this.communicationSkills = 0,
+    this.problemSolvingApproach = 0,
+    this.culturalFit = 0,
+    this.overallImpression = 0,
+    this.additionalComments = '',
     required this.recommendation,
     required this.totalQuestions,
     required this.answeredQuestions,

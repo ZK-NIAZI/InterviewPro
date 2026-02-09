@@ -9,6 +9,7 @@ import '../widgets/technical_questions_widget.dart';
 import '../widgets/soft_skills_grid_widget.dart';
 import '../widgets/recommendation_box_widget.dart';
 import '../providers/report_data_provider.dart';
+import '../../core/services/report_pdf_service.dart';
 
 /// Report preview screen showing PDF-style interview evaluation report
 class ReportPreviewPage extends StatefulWidget {
@@ -247,8 +248,8 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
               // Candidate info box
               CandidateInfoBoxWidget(
                 candidateName: reportData?.interview.candidateName ?? 'N/A',
-                role: reportData?.interview.role.name ?? 'N/A',
-                level: reportData?.interview.level.name ?? 'N/A',
+                role: reportData?.roleName ?? 'N/A',
+                level: reportData?.interview.level.displayName ?? 'N/A',
                 date: _formatDate(
                   reportData?.interview.startTime ?? DateTime.now(),
                 ),
@@ -268,12 +269,12 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
               const SizedBox(height: 24),
 
-              // Soft skills (using default values as these aren't stored in Interview entity)
-              const SoftSkillsGridWidget(
-                communicationSkills: 4,
-                problemSolvingApproach: 4,
-                culturalFit: 4,
-                overallImpression: 4,
+              // Soft skills
+              SoftSkillsGridWidget(
+                communicationSkills: reportData?.communicationSkills ?? 0,
+                problemSolvingApproach: reportData?.problemSolvingApproach ?? 0,
+                culturalFit: reportData?.culturalFit ?? 0,
+                overallImpression: reportData?.overallImpression ?? 0,
               ),
 
               const SizedBox(height: 24),
@@ -281,6 +282,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
               // Recommendation box
               RecommendationBoxWidget(
                 overallScore: reportData?.overallScore ?? 0.0,
+                recommendation: reportData?.recommendation,
               ),
 
               const SizedBox(height: 24),
@@ -295,9 +297,6 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             ],
           ),
         ),
-
-        // Watermark
-        _buildWatermark(),
       ],
     );
   }
@@ -334,10 +333,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
   }
 
   Widget _buildCommentsSection(ReportData? reportData) {
-    // Note: additionalComments is not stored in Interview entity
-    // Using placeholder text for PDF preview
-    const comments =
-        'Candidate demonstrated strong technical skills and problem-solving abilities.';
+    final comments = reportData?.additionalComments ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,28 +391,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     );
   }
 
-  Widget _buildWatermark() {
-    return Positioned(
-      bottom: 100,
-      right: 40,
-      child: Opacity(
-        opacity: 0.03,
-        child: Transform.rotate(
-          angle: -0.5,
-          child: const Text(
-            'INTERVIEW\nPRO',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 120,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-              height: 0.9,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Removed _buildWatermark as requested
 
   Widget _buildFloatingActionBar(BuildContext context) {
     return Positioned(
@@ -550,17 +525,21 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       }
     }
 
-    return questions.take(5).toList(); // Show top 5 questions
+    return questions; // Show all questions
   }
 
   void _onDownloadPDF() {
-    // TODO: Implement PDF download functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('PDF download feature coming soon'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    final reportData = context.read<ReportDataProvider>().reportData;
+    if (reportData != null) {
+      ReportPdfService.generateAndDownload(reportData);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No report data available to download'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   void _onShare() {

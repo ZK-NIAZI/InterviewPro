@@ -13,6 +13,9 @@ class Interview extends Equatable {
   /// Role the candidate is applying for
   final Role role;
 
+  /// The specific name of the role (supports custom roles)
+  final String roleName;
+
   /// Experience level of the candidate
   final Level level;
 
@@ -43,10 +46,26 @@ class Interview extends Equatable {
   /// Total number of questions in the interview
   final int totalQuestions;
 
+  /// Communication skills rating (0-5)
+  final int communicationSkills;
+
+  /// Problem solving approach rating (0-5)
+  final int problemSolvingApproach;
+
+  /// Cultural fit rating (0-5)
+  final int culturalFit;
+
+  /// Overall impression rating (0-5)
+  final int overallImpression;
+
+  /// Additional comments/notes from interviewer
+  final String additionalComments;
+
   const Interview({
     required this.id,
     required this.candidateName,
     required this.role,
+    this.roleName = '',
     required this.level,
     required this.startTime,
     this.endTime,
@@ -55,6 +74,11 @@ class Interview extends Equatable {
     this.overallScore,
     this.technicalScore,
     this.softSkillsScore,
+    this.communicationSkills = 0,
+    this.problemSolvingApproach = 0,
+    this.culturalFit = 0,
+    this.overallImpression = 0,
+    this.additionalComments = '',
     this.currentQuestionIndex = 0,
     this.totalQuestions = 25,
   });
@@ -64,6 +88,7 @@ class Interview extends Equatable {
     String? id,
     String? candidateName,
     Role? role,
+    String? roleName,
     Level? level,
     DateTime? startTime,
     DateTime? endTime,
@@ -72,6 +97,11 @@ class Interview extends Equatable {
     double? overallScore,
     double? technicalScore,
     double? softSkillsScore,
+    int? communicationSkills,
+    int? problemSolvingApproach,
+    int? culturalFit,
+    int? overallImpression,
+    String? additionalComments,
     int? currentQuestionIndex,
     int? totalQuestions,
   }) {
@@ -79,6 +109,7 @@ class Interview extends Equatable {
       id: id ?? this.id,
       candidateName: candidateName ?? this.candidateName,
       role: role ?? this.role,
+      roleName: roleName ?? this.roleName,
       level: level ?? this.level,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
@@ -87,6 +118,12 @@ class Interview extends Equatable {
       overallScore: overallScore ?? this.overallScore,
       technicalScore: technicalScore ?? this.technicalScore,
       softSkillsScore: softSkillsScore ?? this.softSkillsScore,
+      communicationSkills: communicationSkills ?? this.communicationSkills,
+      problemSolvingApproach:
+          problemSolvingApproach ?? this.problemSolvingApproach,
+      culturalFit: culturalFit ?? this.culturalFit,
+      overallImpression: overallImpression ?? this.overallImpression,
+      additionalComments: additionalComments ?? this.additionalComments,
       currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
       totalQuestions: totalQuestions ?? this.totalQuestions,
     );
@@ -170,6 +207,9 @@ class Interview extends Equatable {
       id: json['id'] ?? '',
       candidateName: json['candidateName'] ?? '',
       role: _parseRole(json['role']),
+      roleName:
+          json['roleName'] ??
+          (json['role'] != null ? json['role'].toString().split('.').last : ''),
       level: _parseLevel(json['level']),
       startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
       endTime: json['endTime'] != null
@@ -182,6 +222,11 @@ class Interview extends Equatable {
       overallScore: json['overallScore']?.toDouble(),
       technicalScore: json['technicalScore']?.toDouble(),
       softSkillsScore: json['softSkillsScore']?.toDouble(),
+      communicationSkills: json['communicationSkills'] ?? 0,
+      problemSolvingApproach: json['problemSolvingApproach'] ?? 0,
+      culturalFit: json['culturalFit'] ?? 0,
+      overallImpression: json['overallImpression'] ?? 0,
+      additionalComments: json['additionalComments'] ?? '',
       currentQuestionIndex: json['currentQuestionIndex'] ?? 0,
       totalQuestions: json['totalQuestions'] ?? 25,
     );
@@ -193,6 +238,7 @@ class Interview extends Equatable {
       'id': id,
       'candidateName': candidateName,
       'role': role.toString(),
+      'roleName': roleName,
       'level': level.toString(),
       'startTime': startTime.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
@@ -201,6 +247,11 @@ class Interview extends Equatable {
       'overallScore': overallScore,
       'technicalScore': technicalScore,
       'softSkillsScore': softSkillsScore,
+      'communicationSkills': communicationSkills,
+      'problemSolvingApproach': problemSolvingApproach,
+      'culturalFit': culturalFit,
+      'overallImpression': overallImpression,
+      'additionalComments': additionalComments,
       'currentQuestionIndex': currentQuestionIndex,
       'totalQuestions': totalQuestions,
     };
@@ -253,6 +304,7 @@ class Interview extends Equatable {
     id,
     candidateName,
     role,
+    roleName,
     level,
     startTime,
     endTime,
@@ -261,6 +313,11 @@ class Interview extends Equatable {
     overallScore,
     technicalScore,
     softSkillsScore,
+    communicationSkills,
+    problemSolvingApproach,
+    culturalFit,
+    overallImpression,
+    additionalComments,
     currentQuestionIndex,
     totalQuestions,
   ];

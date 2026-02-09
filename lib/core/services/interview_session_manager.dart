@@ -43,6 +43,7 @@ class InterviewSessionManager extends ChangeNotifier {
         id: _generateSecureInterviewId(),
         candidateName: _sanitizeInput(candidateName),
         role: _parseRole(role),
+        roleName: role.trim(),
         level: _parseLevel(level),
         startTime: DateTime.now(),
         responses: [],

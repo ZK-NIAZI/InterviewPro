@@ -4,13 +4,21 @@ import '../../../../core/constants/app_colors.dart';
 /// Recommendation box widget with final verdict
 class RecommendationBoxWidget extends StatelessWidget {
   final double overallScore;
+  final String? recommendation;
 
-  const RecommendationBoxWidget({super.key, required this.overallScore});
+  const RecommendationBoxWidget({
+    super.key,
+    required this.overallScore,
+    this.recommendation,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isRecommended = overallScore >= 6.0;
-    final verdict = isRecommended ? 'RECOMMENDED FOR HIRE' : 'NOT RECOMMENDED';
+    // Standardize threshold to 70% as per app requirements
+    final isRecommended = overallScore >= 70.0;
+    final verdict =
+        recommendation?.toUpperCase() ??
+        (isRecommended ? 'RECOMMENDED FOR HIRE' : 'NOT RECOMMENDED');
 
     return Center(
       child: Container(

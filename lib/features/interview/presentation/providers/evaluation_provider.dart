@@ -195,6 +195,12 @@ class EvaluationProvider extends ChangeNotifier {
           status: InterviewStatus.completed,
           overallScore: evaluation.calculatedScore,
           endTime: DateTime.now(),
+          softSkillsScore: evaluation.calculatedScore,
+          communicationSkills: _communicationSkills,
+          problemSolvingApproach: _problemSolvingApproach,
+          culturalFit: _culturalFit,
+          overallImpression: _overallImpression,
+          additionalComments: _additionalComments,
         );
         await _interviewRepository.updateInterview(updatedInterview);
       }
@@ -215,8 +221,7 @@ class EvaluationProvider extends ChangeNotifier {
     required String role,
     required String level,
   }) async {
-    final score = calculatedScore;
-    final scorePercentage = (score * 10).toInt();
+    final scorePercentage = calculatedScore.toInt();
 
     final report =
         '''
@@ -232,26 +237,26 @@ EVALUATION SCORES:
 • Problem-Solving Approach: $_problemSolvingApproach/5
 • Cultural Fit: $_culturalFit/5
 • Overall Impression: $_overallImpression/5
-
-OVERALL SCORE: ${score.toStringAsFixed(1)}/10 ($scorePercentage%)
+ 
+OVERALL SCORE: $scorePercentage%
 
 ADDITIONAL COMMENTS:
 ${_additionalComments.isEmpty ? 'No additional comments provided.' : _additionalComments}
 
 RECOMMENDATION:
-${_getRecommendation(score)}
+${_getRecommendation(calculatedScore)}
 ''';
 
     return report;
   }
 
-  /// Get recommendation based on score
+  /// Get recommendation based on score (0-100)
   String _getRecommendation(double score) {
-    if (score >= 8.0) {
+    if (score >= 80.0) {
       return 'Highly Recommended - Excellent candidate with strong skills across all areas.';
-    } else if (score >= 6.0) {
+    } else if (score >= 60.0) {
       return 'Recommended - Good candidate with solid skills, minor areas for improvement.';
-    } else if (score >= 4.0) {
+    } else if (score >= 40.0) {
       return 'Consider with Reservations - Average candidate, significant areas need improvement.';
     } else {
       return 'Not Recommended - Candidate needs substantial development before being suitable for this role.';
