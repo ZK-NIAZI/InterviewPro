@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/app_router.dart';
 import '../../../../shared/domain/entities/entities.dart';
 import '../providers/history_provider.dart';
 
@@ -285,95 +287,101 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
 
   /// Builds individual interview list item
   Widget _buildInterviewListItem(Interview interview) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left colored indicator based on status
-          Container(
-            width: 4,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _getStatusColor(interview.status),
-              borderRadius: BorderRadius.circular(2),
+    return GestureDetector(
+      onTap: () => _navigateToInterviewReport(interview),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE5E5E5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Interview details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  interview.candidateName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      _getRoleDisplayName(interview),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF666666),
-                      ),
-                    ),
-                    const Text(
-                      ' • ',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF999999)),
-                    ),
-                    Text(
-                      _formatDate(interview.startTime),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF666666),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Score badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: interview.overallScore != null
-                  ? AppColors.primary.withValues(alpha: 0.1)
-                  : const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              interview.overallScore?.toStringAsFixed(1) ?? '--',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: interview.overallScore != null
-                    ? AppColors.primary
-                    : const Color(0xFF999999),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Left colored indicator based on status
+            Container(
+              width: 4,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _getStatusColor(interview.status),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(width: 12),
+
+            // Interview details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    interview.candidateName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '${_getRoleDisplayName(interview)} - ${_getLevelDisplayName(interview.level)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const Text(
+                        ' • ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                      Text(
+                        _formatDate(interview.startTime),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Score badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: interview.overallScore != null
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                interview.overallScore?.toStringAsFixed(1) ?? '--',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: interview.overallScore != null
+                      ? AppColors.primary
+                      : const Color(0xFF999999),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -382,7 +390,8 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   Color _getStatusColor(InterviewStatus status) {
     switch (status) {
       case InterviewStatus.completed:
-        return AppColors.success;
+        return AppColors
+            .primary; // Changed from success (green) to primary (red)
       case InterviewStatus.inProgress:
         return AppColors.warning;
       case InterviewStatus.cancelled:
@@ -414,6 +423,18 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
     }
   }
 
+  /// Get level display name
+  String _getLevelDisplayName(Level level) {
+    switch (level) {
+      case Level.intern:
+        return AppStrings.intern;
+      case Level.associate:
+        return AppStrings.associate;
+      case Level.senior:
+        return AppStrings.senior;
+    }
+  }
+
   /// Format date for display
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -427,6 +448,35 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
       return '${difference.inDays} days ago';
     } else {
       return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  /// Navigate to interview report
+  void _navigateToInterviewReport(Interview interview) {
+    try {
+      if (interview.candidateName.isEmpty) return;
+
+      final candidateName = Uri.encodeComponent(interview.candidateName);
+      final roleValue = Uri.encodeComponent(_getRoleDisplayName(interview));
+      final levelValue = Uri.encodeComponent(
+        _getLevelDisplayName(interview.level),
+      );
+      final overallScore =
+          interview.overallScore ?? interview.technicalScore ?? 0.0;
+      final communicationSkills = interview.softSkillsScore?.round() ?? 3;
+      final problemSolvingApproach = interview.technicalScore?.round() ?? 3;
+      final culturalFit = interview.softSkillsScore?.round() ?? 3;
+      final overallImpression = interview.overallScore?.round() ?? 3;
+      final additionalComments = Uri.encodeComponent(
+        'Generated from interview session',
+      );
+      final interviewId = interview.id;
+
+      context.push(
+        '${AppRouter.interviewReport}?candidateName=$candidateName&role=$roleValue&level=$levelValue&overallScore=$overallScore&communicationSkills=$communicationSkills&problemSolvingApproach=$problemSolvingApproach&culturalFit=$culturalFit&overallImpression=$overallImpression&additionalComments=$additionalComments&interviewId=$interviewId',
+      );
+    } catch (e) {
+      debugPrint('Error navigating to report: $e');
     }
   }
 }

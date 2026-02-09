@@ -59,10 +59,8 @@ class _DashboardPageState extends State<DashboardPage> {
         // Bottom Navigation - always visible
         bottomNavigationBar: _buildBottomNavigation(),
 
-        // Floating Action Button - only show on history tab
-        floatingActionButton: _selectedIndex == 1
-            ? _buildFloatingActionButton()
-            : null,
+        // Floating Action Button - removed from history tab as per requirements
+        floatingActionButton: null,
       ),
     );
   }
@@ -278,33 +276,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildSettingsContent() {
     return const SettingsContentWidget();
-  }
-
-  Widget _buildFloatingActionButton() {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: () {
-          // Navigate to start new interview
-          context.push(AppRouter.interview);
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.add, size: 32, color: Colors.white),
-      ),
-    );
   }
 
   Widget _buildStartInterviewButton() {
