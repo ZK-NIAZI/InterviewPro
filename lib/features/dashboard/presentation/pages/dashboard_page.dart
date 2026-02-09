@@ -588,7 +588,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _buildStatusChip(interview.status),
                     ],
                   ),
                 ],
@@ -631,47 +630,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(InterviewStatus status) {
-    Color color;
-    String text;
-
-    switch (status) {
-      case InterviewStatus.completed:
-        color = AppColors.success;
-        text = 'Completed';
-        break;
-      case InterviewStatus.inProgress:
-        color = AppColors.warning;
-        text = 'In Progress';
-        break;
-      case InterviewStatus.cancelled:
-        color = AppColors.error;
-        text = 'Cancelled';
-        break;
-      case InterviewStatus.notStarted:
-        color = AppColors.grey500;
-        text = 'Not Started';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: color,
         ),
       ),
     );
