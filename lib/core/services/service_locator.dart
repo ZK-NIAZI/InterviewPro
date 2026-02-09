@@ -5,14 +5,20 @@ import '../../shared/domain/repositories/interview_repository.dart';
 import '../../shared/domain/repositories/role_repository.dart';
 import '../../shared/domain/repositories/experience_level_repository.dart';
 import '../../shared/domain/repositories/interview_question_repository.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'appwrite_service.dart';
 import 'interview_session_manager.dart';
+import 'voice_recording_service.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
 
 /// Initialize all dependencies
 Future<void> initializeDependencies() async {
+  // Initialize Hive
+  await Hive.initFlutter();
+  await Hive.openBox('voiceRecordingsBox');
+
   // Initialize Appwrite service first
   sl.registerLazySingleton<AppwriteService>(() => AppwriteService.instance);
   sl<AppwriteService>().initialize();
@@ -50,6 +56,10 @@ Future<void> initializeDependencies() async {
   // Services
   sl.registerLazySingleton<InterviewSessionManager>(
     () => InterviewSessionManager(sl<InterviewRepository>()),
+  );
+
+  sl.registerLazySingleton<VoiceRecordingService>(
+    () => VoiceRecordingService(Hive.box('voiceRecordingsBox')),
   );
 
   // Initialize data sources

@@ -74,7 +74,12 @@ class InterviewSessionManager extends ChangeNotifier {
   }
 
   /// Record a response to the current question with enhanced validation
-  Future<void> recordResponse({required bool isCorrect, String? notes}) async {
+  Future<void> recordResponse({
+    required bool isCorrect,
+    String? notes,
+    String? voiceRecordingPath,
+    int? voiceRecordingDurationSeconds,
+  }) async {
     if (_currentInterview == null || _sessionQuestions.isEmpty) {
       throw Exception('No active interview session');
     }
@@ -101,6 +106,8 @@ class InterviewSessionManager extends ChangeNotifier {
         isCorrect: isCorrect,
         notes: sanitizedNotes,
         responseTimeSeconds: responseTime,
+        voiceRecordingPath: voiceRecordingPath,
+        voiceRecordingDurationSeconds: voiceRecordingDurationSeconds,
       );
 
       // Add response to current interview

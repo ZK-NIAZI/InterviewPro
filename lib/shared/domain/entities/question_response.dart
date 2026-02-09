@@ -26,6 +26,12 @@ class QuestionResponse extends Equatable {
   /// Time taken to answer the question (in seconds)
   final int? responseTimeSeconds;
 
+  /// Path to the recorded voice answer (if any)
+  final String? voiceRecordingPath;
+
+  /// Duration of the voice recording (in seconds)
+  final int? voiceRecordingDurationSeconds;
+
   const QuestionResponse({
     required this.questionId,
     required this.questionText,
@@ -35,6 +41,8 @@ class QuestionResponse extends Equatable {
     this.notes,
     required this.timestamp,
     this.responseTimeSeconds,
+    this.voiceRecordingPath,
+    this.voiceRecordingDurationSeconds,
   });
 
   /// Creates a copy of this response with updated fields
@@ -47,6 +55,8 @@ class QuestionResponse extends Equatable {
     String? notes,
     DateTime? timestamp,
     int? responseTimeSeconds,
+    String? voiceRecordingPath,
+    int? voiceRecordingDurationSeconds,
   }) {
     return QuestionResponse(
       questionId: questionId ?? this.questionId,
@@ -57,6 +67,9 @@ class QuestionResponse extends Equatable {
       notes: notes ?? this.notes,
       timestamp: timestamp ?? this.timestamp,
       responseTimeSeconds: responseTimeSeconds ?? this.responseTimeSeconds,
+      voiceRecordingPath: voiceRecordingPath ?? this.voiceRecordingPath,
+      voiceRecordingDurationSeconds:
+          voiceRecordingDurationSeconds ?? this.voiceRecordingDurationSeconds,
     );
   }
 
@@ -101,6 +114,8 @@ class QuestionResponse extends Equatable {
     required bool isCorrect,
     String? notes,
     int? responseTimeSeconds,
+    String? voiceRecordingPath,
+    int? voiceRecordingDurationSeconds,
   }) {
     return QuestionResponse(
       questionId: questionId,
@@ -111,6 +126,8 @@ class QuestionResponse extends Equatable {
       notes: notes,
       timestamp: DateTime.now(),
       responseTimeSeconds: responseTimeSeconds,
+      voiceRecordingPath: voiceRecordingPath,
+      voiceRecordingDurationSeconds: voiceRecordingDurationSeconds,
     );
   }
 
@@ -125,6 +142,8 @@ class QuestionResponse extends Equatable {
       notes: json['notes'],
       timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
       responseTimeSeconds: json['responseTimeSeconds'],
+      voiceRecordingPath: json['voiceRecordingPath'],
+      voiceRecordingDurationSeconds: json['voiceRecordingDurationSeconds'],
     );
   }
 
@@ -139,6 +158,8 @@ class QuestionResponse extends Equatable {
       'notes': notes,
       'timestamp': timestamp.toIso8601String(),
       'responseTimeSeconds': responseTimeSeconds,
+      'voiceRecordingPath': voiceRecordingPath,
+      'voiceRecordingDurationSeconds': voiceRecordingDurationSeconds,
     };
   }
 

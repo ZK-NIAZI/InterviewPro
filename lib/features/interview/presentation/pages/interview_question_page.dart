@@ -9,6 +9,7 @@ import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
+import '../providers/voice_recording_provider.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -27,10 +28,15 @@ class InterviewQuestionPage extends StatefulWidget {
   State<InterviewQuestionPage> createState() => _InterviewQuestionPageState();
 }
 
-class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
+class _InterviewQuestionPageState extends State<InterviewQuestionPage>
+    with SingleTickerProviderStateMixin {
   bool? selectedAnswer; // null = no selection, true = Yes, false = No
   bool showNotes = false;
   final TextEditingController notesController = TextEditingController();
+
+  // Voice recording state
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
 
   // Dynamic question data
   List<InterviewQuestion> _questions = [];
@@ -47,6 +53,15 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     super.initState();
     _sessionManager = sl<InterviewSessionManager>();
     _loadQuestions();
+
+    // Initialize pulsing animation
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   /// Load questions based on selected role and experience level
@@ -171,6 +186,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   @override
   void dispose() {
     notesController.dispose();
+    _pulseController.dispose();
     // Note: We don't clear the session here as it should persist
     // until the interview is completed or explicitly cancelled
     super.dispose();
@@ -640,27 +656,130 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
   }
 
   Widget _buildVoiceRecordingButton() {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: Center(
-        child: GestureDetector(
-          onTap: _onVoiceRecording,
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                width: 2,
+    final question = _currentQuestion;
+    if (question == null) return const SizedBox.shrink();
+
+    return Consumer<VoiceRecordingProvider>(
+      builder: (context, provider, child) {
+        final isActive =
+            provider.isRecording && provider.activeQuestionId == question.id;
+        final hasAudio = provider.hasRecording(question.id);
+
+        if (isActive && !_pulseController.isAnimating) {
+          _pulseController.repeat(reverse: true);
+        } else if (!isActive && _pulseController.isAnimating) {
+          _pulseController.stop();
+          _pulseController.reset();
+        }
+
+        return Column(
+          children: [
+            const SizedBox(height: 16),
+            Center(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: () => _toggleRecording(question.id),
+                    child: ScaleTransition(
+                      scale: _pulseAnimation,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? AppColors.primary
+                              : AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                            color: isActive
+                                ? AppColors.primary
+                                : AppColors.primary.withValues(alpha: 0.3),
+                            width: 2,
+                          ),
+                          boxShadow: isActive
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Icon(
+                          isActive
+                              ? Icons.stop
+                              : (hasAudio ? Icons.mic : Icons.mic_none),
+                          size: 32,
+                          color: isActive ? Colors.white : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isActive || hasAudio) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (isActive)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        Text(
+                          isActive
+                              ? _formatDuration(
+                                  provider.recordingDurationSeconds,
+                                )
+                              : (hasAudio ? 'Recording Saved' : ''),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isActive
+                                ? AppColors.primary
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
-            child: Icon(Icons.mic, size: 28, color: AppColors.primary),
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
+  }
+
+  String _formatDuration(int seconds) {
+    final mins = (seconds ~/ 60).toString().padLeft(2, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+    return '$mins:$secs';
+  }
+
+  void _toggleRecording(String questionId) async {
+    final provider = context.read<VoiceRecordingProvider>();
+    if (provider.isRecording) {
+      await provider.stop();
+    } else {
+      try {
+        await provider.start(questionId: questionId);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not start recording: $e')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildBottomNavigation() {
@@ -758,9 +877,17 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     // Record response if session is active and answer is selected
     if (_sessionStarted && _sessionManager.hasActiveSession) {
       try {
+        final recordingProvider = context.read<VoiceRecordingProvider>();
+        final voicePath = recordingProvider.getRecordingPath(question.id);
+        final voiceDuration = recordingProvider.getRecordingDuration(
+          question.id,
+        );
+
         await _sessionManager.recordResponse(
           isCorrect: selectedAnswer!,
           notes: notesController.text.isNotEmpty ? notesController.text : null,
+          voiceRecordingPath: voicePath,
+          voiceRecordingDurationSeconds: voiceDuration,
         );
         debugPrint('✅ Response recorded for question ${_currentIndex + 1}');
       } catch (e) {
@@ -898,9 +1025,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage> {
     }
   }
 
-  void _onVoiceRecording() {
-    // Voice recording functionality planned
-  }
+  // Removed _onVoiceRecording as it's replaced by _toggleRecording
 
   /// Check if this is the last question
   bool _isLastQuestion() {

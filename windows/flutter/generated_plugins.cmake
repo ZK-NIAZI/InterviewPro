@@ -3,9 +3,12 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audioplayers_windows
   connectivity_plus
   desktop_webview_window
+  permission_handler_windows
   printing
+  record_windows
   share_plus
   url_launcher_windows
   window_to_front

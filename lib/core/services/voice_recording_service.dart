@@ -1,0 +1,129 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
+
+/// Service for handling audio recording logic and persistence metadata
+class VoiceRecordingService {
+  final Box _box;
+  final AudioRecorder _recorder = AudioRecorder();
+
+  VoiceRecordingService(this._box);
+
+  /// Check and request microphone permission
+  Future<bool> checkPermission() async {
+    try {
+      final status = await Permission.microphone.status;
+      if (status.isGranted) return true;
+
+      final result = await Permission.microphone.request();
+      return result.isGranted;
+    } on Exception catch (e) {
+      if (e.toString().contains('MissingPluginException')) {
+        debugPrint(
+          '⚠️ Permission handler plugin not yet registered. Rebuilding recommended.',
+        );
+      }
+      debugPrint('❌ Error checking permissions: $e');
+      return false;
+    } catch (e) {
+      debugPrint('❌ Unexpected error checking permissions: $e');
+      return false;
+    }
+  }
+
+  /// Start recording audio for a specific question
+  Future<void> startRecording(String questionId) async {
+    if (!await checkPermission()) {
+      throw Exception('Microphone permission not granted');
+    }
+
+    if (await _recorder.isRecording()) {
+      await stopRecording();
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        'recording_${questionId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final filePath = '${directory.path}/$fileName';
+
+    // Delete existing recording if any
+    await deleteRecording(questionId);
+
+    const config = RecordConfig(); // Default config: AAC/M4A
+
+    await _recorder.start(config, path: filePath);
+    debugPrint('🎙️ Started recording: $filePath');
+  }
+
+  /// Stop current recording and return the path
+  Future<String?> stopRecording() async {
+    final path = await _recorder.stop();
+    debugPrint('🛑 Stopped recording: $path');
+    return path;
+  }
+
+  /// Pause current recording
+  Future<void> pauseRecording() async {
+    await _recorder.pause();
+    debugPrint('⏸️ Paused recording');
+  }
+
+  /// Resume current recording
+  Future<void> resumeRecording() async {
+    await _recorder.resume();
+    debugPrint('▶️ Resumed recording');
+  }
+
+  /// Check if currently recording
+  Future<bool> isRecording() => _recorder.isRecording();
+
+  /// Save recording metadata to Hive
+  Future<void> saveMetadata({
+    required String questionId,
+    required String path,
+    required int durationSeconds,
+  }) async {
+    await _box.put(questionId, {
+      'path': path,
+      'duration': durationSeconds,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    debugPrint('💾 Saved metadata for $questionId');
+  }
+
+  /// Get recording metadata from Hive
+  Map<String, dynamic>? getMetadata(String questionId) {
+    final data = _box.get(questionId);
+    if (data == null) return null;
+    return Map<String, dynamic>.from(data);
+  }
+
+  /// Delete recording file and metadata
+  Future<void> deleteRecording(String questionId) async {
+    final metadata = getMetadata(questionId);
+    if (metadata != null) {
+      final path = metadata['path'] as String;
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('🗑️ Deleted file: $path');
+      }
+      await _box.delete(questionId);
+      debugPrint('🗑️ Deleted metadata for $questionId');
+    }
+  }
+
+  /// Clear all recordings (e.g., when interview is cancelled)
+  Future<void> clearAll() async {
+    for (final key in _box.keys) {
+      await deleteRecording(key.toString());
+    }
+  }
+
+  void dispose() {
+    _recorder.dispose();
+  }
+}
