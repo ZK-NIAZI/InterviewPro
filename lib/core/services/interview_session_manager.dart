@@ -492,21 +492,19 @@ class InterviewSessionManager extends ChangeNotifier {
 
   /// Parse role string to Role enum with validation
   Role _parseRole(String roleString) {
-    switch (roleString.toLowerCase().trim()) {
-      case 'flutter developer':
-        return Role.flutter;
-      case 'backend developer':
-        return Role.backend;
-      case 'frontend developer':
-        return Role.frontend;
-      case 'full stack developer':
-        return Role.fullStack;
-      case 'mobile developer':
-        return Role.mobile;
-      default:
-        debugPrint('⚠️ Unknown role: $roleString, defaulting to Flutter');
-        return Role.flutter;
+    final normalized = roleString.toLowerCase().trim();
+    if (normalized.contains('flutter')) return Role.flutter;
+    if (normalized.contains('backend')) return Role.backend;
+    if (normalized.contains('frontend')) return Role.frontend;
+    if (normalized.contains('full stack') || normalized.contains('fullstack')) {
+      return Role.fullStack;
     }
+    if (normalized.contains('mobile')) return Role.mobile;
+
+    // If no match found, we still return Role.flutter as a structural fallback,
+    // but the actual display will now use Interview.roleName (the original string).
+    debugPrint('ℹ️ Custom role detected: $roleString');
+    return Role.flutter;
   }
 
   /// Parse level string to Level enum with validation

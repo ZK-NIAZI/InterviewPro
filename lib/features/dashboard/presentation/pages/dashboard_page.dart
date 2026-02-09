@@ -564,7 +564,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_getRoleDisplayName(interview.role)} - ${_getLevelDisplayName(interview.level)}',
+                    '${_getRoleDisplayName(interview)} - ${_getLevelDisplayName(interview.level)}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -677,8 +677,14 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  String _getRoleDisplayName(Role role) {
-    switch (role) {
+  String _getRoleDisplayName(Interview interview) {
+    // Priority 1: Use the actual roleName string if available (it persists the user selection)
+    if (interview.roleName.isNotEmpty) {
+      return interview.roleName;
+    }
+
+    // Priority 2: Fallback to Enum display name for legacy data
+    switch (interview.role) {
       case Role.flutter:
         return AppStrings.flutterDeveloper;
       case Role.backend:
@@ -833,7 +839,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Build navigation URL with proper encoding
       final candidateName = Uri.encodeComponent(interview.candidateName);
-      final role = Uri.encodeComponent(_getRoleDisplayName(interview.role));
+      final role = Uri.encodeComponent(_getRoleDisplayName(interview));
       final level = Uri.encodeComponent(_getLevelDisplayName(interview.level));
       final overallScore =
           interview.overallScore ?? interview.technicalScore ?? 0.0;

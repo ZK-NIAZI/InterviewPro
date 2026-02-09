@@ -209,7 +209,16 @@ class Interview extends Equatable {
       role: _parseRole(json['role']),
       roleName:
           json['roleName'] ??
-          (json['role'] != null ? json['role'].toString().split('.').last : ''),
+          (json['role'] != null
+              ? json['role']
+                    .toString()
+                    .split('.')
+                    .last
+                    .replaceAllMapped(
+                      RegExp(r'([a-z])([A-Z])'),
+                      (Match m) => '${m[1]} ${m[2]}',
+                    )
+              : ''),
       level: _parseLevel(json['level']),
       startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
       endTime: json['endTime'] != null

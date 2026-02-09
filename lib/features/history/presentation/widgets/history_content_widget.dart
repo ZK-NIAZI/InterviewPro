@@ -330,7 +330,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
                 Row(
                   children: [
                     Text(
-                      _getRoleDisplayName(interview.role),
+                      _getRoleDisplayName(interview),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF666666),
@@ -393,8 +393,14 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   }
 
   /// Get role display name
-  String _getRoleDisplayName(Role role) {
-    switch (role) {
+  String _getRoleDisplayName(Interview interview) {
+    // Priority 1: Use the actual roleName string if available
+    if (interview.roleName.isNotEmpty) {
+      return interview.roleName;
+    }
+
+    // Priority 2: Fallback to Enum display name for legacy data
+    switch (interview.role) {
       case Role.flutter:
         return AppStrings.flutterDeveloper;
       case Role.backend:
