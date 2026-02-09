@@ -60,10 +60,9 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache the session data securely
       _cacheSessionData();
 
-      // Save to repository with error handling
-      await _interviewRepository.saveInterview(interview);
-
-      debugPrint('✅ Started interview session: ${interview.id}');
+      debugPrint(
+        '✅ Started interview session (In-Memory/Cache): ${interview.id}',
+      );
       notifyListeners();
 
       return interview;
@@ -119,13 +118,8 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository with retry mechanism
-      await _saveWithRetry(
-        () => _interviewRepository.updateInterview(_currentInterview!),
-      );
-
       debugPrint(
-        '✅ Recorded response for question ${currentQuestionIndex + 1}',
+        '✅ Recorded response for question ${currentQuestionIndex + 1} (Cached)',
       );
       notifyListeners();
     } catch (e) {
@@ -156,12 +150,7 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository with retry
-      await _saveWithRetry(
-        () => _interviewRepository.updateInterview(_currentInterview!),
-      );
-
-      debugPrint('✅ Moved to question ${currentQuestionIndex + 1}');
+      debugPrint('✅ Moved to question ${currentQuestionIndex + 1} (Cached)');
       notifyListeners();
     } catch (e) {
       debugPrint('❌ Error moving to next question: $e');
@@ -191,12 +180,7 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache updated session
       _cacheSessionData();
 
-      // Save to repository with retry
-      await _saveWithRetry(
-        () => _interviewRepository.updateInterview(_currentInterview!),
-      );
-
-      debugPrint('✅ Moved to question ${currentQuestionIndex + 1}');
+      debugPrint('✅ Moved to question ${currentQuestionIndex + 1} (Cached)');
       notifyListeners();
     } catch (e) {
       debugPrint('❌ Error moving to previous question: $e');

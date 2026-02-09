@@ -45,6 +45,9 @@ class InterviewRepositoryImpl implements InterviewRepository {
         await _loadFromFileSystem();
       }
 
+      // Cleanup abandoned/incomplete sessions from legacy data
+      await _cleanupIncompleteInterviews();
+
       _isInitialized = true;
       debugPrint('✅ InterviewRepository initialized successfully');
     } catch (e) {
@@ -306,9 +309,13 @@ class InterviewRepositoryImpl implements InterviewRepository {
   Future<List<Interview>> getAllInterviews() async {
     await _ensureInitialized();
 
-    final interviews = _interviews.values.toList();
+    final interviews = _interviews.values
+        .where((i) => i.status == InterviewStatus.completed)
+        .toList();
     interviews.sort((a, b) => b.startTime.compareTo(a.startTime));
-    debugPrint('✅ Loaded ${interviews.length} interviews from memory');
+    debugPrint(
+      '✅ Loaded ${interviews.length} completed interviews from memory',
+    );
     return interviews;
   }
 
@@ -414,7 +421,8 @@ class InterviewRepositoryImpl implements InterviewRepository {
 
   @override
   Future<int> getInterviewCount() async {
-    return _interviews.length;
+    final allInterviews = await getAllInterviews();
+    return allInterviews.length;
   }
 
   @override
@@ -571,6 +579,30 @@ class InterviewRepositoryImpl implements InterviewRepository {
         overallScore: overallScore,
       );
       await updateInterview(updatedInterview);
+    }
+  }
+
+  /// One-time cleanup of incomplete/abandoned interviews from storage
+  Future<void> _cleanupIncompleteInterviews() async {
+    try {
+      final abandonedIds = _interviews.entries
+          .where((e) => e.value.status != InterviewStatus.completed)
+          .map((e) => e.key)
+          .toList();
+
+      if (abandonedIds.isNotEmpty) {
+        debugPrint(
+          '🧹 Cleaning up ${abandonedIds.length} incomplete interviews',
+        );
+        for (final id in abandonedIds) {
+          _interviews.remove(id);
+          _responses.remove(id);
+        }
+        await _persistInterviews();
+        await _persistResponses();
+      }
+    } catch (e) {
+      debugPrint('❌ Error during legacy cleanup: $e');
     }
   }
 }
