@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:interview_pro_app/core/services/voice_recording_service.dart';
 
 /// Provider for managing voice recording state and UI updates
@@ -11,12 +12,27 @@ class VoiceRecordingProvider extends ChangeNotifier {
   Timer? _timer;
   String? _activeQuestionId;
 
-  VoiceRecordingProvider(this._recordingService);
+  // Playback state
+  bool _isPlaying = false;
+  Duration _currentPosition = Duration.zero;
+  Duration _totalDuration = Duration.zero;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerStateSubscription;
+  StreamSubscription? _completeSubscription;
+
+  VoiceRecordingProvider(this._recordingService) {
+    _initPlaybackListeners();
+  }
 
   // Getters
   bool get isRecording => _isRecording;
   int get recordingDurationSeconds => _recordingDurationSeconds;
   String? get activeQuestionId => _activeQuestionId;
+
+  // Playback Getters
+  bool get isPlaying => _isPlaying;
+  Duration get currentPosition => _currentPosition;
+  Duration get totalDuration => _totalDuration;
 
   /// Start recording for a question
   Future<void> start({required String questionId}) async {
@@ -102,6 +118,69 @@ class VoiceRecordingProvider extends ChangeNotifier {
     return _recordingService.getMetadata(questionId)?['duration'] as int?;
   }
 
+  // --- Playback Section ---
+
+  /// Start playing a recording
+  Future<void> playRecording(String questionId) async {
+    final path = getRecordingPath(questionId);
+    if (path == null) return;
+
+    try {
+      await _recordingService.play(path);
+      _totalDuration = (await _recordingService.getDuration()) ?? Duration.zero;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error playing recording: $e');
+    }
+  }
+
+  /// Pause current playback
+  Future<void> pausePlayback() async {
+    await _recordingService.pausePlayback();
+    _isPlaying = false;
+    notifyListeners();
+  }
+
+  /// Resume current playback
+  Future<void> resumePlayback() async {
+    await _recordingService.resumePlayback();
+    _isPlaying = true;
+    notifyListeners();
+  }
+
+  /// Stop current playback
+  Future<void> stopPlayback() async {
+    await _recordingService.stopPlayback();
+    _isPlaying = false;
+    _currentPosition = Duration.zero;
+    notifyListeners();
+  }
+
+  /// Seek to a specific position
+  Future<void> seekPlayback(Duration position) async {
+    await _recordingService.seekPlayback(position);
+  }
+
+  void _initPlaybackListeners() {
+    _positionSubscription = _recordingService.onPositionChanged.listen((pos) {
+      _currentPosition = pos;
+      notifyListeners();
+    });
+
+    _playerStateSubscription = _recordingService.onPlayerStateChanged.listen((
+      state,
+    ) {
+      _isPlaying = state == PlayerState.playing;
+      notifyListeners();
+    });
+
+    _completeSubscription = _recordingService.onPlaybackComplete.listen((_) {
+      _isPlaying = false;
+      _currentPosition = Duration.zero;
+      notifyListeners();
+    });
+  }
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -118,6 +197,9 @@ class VoiceRecordingProvider extends ChangeNotifier {
   @override
   void dispose() {
     _stopTimer();
+    _positionSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    _completeSubscription?.cancel();
     super.dispose();
   }
 }

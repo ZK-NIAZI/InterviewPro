@@ -4,11 +4,13 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 /// Service for handling audio recording logic and persistence metadata
 class VoiceRecordingService {
   final Box _box;
   final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _player = AudioPlayer();
 
   VoiceRecordingService(this._box);
 
@@ -80,6 +82,50 @@ class VoiceRecordingService {
   /// Check if currently recording
   Future<bool> isRecording() => _recorder.isRecording();
 
+  // --- Playback Section ---
+
+  /// Play audio from path
+  Future<void> play(String path) async {
+    await _player.stop();
+    await _player.play(DeviceFileSource(path));
+    debugPrint('▶️ Started playback: $path');
+  }
+
+  /// Pause current playback
+  Future<void> pausePlayback() async {
+    await _player.pause();
+    debugPrint('⏸️ Paused playback');
+  }
+
+  /// Resume current playback
+  Future<void> resumePlayback() async {
+    await _player.resume();
+    debugPrint('▶️ Resumed playback');
+  }
+
+  /// Stop current playback
+  Future<void> stopPlayback() async {
+    await _player.stop();
+    debugPrint('🛑 Stopped playback');
+  }
+
+  /// Seek to a specific position
+  Future<void> seekPlayback(Duration position) async {
+    await _player.seek(position);
+  }
+
+  /// Stream of playback position updates
+  Stream<Duration> get onPositionChanged => _player.onPositionChanged;
+
+  /// Stream of player state changes
+  Stream<PlayerState> get onPlayerStateChanged => _player.onPlayerStateChanged;
+
+  /// Stream of playback completion
+  Stream<void> get onPlaybackComplete => _player.onPlayerComplete;
+
+  /// Get total duration of the current audio
+  Future<Duration?> getDuration() => _player.getDuration();
+
   /// Save recording metadata to Hive
   Future<void> saveMetadata({
     required String questionId,
@@ -125,5 +171,6 @@ class VoiceRecordingService {
 
   void dispose() {
     _recorder.dispose();
+    _player.dispose();
   }
 }

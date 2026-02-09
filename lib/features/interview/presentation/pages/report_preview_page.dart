@@ -520,6 +520,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             response.questionText,
             response.notes ?? 'No notes provided',
             response.isCorrect,
+            questionId: response.questionId,
           ),
         );
       }
@@ -545,6 +546,12 @@ class TechnicalQuestion {
   final String question;
   final String feedback;
   final bool isCorrect;
+  final String questionId;
 
-  TechnicalQuestion(this.question, this.feedback, this.isCorrect);
+  TechnicalQuestion(
+    this.question,
+    this.feedback,
+    this.isCorrect, {
+    this.questionId = '',
+  });
 }

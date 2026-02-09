@@ -10,6 +10,7 @@ import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
 import '../providers/voice_recording_provider.dart';
+import '../widgets/voice_playback_widget.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -665,11 +666,41 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
             provider.isRecording && provider.activeQuestionId == question.id;
         final hasAudio = provider.hasRecording(question.id);
 
-        if (isActive && !_pulseController.isAnimating) {
-          _pulseController.repeat(reverse: true);
-        } else if (!isActive && _pulseController.isAnimating) {
-          _pulseController.stop();
-          _pulseController.reset();
+        if (hasAudio && !isActive) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: VoicePlaybackWidget(
+              questionId: question.id,
+              onReRecord: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Re-record Answer?'),
+                    content: const Text(
+                      'This will delete the current voice recording. Continue?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                        ),
+                        child: const Text('Re-record'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await provider.cancel(); // Deletes recording and resets state
+                }
+              },
+            ),
+          );
         }
 
         return Column(
@@ -718,33 +749,26 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
                       ),
                     ),
                   ),
-                  if (isActive || hasAudio) ...[
+                  if (isActive) ...[
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (isActive)
-                          Container(
-                            width: 8,
-                            height: 8,
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
                           ),
+                        ),
                         Text(
-                          isActive
-                              ? _formatDuration(
-                                  provider.recordingDurationSeconds,
-                                )
-                              : (hasAudio ? 'Recording Saved' : ''),
-                          style: TextStyle(
+                          _formatDuration(provider.recordingDurationSeconds),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: isActive
-                                ? AppColors.primary
-                                : Colors.grey[600],
+                            color: AppColors.primary,
                           ),
                         ),
                       ],

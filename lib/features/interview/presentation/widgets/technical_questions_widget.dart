@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../pages/report_preview_page.dart';
+import '../providers/voice_recording_provider.dart';
+import 'playback_dialog.dart';
 
 /// Technical questions widget with check/cancel icons
 class TechnicalQuestionsWidget extends StatelessWidget {
@@ -82,6 +85,33 @@ class TechnicalQuestionsWidget extends StatelessWidget {
               ],
             ),
           ),
+
+          // Playback button
+          if (question.questionId.isNotEmpty)
+            Consumer<VoiceRecordingProvider>(
+              builder: (context, provider, child) {
+                final hasRecording = provider.hasRecording(question.questionId);
+                if (!hasRecording) return const SizedBox.shrink();
+
+                return IconButton(
+                  icon: const Icon(
+                    Icons.play_circle_outline,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    PlaybackDialog.show(
+                      context,
+                      question.questionId,
+                      question.question,
+                    );
+                  },
+                  tooltip: 'Listen to response',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                );
+              },
+            ),
         ],
       ),
     );
