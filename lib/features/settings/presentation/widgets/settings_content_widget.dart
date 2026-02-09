@@ -25,17 +25,14 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           20,
-          0,
+          16,
           20,
           20, // Significantly reduced bottom padding
         ),
         child: Column(
           children: [
-            // Profile Section
-            _buildProfileSection(),
-            const SizedBox(height: 24),
-
             // General Settings Section
+            const SizedBox(height: 12),
             _buildGeneralSection(),
             const SizedBox(height: 24),
 
@@ -56,33 +53,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
             // Removed extra SizedBox to eliminate bottom space
           ],
         ),
-      ),
-    );
-  }
-
-  /// Builds the profile section with user info (no image)
-  Widget _buildProfileSection() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          // User Name
-          const Text(
-            'Alex Johnson',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          // User Email
-          Text(
-            'alex.j@example.com',
-            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
-          ),
-        ],
       ),
     );
   }
