@@ -182,7 +182,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                   candidateName:
                       _completedInterview?.candidateName ??
                       widget.candidateName,
-                  role: _completedInterview?.role.name ?? widget.role,
+                  role: _completedInterview?.roleName ?? widget.role,
                   level: _completedInterview?.level.name ?? widget.level,
                   interviewDate:
                       _completedInterview?.startTime ?? DateTime.now(),

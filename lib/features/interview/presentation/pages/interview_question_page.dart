@@ -887,7 +887,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
         // Navigate to candidate evaluation page with interview data
         context.go(
-          '${AppRouter.candidateEvaluation}?candidateName=${Uri.encodeComponent(completedInterview.candidateName)}&role=${Uri.encodeComponent(completedInterview.role.name)}&level=${Uri.encodeComponent(completedInterview.level.name)}&interviewId=${completedInterview.id}',
+          '${AppRouter.candidateEvaluation}?candidateName=${Uri.encodeComponent(completedInterview.candidateName)}&role=${Uri.encodeComponent(completedInterview.roleName)}&level=${Uri.encodeComponent(completedInterview.level.name)}&interviewId=${completedInterview.id}',
         );
       }
     } catch (e) {
