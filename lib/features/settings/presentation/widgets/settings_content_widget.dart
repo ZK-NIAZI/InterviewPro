@@ -46,11 +46,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
 
             // About Section
             _buildAboutSection(),
-            const SizedBox(height: 24),
-
-            // Logout Button
-            _buildLogoutButton(),
-            // Removed extra SizedBox to eliminate bottom space
           ],
         ),
       ),
@@ -357,34 +352,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
     );
   }
 
-  /// Builds the logout button
-  Widget _buildLogoutButton() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 0), // Removed top margin completely
-      child: TextButton(
-        onPressed: () {
-          _showLogoutDialog();
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: const Text(
-          'Logout',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-
   /// Builds a settings item row
   Widget _buildSettingItem({
     required String title,
@@ -575,32 +542,6 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
     );
   }
 
-  /// Shows logout confirmation dialog
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Logout functionality - in a real app this would clear user session
-              _performLogout();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Export data functionality
   void _exportData() {
     // In a real app, this would generate a CSV/JSON file and share it
@@ -630,10 +571,5 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
         );
       }
     }
-  }
-
-  /// Perform logout functionality
-  void _performLogout() {
-    // In a real app, this would clear user session and navigate to login
   }
 }
