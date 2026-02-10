@@ -11,6 +11,7 @@ import '../../../../shared/domain/repositories/interview_repository.dart';
 import '../providers/evaluation_provider.dart';
 import '../widgets/candidate_info_card.dart';
 import '../widgets/evaluation_form_widget.dart';
+import '../widgets/back_navigation_dialog.dart';
 
 /// Candidate evaluation screen for assessing soft skills and generating reports
 class CandidateEvaluationPage extends StatefulWidget {
@@ -85,25 +86,56 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: Column(
-          children: [
-            // Status bar placeholder
-            Container(
-              height: MediaQuery.of(context).padding.top,
-              decoration: const BoxDecoration(color: Colors.white),
-            ),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
+          if (didPop) return;
 
-            // Header
-            _buildHeader(),
+          final provider = context.read<EvaluationProvider>();
+          if (provider.isSaved) {
+            if (mounted) {
+              context.go(AppRouter.dashboard);
+            }
+            return;
+          }
 
-            // Main content
-            Expanded(child: _buildMainContent()),
+          final navigator = context;
+          final shouldPop = await BackNavigationDialog.show(navigator);
+          if (shouldPop == true) {
+            // Delete the interview from database
+            try {
+              final interviewRepository = sl<InterviewRepository>();
+              await interviewRepository.deleteInterview(widget.interviewId);
+              debugPrint('✅ Interview ${widget.interviewId} deleted');
+            } catch (e) {
+              debugPrint('❌ Error deleting interview: $e');
+            }
 
-            // Bottom button
-            _buildBottomButton(),
-          ],
+            if (mounted) {
+              navigator.go(AppRouter.dashboard);
+            }
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.grey[100],
+          body: Column(
+            children: [
+              // Status bar placeholder
+              Container(
+                height: MediaQuery.of(context).padding.top,
+                decoration: const BoxDecoration(color: Colors.white),
+              ),
+
+              // Header
+              _buildHeader(),
+
+              // Main content
+              Expanded(child: _buildMainContent()),
+
+              // Bottom button
+              _buildBottomButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -117,7 +149,30 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => context.go(AppRouter.dashboard),
+            onTap: () async {
+              final provider = context.read<EvaluationProvider>();
+              if (provider.isSaved) {
+                context.go(AppRouter.dashboard);
+                return;
+              }
+
+              final navigator = context;
+              final shouldPop = await BackNavigationDialog.show(navigator);
+              if (shouldPop == true) {
+                // Delete the interview from database
+                try {
+                  final interviewRepository = sl<InterviewRepository>();
+                  await interviewRepository.deleteInterview(widget.interviewId);
+                  debugPrint('✅ Interview ${widget.interviewId} deleted');
+                } catch (e) {
+                  debugPrint('❌ Error deleting interview: $e');
+                }
+
+                if (mounted) {
+                  navigator.go(AppRouter.dashboard);
+                }
+              }
+            },
             child: Container(
               width: 40,
               height: 40,

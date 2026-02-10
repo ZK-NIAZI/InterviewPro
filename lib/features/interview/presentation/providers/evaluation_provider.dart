@@ -17,6 +17,7 @@ class EvaluationProvider extends ChangeNotifier {
   String _additionalComments = '';
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isSaved = false;
 
   // Getters
   int get communicationSkills => _communicationSkills;
@@ -26,6 +27,7 @@ class EvaluationProvider extends ChangeNotifier {
   String get additionalComments => _additionalComments;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get isSaved => _isSaved;
 
   /// Calculate overall score based on current ratings
   double get calculatedScore {
@@ -135,6 +137,7 @@ class EvaluationProvider extends ChangeNotifier {
     _culturalFit = 0;
     _overallImpression = 0;
     _additionalComments = '';
+    _isSaved = false;
     notifyListeners();
   }
 
@@ -205,6 +208,7 @@ class EvaluationProvider extends ChangeNotifier {
         await _interviewRepository.updateInterview(updatedInterview);
       }
 
+      _isSaved = true;
       return true;
     } catch (e) {
       debugPrint('Error saving evaluation: $e');

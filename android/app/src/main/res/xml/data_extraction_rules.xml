@@ -6,8 +6,6 @@
         <include domain="database" path="." />
         
         <!-- Exclude sensitive data from cloud backup -->
-        <exclude domain="sharedpref" path="auth_tokens.xml" />
-        <exclude domain="sharedpref" path="secure_prefs.xml" />
         <exclude domain="file" path="cache/" />
     </cloud-backup>
     
@@ -18,7 +16,6 @@
         <include domain="sharedpref" path="." />
         
         <!-- Exclude sensitive data from device transfer -->
-        <exclude domain="sharedpref" path="auth_tokens.xml" />
         <exclude domain="file" path="cache/" />
     </device-transfer>
 </data-extraction-rules>
