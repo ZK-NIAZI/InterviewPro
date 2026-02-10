@@ -61,6 +61,12 @@ class Interview extends Equatable {
   /// Additional comments/notes from interviewer
   final String additionalComments;
 
+  /// Path to the interview-wide voice recording
+  final String? voiceRecordingPath;
+
+  /// Total duration of the interview voice recording
+  final int? voiceRecordingDurationSeconds;
+
   const Interview({
     required this.id,
     required this.candidateName,
@@ -81,6 +87,8 @@ class Interview extends Equatable {
     this.additionalComments = '',
     this.currentQuestionIndex = 0,
     this.totalQuestions = 25,
+    this.voiceRecordingPath,
+    this.voiceRecordingDurationSeconds,
   });
 
   /// Creates a copy of this interview with updated fields
@@ -104,6 +112,8 @@ class Interview extends Equatable {
     String? additionalComments,
     int? currentQuestionIndex,
     int? totalQuestions,
+    String? voiceRecordingPath,
+    int? voiceRecordingDurationSeconds,
   }) {
     return Interview(
       id: id ?? this.id,
@@ -126,6 +136,9 @@ class Interview extends Equatable {
       additionalComments: additionalComments ?? this.additionalComments,
       currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
       totalQuestions: totalQuestions ?? this.totalQuestions,
+      voiceRecordingPath: voiceRecordingPath ?? this.voiceRecordingPath,
+      voiceRecordingDurationSeconds:
+          voiceRecordingDurationSeconds ?? this.voiceRecordingDurationSeconds,
     );
   }
 
@@ -190,12 +203,22 @@ class Interview extends Equatable {
     final correctAnswers = responses.where((r) => r.isCorrect).length;
     final totalAnswered = responses.length;
 
+    // Use the actual number of responses as the source of truth for calculations
+    // This prevents impossible values like 7/4 or 175% completion
+    final actualTotalQuestions = totalAnswered > 0
+        ? totalAnswered
+        : totalQuestions;
+
+    // Calculate completion percentage based on actual responses
+    // If all questions are answered, completion is 100%
+    final completion = totalAnswered > 0 ? 100.0 : 0.0;
+
     return {
-      'totalQuestions': totalQuestions,
+      'totalQuestions': actualTotalQuestions,
       'answeredQuestions': totalAnswered,
       'correctAnswers': correctAnswers,
       'incorrectAnswers': totalAnswered - correctAnswers,
-      'completionPercentage': completionPercentage,
+      'completionPercentage': completion,
       'technicalScore': technicalScore ?? calculateTechnicalScore(),
       'duration': duration?.inMinutes ?? 0,
     };
@@ -238,6 +261,8 @@ class Interview extends Equatable {
       additionalComments: json['additionalComments'] ?? '',
       currentQuestionIndex: json['currentQuestionIndex'] ?? 0,
       totalQuestions: json['totalQuestions'] ?? 25,
+      voiceRecordingPath: json['voiceRecordingPath'],
+      voiceRecordingDurationSeconds: json['voiceRecordingDurationSeconds'],
     );
   }
 
@@ -263,6 +288,8 @@ class Interview extends Equatable {
       'additionalComments': additionalComments,
       'currentQuestionIndex': currentQuestionIndex,
       'totalQuestions': totalQuestions,
+      'voiceRecordingPath': voiceRecordingPath,
+      'voiceRecordingDurationSeconds': voiceRecordingDurationSeconds,
     };
   }
 
@@ -329,6 +356,8 @@ class Interview extends Equatable {
     additionalComments,
     currentQuestionIndex,
     totalQuestions,
+    voiceRecordingPath,
+    voiceRecordingDurationSeconds,
   ];
 
   @override

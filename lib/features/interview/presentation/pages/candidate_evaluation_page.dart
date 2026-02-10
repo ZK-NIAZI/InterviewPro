@@ -117,7 +117,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.go(AppRouter.dashboard),
             child: Container(
               width: 40,
               height: 40,
@@ -179,10 +179,13 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               // Candidate info card - centered
               Center(
                 child: CandidateInfoCard(
-                  candidateName: widget.candidateName,
-                  role: widget.role,
-                  level: widget.level,
-                  interviewDate: DateTime.now(),
+                  candidateName:
+                      _completedInterview?.candidateName ??
+                      widget.candidateName,
+                  role: _completedInterview?.role.name ?? widget.role,
+                  level: _completedInterview?.level.name ?? widget.level,
+                  interviewDate:
+                      _completedInterview?.startTime ?? DateTime.now(),
                 ),
               ),
 
@@ -248,7 +251,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 child: _buildMetricCard(
                   'Technical Score',
                   '${(interview.technicalScore ?? 0).toStringAsFixed(1)}%',
-                  AppColors.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -256,7 +258,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 child: _buildMetricCard(
                   'Questions Answered',
                   '${stats['answeredQuestions']}/${stats['totalQuestions']}',
-                  Colors.blue,
                 ),
               ),
             ],
@@ -269,7 +270,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 child: _buildMetricCard(
                   'Correct Answers',
                   '${stats['correctAnswers']}',
-                  Colors.green,
                 ),
               ),
               const SizedBox(width: 12),
@@ -277,7 +277,6 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 child: _buildMetricCard(
                   'Completion',
                   '${stats['completionPercentage'].toStringAsFixed(0)}%',
-                  Colors.orange,
                 ),
               ),
             ],
@@ -287,14 +286,14 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     );
   }
 
-  /// Build metric card widget
-  Widget _buildMetricCard(String title, String value, Color color) {
+  /// Build metric card widget with unified styling
+  Widget _buildMetricCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,10 +309,10 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: AppColors.primary,
             ),
           ),
         ],

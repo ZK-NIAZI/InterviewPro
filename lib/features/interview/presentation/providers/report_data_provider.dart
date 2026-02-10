@@ -99,6 +99,8 @@ class ReportDataProvider extends ChangeNotifier {
       completionPercentage: stats['completionPercentage'] as double,
       questionBreakdown: questionBreakdown,
       duration: interview.duration?.inMinutes ?? 0,
+      voiceRecordingPath: interview.voiceRecordingPath,
+      voiceRecordingDurationSeconds: interview.voiceRecordingDurationSeconds,
     );
   }
 
@@ -163,6 +165,10 @@ class ReportData {
   final List<QuestionBreakdownItem> questionBreakdown;
   final int duration;
 
+  // Audio recording fields
+  final String? voiceRecordingPath;
+  final int? voiceRecordingDurationSeconds;
+
   const ReportData({
     required this.interview,
     required this.roleName,
@@ -182,6 +188,8 @@ class ReportData {
     required this.completionPercentage,
     required this.questionBreakdown,
     required this.duration,
+    this.voiceRecordingPath,
+    this.voiceRecordingDurationSeconds,
   });
 }
 

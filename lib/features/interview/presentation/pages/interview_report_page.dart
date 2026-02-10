@@ -8,6 +8,7 @@ import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
 import '../widgets/quick_stats_widget.dart';
 import '../widgets/candidate_info_card.dart';
+import '../widgets/audio_player_widget.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../core/services/report_pdf_service.dart';
 import '../widgets/share_bottom_sheet.dart';
@@ -208,6 +209,20 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
 
               // Score hero section
               _buildScoreHero(provider.reportData),
+
+              // Audio player (if recording exists)
+              if (provider.reportData?.voiceRecordingPath != null) ...[
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: AudioPlayerWidget(
+                    audioPath: provider.reportData!.voiceRecordingPath!,
+                    durationSeconds:
+                        provider.reportData!.voiceRecordingDurationSeconds,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
 
               // Quick stats
               _buildQuickStats(provider.reportData),

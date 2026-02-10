@@ -196,7 +196,10 @@ class InterviewSessionManager extends ChangeNotifier {
   }
 
   /// Complete the interview session with enhanced validation
-  Future<Interview> completeInterview() async {
+  Future<Interview> completeInterview({
+    String? voiceRecordingPath,
+    int? voiceRecordingDurationSeconds,
+  }) async {
     if (_currentInterview == null) {
       throw Exception('No active interview session');
     }
@@ -215,6 +218,8 @@ class InterviewSessionManager extends ChangeNotifier {
         status: InterviewStatus.completed,
         endTime: DateTime.now(),
         technicalScore: finalTechnicalScore,
+        voiceRecordingPath: voiceRecordingPath,
+        voiceRecordingDurationSeconds: voiceRecordingDurationSeconds,
       );
 
       debugPrint('✅ Interview updated with completion data');

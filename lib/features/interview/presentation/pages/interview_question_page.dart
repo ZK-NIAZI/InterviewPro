@@ -10,7 +10,6 @@ import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
 import '../providers/voice_recording_provider.dart';
-import '../widgets/voice_playback_widget.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -32,12 +31,10 @@ class InterviewQuestionPage extends StatefulWidget {
 class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     with SingleTickerProviderStateMixin {
   bool? selectedAnswer; // null = no selection, true = Yes, false = No
-  bool showNotes = false;
   final TextEditingController notesController = TextEditingController();
 
   // Voice recording state
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnimation;
+  // (Animation logic removed as per interview-wide session design)
 
   // Dynamic question data
   List<InterviewQuestion> _questions = [];
@@ -54,15 +51,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     super.initState();
     _sessionManager = sl<InterviewSessionManager>();
     _loadQuestions();
-
-    // Initialize pulsing animation
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
   }
 
   /// Load questions based on selected role and experience level
@@ -187,7 +175,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
   @override
   void dispose() {
     notesController.dispose();
-    _pulseController.dispose();
     // Note: We don't clear the session here as it should persist
     // until the interview is completed or explicitly cancelled
     super.dispose();
@@ -319,25 +306,98 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
   }
 
   Widget _buildQuestionContent() {
-    return Column(
+    final provider = context.watch<VoiceRecordingProvider>();
+    final isRecording = provider.isRecording;
+
+    return Stack(
       children: [
-        // Status bar placeholder
-        Container(
-          height: MediaQuery.of(context).padding.top,
-          decoration: const BoxDecoration(color: Colors.white),
+        // Main content column
+        Column(
+          children: [
+            // Status bar placeholder
+            Container(
+              height: MediaQuery.of(context).padding.top,
+              decoration: const BoxDecoration(color: Colors.white),
+            ),
+
+            // Header
+            _buildHeader(),
+
+            // Progress bar
+            _buildProgressBar(),
+
+            // Main content
+            Expanded(child: _buildMainContent()),
+
+            // Bottom navigation
+            _buildBottomNavigation(),
+          ],
         ),
 
-        // Header
-        _buildHeader(),
-
-        // Progress bar
-        _buildProgressBar(),
-
-        // Main content
-        Expanded(child: _buildMainContent()),
-
-        // Bottom navigation
-        _buildBottomNavigation(),
+        // Floating Action Button for Voice Recording
+        // Positioned as a separate overlay to ensure tap detection works
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 100, // Positioned above the bottom navigation
+          child: IgnorePointer(
+            ignoring: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Recording Time (if active) - positioned above FAB
+                  if (isRecording)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _formatDuration(provider.recordingDurationSeconds),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  // Voice Recorder FAB
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: FloatingActionButton(
+                      onPressed: _toggleRecording,
+                      backgroundColor: isRecording
+                          ? AppColors.primary
+                          : Colors.white,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        side: BorderSide(
+                          color: isRecording
+                              ? Colors.transparent
+                              : AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        isRecording ? Icons.stop : Icons.mic,
+                        color: isRecording ? Colors.white : AppColors.primary,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -471,16 +531,29 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         // Yes/No buttons
         _buildYesNoButtons(),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-        // Add notes button
-        _buildAddNotesButton(),
+        // Notes Label
+        const Row(
+          children: [
+            Icon(Icons.edit_note, size: 20, color: Color(0xFF64748B)),
+            SizedBox(width: 8),
+            Text(
+              'Interview Notes',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
 
-        // Notes input (if shown)
-        if (showNotes) _buildNotesInput(),
+        // Notes input (ALWAYS VISIBLE)
+        _buildNotesInput(),
 
-        // Voice recording button (always visible)
-        _buildVoiceRecordingButton(),
+        // Extra padding to avoid overlap with FAB/Bottom Nav
+        const SizedBox(height: 120),
       ],
     );
   }
@@ -600,186 +673,26 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     );
   }
 
-  Widget _buildAddNotesButton() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          showNotes = !showNotes;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.edit_note,
-              size: 20,
-              color: showNotes ? AppColors.primary : Colors.grey[500],
-            ),
-            const SizedBox(width: 8),
-            Text(
-              AppStrings.addNotes,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: showNotes ? AppColors.primary : Colors.grey[500],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildNotesInput() {
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!, width: 1.5),
       ),
       child: TextField(
         controller: notesController,
-        maxLines: 2, // Reduced from 3
-        minLines: 2, // Add minimum lines for consistency
+        maxLines: 4,
+        minLines: 3,
         decoration: InputDecoration(
-          hintText: AppStrings.addNotesHint,
+          hintText: 'Type your observations here...',
           border: InputBorder.none,
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          contentPadding: EdgeInsets.zero, // Remove default padding
+          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
         ),
-        style: const TextStyle(fontSize: 14, color: Colors.black),
+        style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
       ),
-    );
-  }
-
-  Widget _buildVoiceRecordingButton() {
-    final question = _currentQuestion;
-    if (question == null) return const SizedBox.shrink();
-
-    return Consumer<VoiceRecordingProvider>(
-      builder: (context, provider, child) {
-        final isActive =
-            provider.isRecording && provider.activeQuestionId == question.id;
-        final hasAudio = provider.hasRecording(question.id);
-
-        if (hasAudio && !isActive) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: VoicePlaybackWidget(
-              questionId: question.id,
-              onReRecord: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Re-record Answer?'),
-                    content: const Text(
-                      'This will delete the current voice recording. Continue?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                        ),
-                        child: const Text('Re-record'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirm == true) {
-                  await provider.cancel(); // Deletes recording and resets state
-                }
-              },
-            ),
-          );
-        }
-
-        return Column(
-          children: [
-            const SizedBox(height: 16),
-            Center(
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () => _toggleRecording(question.id),
-                    child: ScaleTransition(
-                      scale: _pulseAnimation,
-                      child: Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? AppColors.primary
-                              : AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(32),
-                          border: Border.all(
-                            color: isActive
-                                ? AppColors.primary
-                                : AppColors.primary.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                          boxShadow: isActive
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    blurRadius: 16,
-                                    spreadRadius: 2,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Icon(
-                          isActive
-                              ? Icons.stop
-                              : (hasAudio ? Icons.mic : Icons.mic_none),
-                          size: 32,
-                          color: isActive ? Colors.white : AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (isActive) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Text(
-                          _formatDuration(provider.recordingDurationSeconds),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -789,18 +702,21 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     return '$mins:$secs';
   }
 
-  void _toggleRecording(String questionId) async {
+  void _toggleRecording() async {
     final provider = context.read<VoiceRecordingProvider>();
     if (provider.isRecording) {
       await provider.stop();
     } else {
       try {
-        await provider.start(questionId: questionId);
+        await provider.start(
+          interviewId: _sessionManager.currentInterview?.id ?? 'temp',
+          candidateName: widget.candidateName,
+        );
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not start recording: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Microphone error: $e')));
         }
       }
     }
@@ -808,71 +724,62 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
   Widget _buildBottomNavigation() {
     return Container(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[100]!, width: 1)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        MediaQuery.of(context).padding.bottom + 20,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           // Previous button
-          Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: TextButton(
+          if (_currentIndex > 0)
+            Expanded(
+              child: OutlinedButton(
                 onPressed: _onPrevious,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  side: BorderSide(color: Colors.grey[300]!),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text(
-                  AppStrings.previous,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                child: const Text(
+                  'Previous',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 16),
+          if (_currentIndex > 0) const SizedBox(width: 16),
 
           // Next button
           Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TextButton(
-                onPressed: _onNext,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+            child: ElevatedButton(
+              onPressed: _onNext,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(
-                  AppStrings.next,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                elevation: 0,
+              ),
+              child: Text(
+                _currentIndex == _totalQuestions - 1 ? 'Complete' : 'Next',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -882,177 +789,112 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     );
   }
 
-  void _onNext() async {
-    final question = _currentQuestion;
-    if (question == null) return;
+  void _onPrevious() {
+    _sessionManager.previousQuestion();
+    setState(() {
+      _currentQuestionIndex = _sessionManager.currentQuestionIndex;
+      // Load existing result if available
+      final existingResult = _sessionManager.getResponseForQuestion(
+        _currentIndex,
+      );
+      if (existingResult != null) {
+        selectedAnswer = existingResult.isCorrect;
+        notesController.text = existingResult.notes ?? '';
+      } else {
+        selectedAnswer = null;
+        notesController.text = '';
+      }
+    });
+  }
 
-    // Validation: Ensure an option is selected
+  void _onNext() async {
     if (selectedAnswer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select Yes or No to continue'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
+        const SnackBar(content: Text('Please select an answer (Yes/No)')),
       );
       return;
     }
 
-    // Record response if session is active and answer is selected
-    if (_sessionStarted && _sessionManager.hasActiveSession) {
-      try {
-        final recordingProvider = context.read<VoiceRecordingProvider>();
-        final voicePath = recordingProvider.getRecordingPath(question.id);
-        final voiceDuration = recordingProvider.getRecordingDuration(
-          question.id,
-        );
+    try {
+      // Record current response
+      await _sessionManager.recordResponse(
+        isCorrect: selectedAnswer!,
+        notes: notesController.text,
+      );
 
-        await _sessionManager.recordResponse(
-          isCorrect: selectedAnswer!,
-          notes: notesController.text.isNotEmpty ? notesController.text : null,
-          voiceRecordingPath: voicePath,
-          voiceRecordingDurationSeconds: voiceDuration,
-        );
-        debugPrint('✅ Response recorded for question ${_currentIndex + 1}');
-      } catch (e) {
-        debugPrint('❌ Error recording response: $e');
-      }
-    }
-
-    // Debug logging (for development)
-    debugPrint('Question ${_currentIndex + 1}: ${question.question}');
-    debugPrint(
-      'Answer: ${selectedAnswer == null ? "No answer" : (selectedAnswer! ? "Yes" : "No")}',
-    );
-    debugPrint('Notes: ${notesController.text}');
-
-    // Check if this is the last question
-    if (_isLastQuestion()) {
-      // Complete interview session and navigate to evaluation
-      await _completeInterviewAndNavigate();
-    } else {
-      // Move to next question
-      await _moveToNextQuestion();
-    }
-  }
-
-  /// Complete interview session and navigate to evaluation
-  Future<void> _completeInterviewAndNavigate() async {
-    String candidateName = 'John Doe'; // Default fallback
-    String? interviewId;
-
-    debugPrint('🚀 Starting interview completion and navigation...');
-
-    if (_sessionStarted && _sessionManager.hasActiveSession) {
-      try {
-        // Move to next question first to complete all responses
-        if (_sessionManager.currentQuestionIndex <
-            _sessionManager.totalQuestions - 1) {
-          await _sessionManager.nextQuestion();
-        }
-
-        debugPrint('📝 Completing interview session...');
-        // Complete the interview session
-        final completedInterview = await _sessionManager.completeInterview();
-        candidateName = completedInterview.candidateName;
-        interviewId = completedInterview.id;
-
-        debugPrint('✅ Interview completed: $interviewId');
-        debugPrint('👤 Candidate: $candidateName');
-      } catch (e) {
-        debugPrint('❌ Error completing interview: $e');
-      }
-    } else {
-      debugPrint('⚠️ No active session, using fallback data');
-    }
-
-    // Generate fallback ID only if we don't have one from the session
-    if (interviewId == null) {
-      interviewId = 'interview_${DateTime.now().millisecondsSinceEpoch}';
-      debugPrint('⚠️ Using fallback interview ID: $interviewId');
-    }
-
-    // Navigate to candidate evaluation
-    if (mounted) {
-      final navigationUrl =
-          '${AppRouter.candidateEvaluation}?candidateName=$candidateName&role=${widget.selectedRole}&level=${widget.selectedLevel}&interviewId=$interviewId';
-      debugPrint('🧭 Navigating to: $navigationUrl');
-
-      context.push(navigationUrl);
-    }
-  }
-
-  /// Move to next question
-  Future<void> _moveToNextQuestion() async {
-    if (_sessionStarted && _sessionManager.hasActiveSession) {
-      try {
+      if (_currentIndex < _totalQuestions - 1) {
         await _sessionManager.nextQuestion();
         setState(() {
           _currentQuestionIndex = _sessionManager.currentQuestionIndex;
-          selectedAnswer = null; // Reset answer for next question
-          showNotes = false; // Hide notes
-          notesController.clear(); // Clear notes
-        });
-      } catch (e) {
-        debugPrint('❌ Error moving to next question: $e');
-        // Fallback to manual navigation
-        setState(() {
-          _currentQuestionIndex++;
-          selectedAnswer = null;
-          showNotes = false;
-          notesController.clear();
-        });
-      }
-    } else {
-      // Fallback to manual navigation
-      setState(() {
-        _currentQuestionIndex++;
-        selectedAnswer = null;
-        showNotes = false;
-        notesController.clear();
-      });
-    }
-  }
-
-  void _onPrevious() async {
-    if (_currentIndex > 0) {
-      if (_sessionStarted && _sessionManager.hasActiveSession) {
-        try {
-          await _sessionManager.previousQuestion();
-          setState(() {
-            _currentQuestionIndex = _sessionManager.currentQuestionIndex;
-            selectedAnswer = null; // Reset answer
-            showNotes = false; // Hide notes
-            notesController.clear(); // Clear notes
-          });
-        } catch (e) {
-          debugPrint('❌ Error moving to previous question: $e');
-          // Fallback to manual navigation
-          setState(() {
-            _currentQuestionIndex--;
+          // Check if next question already answered
+          final existingResult = _sessionManager.getResponseForQuestion(
+            _currentIndex,
+          );
+          if (existingResult != null) {
+            selectedAnswer = existingResult.isCorrect;
+            notesController.text = existingResult.notes ?? '';
+          } else {
             selectedAnswer = null;
-            showNotes = false;
-            notesController.clear();
-          });
-        }
-      } else {
-        // Fallback to manual navigation
-        setState(() {
-          _currentQuestionIndex--;
-          selectedAnswer = null;
-          showNotes = false;
-          notesController.clear();
+            notesController.text = '';
+          }
         });
+      } else {
+        // Handle interview completion
+        _completeInterview();
       }
-    } else {
-      context.pop();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
-  // Removed _onVoiceRecording as it's replaced by _toggleRecording
+  void _completeInterview() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
 
-  /// Check if this is the last question
-  bool _isLastQuestion() {
-    return _currentIndex >= _totalQuestions - 1;
+    try {
+      // STOP Recording if it's active
+      final recordingProvider = context.read<VoiceRecordingProvider>();
+      String? recordingPath;
+      int recordingDuration = 0;
+
+      if (recordingProvider.isRecording) {
+        recordingDuration = recordingProvider.recordingDurationSeconds;
+        recordingPath = await recordingProvider.stop();
+      }
+
+      // Complete interview in manager and capture the returned interview data
+      final completedInterview = await _sessionManager.completeInterview(
+        voiceRecordingPath: recordingPath,
+        voiceRecordingDurationSeconds: recordingDuration,
+      );
+
+      // Update interview with recording details if available
+      debugPrint('📽️ Recording saved at: $recordingPath');
+      debugPrint('✅ Interview completed: ${completedInterview.id}');
+
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+
+        // Navigate to candidate evaluation page with interview data
+        context.go(
+          '${AppRouter.candidateEvaluation}?candidateName=${Uri.encodeComponent(completedInterview.candidateName)}&role=${Uri.encodeComponent(completedInterview.role.name)}&level=${Uri.encodeComponent(completedInterview.level.name)}&interviewId=${completedInterview.id}',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Remove loading
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to complete: $e')));
+      }
+    }
   }
 }

@@ -64,8 +64,11 @@ class VoiceRecordingService {
     }
   }
 
-  /// Start recording audio for a specific question
-  Future<void> startRecording(String questionId) async {
+  /// Start recording audio for an interview session
+  Future<void> startRecording({
+    required String interviewId,
+    required String candidateName,
+  }) async {
     if (!await checkPermission()) {
       throw Exception('Microphone permission not granted');
     }
@@ -77,12 +80,10 @@ class VoiceRecordingService {
     await stopPlayback();
 
     final directory = await getApplicationDocumentsDirectory();
+    final sanitizedCandidate = candidateName.replaceAll(' ', '_');
     final fileName =
-        'recording_${questionId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        'interview_${interviewId}_${sanitizedCandidate}_${DateTime.now().millisecondsSinceEpoch}.m4a';
     final filePath = '${directory.path}/$fileName';
-
-    // Delete existing recording if any
-    await deleteRecording(questionId);
 
     // Explicitly use AAC-LC for better compatibility on emulators
     const config = RecordConfig(
@@ -92,7 +93,7 @@ class VoiceRecordingService {
     );
 
     await _recorder.start(config, path: filePath);
-    debugPrint('🎙️ Started recording: $filePath');
+    debugPrint('🎙️ Started interview-wide recording: $filePath');
   }
 
   /// Stop current recording and return the path
