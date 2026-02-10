@@ -11,7 +11,7 @@ import '../widgets/candidate_info_card.dart';
 import '../widgets/audio_player_widget.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../core/services/report_pdf_service.dart';
-import '../widgets/share_bottom_sheet.dart';
+import 'package:share_plus/share_plus.dart';
 import '../widgets/download_success_dialog.dart';
 
 /// Interview report screen showing detailed evaluation results
@@ -481,10 +481,13 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
 
       if (mounted) {
         Navigator.pop(context); // Remove loading
-        ShareBottomSheet.show(
-          context,
-          path,
-          reportData.interview.candidateName,
+
+        // Use native share sheet
+        await Share.shareXFiles(
+          [XFile(path)],
+          subject: 'Interview Report - ${reportData.interview.candidateName}',
+          text:
+              'Evaluation report for candidate: ${reportData.interview.candidateName}',
         );
       }
     } catch (e) {

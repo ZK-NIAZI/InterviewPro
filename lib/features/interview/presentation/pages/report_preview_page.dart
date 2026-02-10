@@ -10,7 +10,7 @@ import '../widgets/soft_skills_grid_widget.dart';
 import '../widgets/recommendation_box_widget.dart';
 import '../providers/report_data_provider.dart';
 import '../../core/services/report_pdf_service.dart';
-import '../widgets/share_bottom_sheet.dart';
+import 'package:share_plus/share_plus.dart';
 import '../widgets/download_success_dialog.dart';
 
 /// Report preview screen showing PDF-style interview evaluation report
@@ -586,10 +586,13 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
       if (mounted) {
         Navigator.pop(context); // Remove loading
-        ShareBottomSheet.show(
-          context,
-          path,
-          reportData.interview.candidateName,
+
+        // Use native share sheet
+        await Share.shareXFiles(
+          [XFile(path)],
+          subject: 'Interview Report - ${reportData.interview.candidateName}',
+          text:
+              'Evaluation report for candidate: ${reportData.interview.candidateName}',
         );
       }
     } catch (e) {
