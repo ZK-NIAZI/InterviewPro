@@ -110,6 +110,17 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           final navigator = context;
           final shouldPop = await BackNavigationDialog.show(navigator);
           if (shouldPop == true) {
+            // Show loading indicator
+            if (context.mounted) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (ctx) => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              );
+            }
+
             // Delete the interview from database
             try {
               final interviewRepository = sl<InterviewRepository>();
@@ -119,7 +130,9 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               debugPrint('❌ Error deleting interview: $e');
             }
 
+            // Dismiss loading and navigate
             if (navigator.mounted) {
+              navigator.pop(); // Dismiss loading
               navigator.go(AppRouter.dashboard);
             }
           }
@@ -167,6 +180,19 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               final navigator = context;
               final shouldPop = await BackNavigationDialog.show(navigator);
               if (shouldPop == true) {
+                // Show loading indicator
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                }
+
                 // Delete the interview from database
                 try {
                   final interviewRepository = sl<InterviewRepository>();
@@ -176,7 +202,9 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                   debugPrint('❌ Error deleting interview: $e');
                 }
 
+                // Dismiss loading and navigate
                 if (navigator.mounted) {
+                  navigator.pop(); // Dismiss loading
                   navigator.go(AppRouter.dashboard);
                 }
               }
