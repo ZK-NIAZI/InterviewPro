@@ -111,7 +111,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               debugPrint('❌ Error deleting interview: $e');
             }
 
-            if (mounted) {
+            if (navigator.mounted) {
               navigator.go(AppRouter.dashboard);
             }
           }
@@ -168,7 +168,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                   debugPrint('❌ Error deleting interview: $e');
                 }
 
-                if (mounted) {
+                if (navigator.mounted) {
                   navigator.go(AppRouter.dashboard);
                 }
               }

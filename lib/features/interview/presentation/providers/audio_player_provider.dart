@@ -33,11 +33,15 @@ class AudioPlayerProvider extends ChangeNotifier {
 
   /// Initialize audio player with file path
   Future<void> initialize(String filePath) async {
+    if (_isDisposed) return;
+
     try {
       debugPrint('🎵 Initializing audio player with: $filePath');
 
       // CRITICAL: Reset all state and cleanup existing resources before reinitializing
       await _resetState();
+
+      if (_isDisposed) return; // double check after async reset
 
       // Check if file exists
       final file = File(filePath);
@@ -56,7 +60,7 @@ class AudioPlayerProvider extends ChangeNotifier {
 
       // Listen to position changes
       _positionSubscription = _player.onPositionChanged.listen((position) {
-        if (_isDisposed) return; // Guard against disposed state
+        if (_isDisposed) return;
         if (_isSeeking) return; // Don't update position during manual seeking
         _currentPosition = position;
         notifyListeners();
@@ -64,7 +68,7 @@ class AudioPlayerProvider extends ChangeNotifier {
 
       // Listen to duration changes
       _durationSubscription = _player.onDurationChanged.listen((duration) {
-        if (_isDisposed) return; // Guard against disposed state
+        if (_isDisposed) return;
         _totalDuration = duration;
         debugPrint('🎵 Audio duration: ${duration.inSeconds}s');
         notifyListeners();
@@ -72,12 +76,13 @@ class AudioPlayerProvider extends ChangeNotifier {
 
       // Listen to player state changes
       _playerStateSubscription = _player.onPlayerStateChanged.listen((state) {
-        if (_isDisposed) return; // Guard against disposed state
+        if (_isDisposed) return;
         _isPlaying = state == PlayerState.playing;
 
         // Auto-reset when completed to allow replay
         if (state == PlayerState.completed) {
           _isPlaying = false;
+          _currentPosition = Duration.zero; // Reset UI position
           // Seek to start to allow replay
           _player.seek(Duration.zero);
           debugPrint('🔄 Audio completed, reset to start for replay');
@@ -90,9 +95,11 @@ class AudioPlayerProvider extends ChangeNotifier {
       debugPrint('✅ Audio player initialized successfully');
       notifyListeners();
     } catch (e) {
-      _error = 'Failed to load audio: $e';
-      debugPrint('❌ Error initializing audio player: $e');
-      notifyListeners();
+      if (!_isDisposed) {
+        _error = 'Failed to load audio: $e';
+        debugPrint('❌ Error initializing audio player: $e');
+        notifyListeners();
+      }
     }
   }
 
@@ -110,6 +117,7 @@ class AudioPlayerProvider extends ChangeNotifier {
     _currentFilePath = null;
     _isInitialized = false;
     _error = null;
+    // Do NOT reset _isDisposed here
 
     debugPrint('✅ Audio player state reset complete');
   }
@@ -136,6 +144,7 @@ class AudioPlayerProvider extends ChangeNotifier {
 
   /// Play audio
   Future<void> play() async {
+    if (_isDisposed) return;
     if (!_isInitialized || _currentFilePath == null) {
       debugPrint('⚠️ Cannot play: Audio not initialized');
       return;
@@ -147,13 +156,16 @@ class AudioPlayerProvider extends ChangeNotifier {
       debugPrint('▶️ Playing audio');
     } catch (e) {
       debugPrint('❌ Error playing audio: $e');
-      _error = 'Playback failed: $e';
-      notifyListeners();
+      if (!_isDisposed) {
+        _error = 'Playback failed: $e';
+        notifyListeners();
+      }
     }
   }
 
   /// Pause audio
   Future<void> pause() async {
+    if (_isDisposed) return;
     if (!_isInitialized) return;
 
     try {
@@ -166,6 +178,7 @@ class AudioPlayerProvider extends ChangeNotifier {
 
   /// Seek to position
   Future<void> seek(Duration position) async {
+    if (_isDisposed) return;
     if (!_isInitialized) return;
 
     try {
@@ -191,18 +204,21 @@ class AudioPlayerProvider extends ChangeNotifier {
 
   /// Start manual seeking (called when user starts dragging slider)
   void startSeeking() {
+    if (_isDisposed) return;
     _isSeeking = true;
     debugPrint('🎯 Started manual seeking');
   }
 
   /// End manual seeking (called when user releases slider)
   void endSeeking() {
+    if (_isDisposed) return;
     _isSeeking = false;
     debugPrint('🎯 Ended manual seeking');
   }
 
   /// Toggle play/pause
   Future<void> togglePlayPause() async {
+    if (_isDisposed) return;
     if (_isPlaying) {
       await pause();
     } else {
@@ -219,6 +235,7 @@ class AudioPlayerProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_isDisposed) return; // Already disposed
     debugPrint('🗑️ Disposing audio player');
 
     // Mark as disposed FIRST to prevent stream listeners from calling notifyListeners

@@ -19,29 +19,18 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayerProvider _audioProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    _audioProvider = AudioPlayerProvider();
-
-    // Initialize audio player after widget is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _audioProvider.initialize(widget.audioPath);
-    });
-  }
-
-  @override
-  void dispose() {
-    _audioProvider.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _audioProvider,
+    // CRITICAL FIX: Use ChangeNotifierProvider (create) instead of .value
+    // This ensures Provider automatically calls dispose() on the AudioPlayerProvider
+    // when this widget is removed from the tree.
+    return ChangeNotifierProvider(
+      create: (_) {
+        // Create and initialize the provider
+        final provider = AudioPlayerProvider();
+        provider.initialize(widget.audioPath);
+        return provider;
+      },
       child: Consumer<AudioPlayerProvider>(
         builder: (context, provider, child) {
           // Show error state if audio failed to load
