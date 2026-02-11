@@ -140,6 +140,11 @@ class AppRouter {
         },
       ),
       //  Add other routes as features are implemented
+      //  Add other routes as features are implemented
     ],
+    // Handle deep link errors or unknown routes
+    onException: (context, state, router) {
+      router.go(dashboard);
+    },
   );
 }

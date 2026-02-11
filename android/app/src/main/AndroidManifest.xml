@@ -55,6 +55,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/pdf" />
             </intent-filter>
+
+            <!-- Deep Linking Support -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Custom Scheme -->
+                <data android:scheme="interviewpro" />
+                <!-- Web Links -->
+                <data android:scheme="http" android:host="interviewpro.com" android:pathPrefix="/app" />
+                <data android:scheme="https" android:host="interviewpro.com" android:pathPrefix="/app" />
+            </intent-filter>
         </activity>
         
         <!-- Flutter embedding version -->
