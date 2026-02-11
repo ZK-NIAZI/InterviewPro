@@ -203,7 +203,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 }
 
                 // Dismiss loading and navigate
-                if (navigator.mounted) {
+                if (mounted) {
                   navigator.pop(); // Dismiss loading
                   navigator.go(AppRouter.dashboard);
                 }

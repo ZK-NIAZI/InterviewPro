@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:interview_pro_app/core/services/crash_reporting_service.dart';
 import '../../domain/entities/entities.dart';
 import '../../domain/repositories/interview_repository.dart';
 
@@ -98,9 +99,15 @@ class InterviewRepositoryImpl implements InterviewRepository {
       }
 
       _sharedPrefsAvailable = true;
-    } catch (e) {
+      _sharedPrefsAvailable = true;
+    } catch (e, stack) {
       debugPrint(
         '⚠️ SharedPreferences unavailable, switching to file fallback: $e',
+      );
+      CrashReportingService().recordError(
+        e,
+        stack,
+        reason: 'SharedPreferences Load Failed',
       );
       _sharedPrefsAvailable = false;
     }
@@ -153,8 +160,13 @@ class InterviewRepositoryImpl implements InterviewRepository {
           '✅ Loaded responses for ${_responses.length} interviews from file system',
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('❌ File system fallback also failed: $e');
+      CrashReportingService().recordError(
+        e,
+        stack,
+        reason: 'FileSystem Load Failed',
+      );
     }
   }
 
@@ -187,8 +199,13 @@ class InterviewRepositoryImpl implements InterviewRepository {
 
       // File system fallback
       await _persistInterviewsToFile(interviewsMap);
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('❌ All persistence methods failed for interviews: $e');
+      CrashReportingService().recordError(
+        e,
+        stack,
+        reason: 'Persist Interviews Failed',
+      );
     }
   }
 
@@ -221,8 +238,13 @@ class InterviewRepositoryImpl implements InterviewRepository {
 
       // File system fallback
       await _persistResponsesToFile(responsesMap);
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('❌ All persistence methods failed for responses: $e');
+      CrashReportingService().recordError(
+        e,
+        stack,
+        reason: 'Persist Responses Failed',
+      );
     }
   }
 
