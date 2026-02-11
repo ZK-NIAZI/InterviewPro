@@ -48,6 +48,14 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     });
   }
 
+  @override
+  void dispose() {
+    // CRITICAL FIX: Reset form state when leaving the screen
+    // This prevents stale data when opening a new evaluation
+    context.read<EvaluationProvider>().resetForm();
+    super.dispose();
+  }
+
   /// Load interview data from repository
   Future<void> _loadInterviewData() async {
     try {
