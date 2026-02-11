@@ -168,11 +168,19 @@ class Interview extends Equatable {
     // Count correct answers
     final correctAnswers = responses.where((r) => r.isCorrect == true).length;
 
-    // User Requirement: "suppose there are total 4 questions in interview, candidate answers 2 correct and 2 wrong then the overall score % should be 50%"
-    // Use this.totalQuestions as denominator to ensure correct percentage relative to the full interview
-    final denominator = totalQuestions > 0
-        ? totalQuestions
-        : (responses.isNotEmpty ? responses.length : 1);
+    // CRITICAL FIX: Use the actual number of responses as the denominator
+    // if the interview is completed or if totalQuestions is mismatched.
+    // This ensures that 2 correct out of 2 answered is 100%, not 2/25 = 8%.
+    // We defer to totalQuestions ONLY if we are strictly enforcing a fixed-length interview
+    // that hasn't finished yet. But for scoring a completed set, we use what we have.
+    final denominator =
+        (status == InterviewStatus.completed ||
+            responses.length > totalQuestions)
+        ? responses.length
+        : (totalQuestions > 0 ? totalQuestions : responses.length);
+
+    // Prevent division by zero
+    if (denominator == 0) return 0.0;
 
     // Calculate percentage
     final score = (correctAnswers / denominator) * 100;
@@ -199,26 +207,30 @@ class Interview extends Equatable {
   }
 
   /// Get detailed performance stats
+  /// Get detailed performance stats
   Map<String, dynamic> getPerformanceStats() {
     final correctAnswers = responses.where((r) => r.isCorrect).length;
     final totalAnswered = responses.length;
 
     // Use the actual number of responses as the source of truth for calculations
     // This prevents impossible values like 7/4 or 175% completion
-    final actualTotalQuestions = totalAnswered > 0
+    final actualTotalQuestions =
+        (status == InterviewStatus.completed || totalAnswered > totalQuestions)
         ? totalAnswered
         : totalQuestions;
 
     // Calculate completion percentage based on actual responses
     // If all questions are answered, completion is 100%
-    final completion = totalAnswered > 0 ? 100.0 : 0.0;
+    final completion = actualTotalQuestions > 0
+        ? (totalAnswered / actualTotalQuestions) * 100.0
+        : 0.0;
 
     return {
       'totalQuestions': actualTotalQuestions,
       'answeredQuestions': totalAnswered,
       'correctAnswers': correctAnswers,
       'incorrectAnswers': totalAnswered - correctAnswers,
-      'completionPercentage': completion,
+      'completionPercentage': completion.clamp(0.0, 100.0),
       'technicalScore': technicalScore ?? calculateTechnicalScore(),
       'duration': duration?.inMinutes ?? 0,
     };
