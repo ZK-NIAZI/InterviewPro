@@ -2,6 +2,7 @@
     <!-- Network permissions for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     
     <!-- File permissions for PDF generation and sharing -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
@@ -82,7 +83,7 @@
         <!-- File provider for sharing files -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.interviewpro.app.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -104,6 +105,9 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="application/pdf" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 </manifest>

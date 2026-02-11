@@ -164,6 +164,7 @@ class EvaluationProvider extends ChangeNotifier {
     required String candidateName,
     required String role,
     required String level,
+    String? transcript,
   }) async {
     if (!isFormValid) {
       return false;
@@ -205,6 +206,7 @@ class EvaluationProvider extends ChangeNotifier {
           culturalFit: _culturalFit,
           overallImpression: _overallImpression,
           additionalComments: _additionalComments,
+          transcript: transcript,
         );
         await _interviewRepository.updateInterview(updatedInterview);
       }

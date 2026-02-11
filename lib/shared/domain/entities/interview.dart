@@ -70,6 +70,9 @@ class Interview extends Equatable {
   /// Total duration of the interview voice recording
   final int? voiceRecordingDurationSeconds;
 
+  /// Full transcript of the interview voice recording
+  final String? transcript;
+
   const Interview({
     required this.id,
     required this.candidateName,
@@ -93,6 +96,7 @@ class Interview extends Equatable {
     this.totalQuestions = 25,
     this.voiceRecordingPath,
     this.voiceRecordingDurationSeconds,
+    this.transcript,
   });
 
   /// Creates a copy of this interview with updated fields
@@ -119,6 +123,7 @@ class Interview extends Equatable {
     int? totalQuestions,
     String? voiceRecordingPath,
     int? voiceRecordingDurationSeconds,
+    String? transcript,
   }) {
     return Interview(
       id: id ?? this.id,
@@ -145,6 +150,7 @@ class Interview extends Equatable {
       voiceRecordingPath: voiceRecordingPath ?? this.voiceRecordingPath,
       voiceRecordingDurationSeconds:
           voiceRecordingDurationSeconds ?? this.voiceRecordingDurationSeconds,
+      transcript: transcript ?? this.transcript,
     );
   }
 
@@ -284,6 +290,7 @@ class Interview extends Equatable {
       totalQuestions: json['totalQuestions'] ?? 25,
       voiceRecordingPath: json['voiceRecordingPath'],
       voiceRecordingDurationSeconds: json['voiceRecordingDurationSeconds'],
+      transcript: json['transcript'],
     );
   }
 
@@ -312,6 +319,7 @@ class Interview extends Equatable {
       'totalQuestions': totalQuestions,
       'voiceRecordingPath': voiceRecordingPath,
       'voiceRecordingDurationSeconds': voiceRecordingDurationSeconds,
+      'transcript': transcript,
     };
   }
 
@@ -381,6 +389,7 @@ class Interview extends Equatable {
     totalQuestions,
     voiceRecordingPath,
     voiceRecordingDurationSeconds,
+    transcript,
   ];
 
   @override

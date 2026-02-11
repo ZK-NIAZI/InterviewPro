@@ -10,6 +10,7 @@ import 'appwrite_service.dart';
 import 'interview_session_manager.dart';
 import 'voice_recording_service.dart';
 import 'data_management_service.dart';
+import 'transcription_service.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
@@ -66,6 +67,8 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<DataManagementService>(
     () => DataManagementService(sl<InterviewRepository>()),
   );
+
+  sl.registerLazySingleton<TranscriptionService>(() => TranscriptionService());
 
   // Initialize data sources
   // (No local data sources to initialize)

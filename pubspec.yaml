@@ -39,12 +39,14 @@ dependencies:
   # Sharing & Communication
   # Sharing & Communication
   share_plus: ^10.0.2
-  file_picker: ^6.1.1
+  file_picker: ^8.1.7
   
   # Audio & Permissions
   record: 5.0.0
   permission_handler: ^11.3.1
   audioplayers: ^5.2.1
+  google_generative_ai: ^0.4.0
+  flutter_dotenv: ^5.1.0
   
   # Network & Connectivity
   connectivity_plus: ^6.0.5
@@ -92,6 +94,7 @@ flutter:
   # Application assets
   assets:
     - assets/data/
+    - .env
 
   # Custom fonts for professional appearance
   # fonts:

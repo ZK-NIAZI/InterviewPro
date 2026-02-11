@@ -221,6 +221,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
                     audioPath: provider.reportData!.voiceRecordingPath!,
                     durationSeconds:
                         provider.reportData!.voiceRecordingDurationSeconds,
+                    transcript: provider.reportData!.interview.transcript,
                   ),
                 ),
                 const SizedBox(height: 20),

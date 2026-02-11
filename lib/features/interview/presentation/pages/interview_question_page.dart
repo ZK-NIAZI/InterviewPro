@@ -864,13 +864,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     try {
       // STOP Recording if it's active
       final recordingProvider = context.read<VoiceRecordingProvider>();
-      String? recordingPath;
-      int recordingDuration = 0;
 
-      if (recordingProvider.isRecording) {
-        recordingDuration = recordingProvider.recordingDurationSeconds;
-        recordingPath = await recordingProvider.stop();
-      }
+      // Stop and get path regardless of provider state (service now handles fallback)
+      final recordingPath = await recordingProvider.stop();
+      final recordingDuration = recordingProvider.recordingDurationSeconds;
 
       // Complete interview in manager and capture the returned interview data
       final completedInterview = await _sessionManager.completeInterview(

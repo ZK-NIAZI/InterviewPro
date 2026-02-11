@@ -62,3 +62,4 @@ test/hive_test/
 # Generated files
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 .agents/
+.env

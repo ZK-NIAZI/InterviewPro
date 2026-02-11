@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import '../widgets/evaluation_form_widget.dart';
 import '../widgets/back_navigation_dialog.dart';
 import '../../../../shared/presentation/widgets/metric_card.dart';
 import '../../../../shared/presentation/widgets/loading_overlay.dart';
+import '../../../../core/services/transcription_service.dart';
 
 /// Candidate evaluation screen for assessing soft skills and generating reports
 class CandidateEvaluationPage extends StatefulWidget {
@@ -40,10 +42,31 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   Interview? _completedInterview;
   bool _loadingInterview = true;
 
+  /// Transcript cache for background processing
+  String? _transcriptCache;
+  bool _isBackgroundTranscribing = false;
+  Future<String>? _transcriptionFuture;
+  StreamSubscription? _sttSubscription;
+
   @override
   void initState() {
     super.initState();
-    _loadInterviewData();
+    _loadInterviewData().then((_) {
+      _startBackgroundTranscription();
+    });
+
+    // Listen for transcription completion in background
+    _sttSubscription = sl<TranscriptionService>().statusStream.listen((
+      results,
+    ) {
+      if (results.containsKey(widget.interviewId)) {
+        setState(() {
+          _transcriptCache = results[widget.interviewId];
+          _isBackgroundTranscribing = false;
+        });
+        debugPrint('🎯 STT Sync complete for: ${widget.interviewId}');
+      }
+    });
 
     // Load existing evaluation if any
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,12 +74,36 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     });
   }
 
-  @override
-  void dispose() {
-    // CRITICAL FIX: Reset form state when leaving the screen
-    // This prevents stale data when opening a new evaluation
-    context.read<EvaluationProvider>().resetForm();
-    super.dispose();
+  /// Start transcribing in background as soon as we have the data
+  Future<void> _startBackgroundTranscription() async {
+    final path = _completedInterview?.voiceRecordingPath;
+    if (path == null || path.isEmpty || _transcriptCache != null) return;
+
+    setState(() => _isBackgroundTranscribing = true);
+    try {
+      final service = sl<TranscriptionService>();
+
+      // Real-World Optimization: Check if task already started in previous screen
+      _transcriptionFuture = service.getActiveTask(widget.interviewId);
+
+      if (_transcriptionFuture == null) {
+        debugPrint('🔄 No active task found, starting fresh background STT...');
+        _transcriptionFuture = service.transcribeFile(path);
+      } else {
+        debugPrint(
+          '🤝 Picking up existing STT task for: ${widget.interviewId}',
+        );
+      }
+
+      _transcriptCache = await _transcriptionFuture;
+      debugPrint(
+        '⚡ Background STT Complete: ${_transcriptCache?.substring(0, 20)}...',
+      );
+    } catch (e) {
+      debugPrint('⚠️ Background STT failed: $e');
+    } finally {
+      if (mounted) setState(() => _isBackgroundTranscribing = false);
+    }
   }
 
   /// Load interview data from repository
@@ -67,23 +114,23 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         widget.interviewId,
       );
 
-      setState(() {
-        _completedInterview = interview;
-        _loadingInterview = false;
-      });
+      if (mounted) {
+        setState(() {
+          _completedInterview = interview;
+          _loadingInterview = false;
+        });
+      }
 
       if (interview != null) {
         debugPrint('✅ Loaded interview data: ${interview.id}');
-        debugPrint('Technical Score: ${interview.technicalScore}');
-        debugPrint('Responses: ${interview.responses.length}');
-      } else {
-        debugPrint('⚠️ No interview found with ID: ${widget.interviewId}');
       }
     } catch (e) {
       debugPrint('❌ Error loading interview data: $e');
-      setState(() {
-        _loadingInterview = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loadingInterview = false;
+        });
+      }
     }
   }
 
@@ -240,6 +287,14 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     );
   }
 
+  @override
+  void dispose() {
+    // CRITICAL FIX: Reset form state when leaving the screen
+    context.read<EvaluationProvider>().resetForm();
+    _sttSubscription?.cancel();
+    super.dispose();
+  }
+
   Widget _buildMainContent() {
     return Consumer<EvaluationProvider>(
       builder: (context, provider, child) {
@@ -254,6 +309,11 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Transcript Synchronization Status Indicator
+              _buildSTTStatus(),
+
+              const SizedBox(height: 16),
+
               // Candidate info card - centered
               Center(
                 child: CandidateInfoCard(
@@ -369,6 +429,61 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     );
   }
 
+  Widget _buildSTTStatus() {
+    String message = 'Waiting for transcription...';
+    IconData icon = Icons.sync_problem;
+    Color color = Colors.grey;
+    bool isSyncing = false;
+
+    if (_isBackgroundTranscribing) {
+      message = 'AI is processing transcription...';
+      icon = Icons.sync;
+      color = AppColors.primary;
+      isSyncing = true;
+    } else if (_transcriptCache != null) {
+      message = 'Interview Transcript Synchronized';
+      icon = Icons.check_circle;
+      color = Colors.green;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          if (isSyncing)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            )
+          else
+            Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color.withOpacity(0.8),
+              ),
+            ),
+          ),
+          if (_transcriptCache != null)
+            const Icon(Icons.bolt, size: 16, color: Colors.amber),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomButton() {
     return Consumer<EvaluationProvider>(
       builder: (context, provider, child) {
@@ -431,12 +546,49 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   }
 
   Future<void> _onGenerateReport(EvaluationProvider provider) async {
-    // Save evaluation
+    final recordingPath = _completedInterview?.voiceRecordingPath;
+    String finalTranscript = _transcriptCache ?? '';
+
+    // If still transcribing in background, wait for it
+    if (_transcriptCache == null &&
+        _isBackgroundTranscribing &&
+        _transcriptionFuture != null) {
+      LoadingOverlay.show(context, message: 'Finishing AI transcription...');
+      try {
+        finalTranscript = await _transcriptionFuture!;
+      } catch (e) {
+        debugPrint('⚠️ Transcription wait failed: $e');
+      } finally {
+        if (mounted) LoadingOverlay.hide(context);
+      }
+    }
+    // Final fallback: If recording exists and no transcript, try once more
+    else if (finalTranscript.isEmpty &&
+        recordingPath != null &&
+        recordingPath.isNotEmpty) {
+      LoadingOverlay.show(
+        context,
+        message: 'Transcribing interview with Gemini AI...',
+      );
+      try {
+        final transcriptionService = sl<TranscriptionService>();
+        finalTranscript = await transcriptionService.transcribeFile(
+          recordingPath,
+        );
+      } catch (e) {
+        debugPrint('⚠️ Final transcription attempt failed: $e');
+      } finally {
+        if (mounted) LoadingOverlay.hide(context);
+      }
+    }
+
+    // 3. Save evaluation with transcript
     final success = await provider.saveEvaluation(
       interviewId: widget.interviewId,
       candidateName: widget.candidateName,
       role: widget.role,
       level: widget.level,
+      transcript: finalTranscript,
     );
 
     if (!mounted) return;

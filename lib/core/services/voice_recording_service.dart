@@ -12,6 +12,8 @@ class VoiceRecordingService {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
 
+  String? _lastRecordingPath; // Added to persist path across errors
+
   VoiceRecordingService(this._box) {
     _initAudioContext();
   }
@@ -84,23 +86,46 @@ class VoiceRecordingService {
     final fileName =
         'interview_${interviewId}_${sanitizedCandidate}_${DateTime.now().millisecondsSinceEpoch}.m4a';
     final filePath = '${directory.path}/$fileName';
+    _lastRecordingPath = filePath;
 
-    // Explicitly use AAC-LC for better compatibility on emulators
+    // Optimized for STT performance: 64kbps/24kHz is plenty for clear speech
     const config = RecordConfig(
       encoder: AudioEncoder.aacLc,
-      bitRate: 128000,
-      sampleRate: 44100,
+      bitRate: 64000,
+      sampleRate: 24000,
     );
 
-    await _recorder.start(config, path: filePath);
-    debugPrint('🎙️ Started interview-wide recording: $filePath');
+    try {
+      debugPrint('🎙️ Starting audio recorder...');
+      await _recorder.start(config, path: filePath);
+      debugPrint('🎙️ Audio recorder started: $filePath');
+    } catch (e) {
+      debugPrint('❌ Critical Error: Failed to start recorder: $e');
+      rethrow;
+    }
   }
 
   /// Stop current recording and return the path
   Future<String?> stopRecording() async {
-    final path = await _recorder.stop();
-    debugPrint('🛑 Stopped recording: $path');
-    return path;
+    try {
+      final path = await _recorder.stop();
+      debugPrint('🛑 Stopped recording: $path');
+
+      // Check file size if path exists
+      final finalPath = path ?? _lastRecordingPath;
+      if (finalPath != null) {
+        final file = File(finalPath);
+        if (await file.exists()) {
+          final size = await file.length();
+          debugPrint('📂 Final recording size: ${size / 1024} KB');
+        }
+      }
+
+      return finalPath;
+    } catch (e) {
+      debugPrint('⚠️ Error in stopRecording: $e');
+      return _lastRecordingPath;
+    }
   }
 
   /// Pause current recording

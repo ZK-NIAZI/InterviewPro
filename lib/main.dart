@@ -17,11 +17,21 @@ import 'features/interview/presentation/providers/voice_recording_provider.dart'
 import 'dart:async';
 import 'core/services/crash_reporting_service.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   // Catch errors strictly outside of Flutter context
   runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Load environment variables
+      try {
+        await dotenv.load(fileName: ".env");
+        debugPrint('✅ .env loaded successfully');
+      } catch (e) {
+        debugPrint('⚠️ .env file not found or failed to load: $e');
+      }
 
       // Initialize Crash Reporting
       final crashReporter = CrashReportingService();

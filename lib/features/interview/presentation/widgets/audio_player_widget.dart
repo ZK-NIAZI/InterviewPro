@@ -7,11 +7,13 @@ import '../providers/audio_player_provider.dart';
 class AudioPlayerWidget extends StatefulWidget {
   final String audioPath;
   final int? durationSeconds;
+  final String? transcript;
 
   const AudioPlayerWidget({
     super.key,
     required this.audioPath,
     this.durationSeconds,
+    this.transcript,
   });
 
   @override
@@ -19,6 +21,8 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+  bool _showTranscript = false;
+
   @override
   Widget build(BuildContext context) {
     // CRITICAL FIX: Use ChangeNotifierProvider (create) instead of .value
@@ -135,12 +139,64 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 child: Icon(Icons.mic, size: 16, color: AppColors.primary),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Interview Recording',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
+              Expanded(
+                child: Text(
+                  'Interview Recording',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (widget.transcript != null &&
+                      widget.transcript!.isNotEmpty) {
+                    setState(() {
+                      _showTranscript = !_showTranscript;
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'No speech was recognized for this recording.',
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _showTranscript
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    widget.transcript == null || widget.transcript!.isEmpty
+                        ? 'Transcript N/A'
+                        : _showTranscript
+                        ? 'Hide Transcript'
+                        : 'View Transcript',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _showTranscript
+                          ? Colors.white
+                          : AppColors.primary.withOpacity(
+                              widget.transcript == null ||
+                                      widget.transcript!.isEmpty
+                                  ? 0.5
+                                  : 1.0,
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -230,6 +286,56 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               ),
             ],
           ),
+
+          if (_showTranscript &&
+              widget.transcript != null &&
+              widget.transcript!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.description_outlined,
+                        size: 14,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'TRANSCRIPT',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600],
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.transcript!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

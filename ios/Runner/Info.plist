@@ -57,6 +57,9 @@
 				<string>interviewpro</string>
 			</array>
 		</dict>
-	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires microphone access for interview recording and speech recognition.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app utilizes speech recognition to generate transcripts of your technical interviews.</string>
 </dict>
 </plist>

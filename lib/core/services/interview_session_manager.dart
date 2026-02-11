@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../../shared/domain/entities/entities.dart';
 import '../../shared/domain/repositories/interview_repository.dart';
 import 'cache_manager.dart';
+import '../services/transcription_service.dart';
+import '../services/service_locator.dart';
 
 /// Service for managing interview sessions and real-time response tracking
 class InterviewSessionManager extends ChangeNotifier {
@@ -224,6 +226,20 @@ class InterviewSessionManager extends ChangeNotifier {
       );
 
       debugPrint('✅ Interview updated with completion data');
+
+      // Proactive STT Trigger: Start transcription immediately in background
+      if (voiceRecordingPath != null && voiceRecordingPath.isNotEmpty) {
+        try {
+          final transcriptionService = sl<TranscriptionService>();
+          transcriptionService.queueTranscription(
+            _currentInterview!.id,
+            voiceRecordingPath,
+          );
+        } catch (e) {
+          debugPrint('⚠️ Failed to queue proactive STT: $e');
+        }
+      }
+
       debugPrint('🆔 Interview ID: ${_currentInterview!.id}');
       debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
       debugPrint('📊 Status: ${_currentInterview!.status}');
