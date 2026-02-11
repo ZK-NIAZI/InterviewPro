@@ -78,48 +78,55 @@ class TranscriptionService {
         Content.multi([
           DataPart('audio/mp4', bytes),
           TextPart(
-            'Transcribe this audio accurately. Return ONLY plain text. No labels or notes.',
+            'Transcribe this interview audio verbatim. \n'
+            'RULES:\n'
+            '1. Start directly with labels. NO preamble or intro text.\n'
+            '2. Use "Interviewer:" and "Candidate:" labels precisely.\n'
+            '3. NO markdown bolding (e.g., NO **Interviewer:**).\n'
+            '4. Return ONLY the plain text dialogue.\n'
+            'Format:\n'
+            'Interviewer: [Text]\n'
+            'Candidate: [Text]',
           ),
         ]),
       ];
 
-      // Try with Flash Latest first (High accuracy, High speed)
+      // Try with Flash Lite primary (Available, High-speed, 2.0)
       try {
         final response =
-            await (_flashModel ??
+            await (_fallbackModel ??
                     GenerativeModel(
-                      model: 'gemini-flash-latest',
+                      model: 'gemini-2.0-flash-lite',
                       apiKey: _apiKey,
                     ))
                 .generateContent(content);
 
         if (response.text != null && response.text!.isNotEmpty) {
-          debugPrint('✅ STT Success (Primary)');
+          debugPrint('✅ STT Success (Lite Primary)');
           return response.text!.trim();
         }
       } catch (e) {
-        debugPrint('⚠️ Primary STT attempt failed: $e');
+        debugPrint('⚠️ Lite Primary STT attempt failed: $e');
 
-        // Fallback to Lite model (Even higher speed, higher quota)
-        if (e.toString().contains('429') ||
-            e.toString().contains('quota') ||
-            e.toString().contains('404')) {
-          debugPrint('🔄 Using high-availability fallback...');
+        // Fallback to Flash Latest if permissible, otherwise Pro
+        try {
           final fallbackResponse =
-              await (_fallbackModel ??
+              await (_flashModel ??
                       GenerativeModel(
-                        model: 'gemini-2.0-flash-lite',
+                        model: 'gemini-flash-latest',
                         apiKey: _apiKey,
                       ))
                   .generateContent(content);
 
           if (fallbackResponse.text != null &&
               fallbackResponse.text!.isNotEmpty) {
-            debugPrint('✅ STT Success (Fallback)');
+            debugPrint('✅ STT Success (Secondary)');
             return fallbackResponse.text!.trim();
           }
+        } catch (e2) {
+          debugPrint('❌ All STT attempts failed: $e2');
+          rethrow;
         }
-        rethrow;
       }
 
       return 'Transcription failed: No text generated.';

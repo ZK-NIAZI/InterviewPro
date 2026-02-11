@@ -222,6 +222,8 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
                     durationSeconds:
                         provider.reportData!.voiceRecordingDurationSeconds,
                     transcript: provider.reportData!.interview.transcript,
+                    candidateName: widget.candidateName,
+                    role: widget.role,
                   ),
                 ),
                 const SizedBox(height: 20),
