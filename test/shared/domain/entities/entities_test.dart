@@ -112,6 +112,7 @@ void main() {
           role: Role.flutter,
           level: Level.associate,
           startTime: startTime,
+          lastModified: startTime,
           responses: responses,
           status: InterviewStatus.notStarted,
         );
@@ -138,6 +139,7 @@ void main() {
           level: Level.associate,
           startTime: startTime,
           endTime: endTime,
+          lastModified: endTime,
           responses: [],
           status: InterviewStatus.completed,
         );
@@ -152,6 +154,7 @@ void main() {
           role: Role.flutter,
           level: Level.associate,
           startTime: DateTime.now(),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
         );
@@ -168,6 +171,7 @@ void main() {
           role: Role.flutter,
           level: Level.associate,
           startTime: startTime,
+          lastModified: startTime,
           responses: [],
           status: InterviewStatus.notStarted,
         );

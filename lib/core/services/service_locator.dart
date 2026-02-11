@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'appwrite_service.dart';
 import 'interview_session_manager.dart';
 import 'voice_recording_service.dart';
+import 'data_management_service.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
@@ -60,6 +61,10 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton<VoiceRecordingService>(
     () => VoiceRecordingService(Hive.box('voiceRecordingsBox')),
+  );
+
+  sl.registerLazySingleton<DataManagementService>(
+    () => DataManagementService(sl<InterviewRepository>()),
   );
 
   // Initialize data sources

@@ -20,6 +20,7 @@ void main() {
           role: Role.flutter,
           level: Level.associate,
           startTime: DateTime.now(),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.inProgress,
         );
@@ -51,6 +52,7 @@ void main() {
           role: Role.flutter,
           level: Level.intern,
           startTime: DateTime.now(),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.inProgress,
         ),
@@ -60,6 +62,7 @@ void main() {
           role: Role.backend,
           level: Level.senior,
           startTime: DateTime.now(),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
         ),
@@ -90,6 +93,7 @@ void main() {
         role: Role.flutter,
         level: Level.associate,
         startTime: DateTime.now(),
+        lastModified: DateTime.now(),
         responses: [],
         status: InterviewStatus.inProgress,
       );

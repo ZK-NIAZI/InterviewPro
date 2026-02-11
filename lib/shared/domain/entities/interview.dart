@@ -25,6 +25,9 @@ class Interview extends Equatable {
   /// When the interview ended (null if still in progress)
   final DateTime? endTime;
 
+  /// Timestamp of last modification for sync
+  final DateTime lastModified;
+
   /// List of responses to interview questions
   final List<QuestionResponse> responses;
 
@@ -75,6 +78,7 @@ class Interview extends Equatable {
     required this.level,
     required this.startTime,
     this.endTime,
+    required this.lastModified,
     required this.responses,
     required this.status,
     this.overallScore,
@@ -100,6 +104,7 @@ class Interview extends Equatable {
     Level? level,
     DateTime? startTime,
     DateTime? endTime,
+    DateTime? lastModified,
     List<QuestionResponse>? responses,
     InterviewStatus? status,
     double? overallScore,
@@ -123,6 +128,7 @@ class Interview extends Equatable {
       level: level ?? this.level,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
+      lastModified: lastModified ?? DateTime.now(),
       responses: responses ?? this.responses,
       status: status ?? this.status,
       overallScore: overallScore ?? this.overallScore,
@@ -259,6 +265,9 @@ class Interview extends Equatable {
       endTime: json['endTime'] != null
           ? DateTime.tryParse(json['endTime'])
           : null,
+      lastModified: json['lastModified'] != null
+          ? DateTime.tryParse(json['lastModified']) ?? DateTime.now()
+          : DateTime.now(),
       responses: (json['responses'] as List<dynamic>? ?? [])
           .map((r) => QuestionResponse.fromJson(r))
           .toList(),
@@ -288,6 +297,7 @@ class Interview extends Equatable {
       'level': level.toString(),
       'startTime': startTime.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
+      'lastModified': lastModified.toIso8601String(),
       'responses': responses.map((r) => r.toJson()).toList(),
       'status': status.toString(),
       'overallScore': overallScore,
@@ -356,6 +366,7 @@ class Interview extends Equatable {
     level,
     startTime,
     endTime,
+    lastModified,
     responses,
     status,
     overallScore,

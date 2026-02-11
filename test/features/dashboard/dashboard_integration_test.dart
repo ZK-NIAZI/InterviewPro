@@ -29,6 +29,7 @@ void main() {
         role: Role.flutter,
         level: Level.associate,
         startTime: DateTime.now().subtract(const Duration(days: 1)),
+        lastModified: DateTime.now(),
         endTime: DateTime.now().subtract(const Duration(hours: 1)),
         responses: [
           QuestionResponse(
@@ -78,6 +79,7 @@ void main() {
           role: Role.frontend,
           level: Level.senior,
           startTime: DateTime.now().subtract(const Duration(days: 1)),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
           technicalScore: 85.0,
@@ -89,6 +91,7 @@ void main() {
           role: Role.backend,
           level: Level.associate,
           startTime: DateTime.now().subtract(const Duration(days: 8)),
+          lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
           technicalScore: 70.0,

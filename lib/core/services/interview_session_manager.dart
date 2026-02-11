@@ -46,6 +46,7 @@ class InterviewSessionManager extends ChangeNotifier {
         roleName: role.trim(),
         level: _parseLevel(level),
         startTime: DateTime.now(),
+        lastModified: DateTime.now(),
         responses: [],
         status: InterviewStatus.inProgress,
         currentQuestionIndex: 0,
@@ -447,6 +448,7 @@ class InterviewSessionManager extends ChangeNotifier {
       role: Role.flutter,
       level: Level.associate,
       startTime: DateTime.now(),
+      lastModified: DateTime.now(),
       responses: responses,
       status: InterviewStatus.inProgress,
     );

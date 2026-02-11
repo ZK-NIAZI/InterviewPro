@@ -131,6 +131,7 @@ class InterviewSetupProvider extends ChangeNotifier {
         role: _selectedRole!,
         level: _selectedLevel!,
         startTime: DateTime.now(),
+        lastModified: DateTime.now(),
         endTime: null,
         responses: [],
         status: InterviewStatus.notStarted,
