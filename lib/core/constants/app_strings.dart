@@ -56,10 +56,29 @@ class AppStrings {
   static const String addNotes = 'Add Notes';
   static const String addNotesHint = 'Add your notes here...';
 
+  // Dialogs & Alerts
+  static const String deleteInterviewTitle = 'Delete Interview';
+  static const String deleteInterviewMessage =
+      'Are you sure you want to delete this interview? This action cannot be undone.';
+  static const String deleting = 'Deleting...';
+  static const String discardChanges = 'Discard Changes?';
+  static const String discardChangesMessage =
+      'You have unsaved changes. Are you sure you want to discard them?';
+  static const String confirm = 'Confirm';
+
+  // Dashboard Sections
+  static const String recentInterviews = 'Recent Interviews';
+  static const String newInterview = 'New Interview';
+  static const String history = 'History';
+  static const String statistics = 'Statistics';
+  static const String viewAll = 'View All';
+
   // Messages
   static const String loading = 'Loading...';
   static const String noData = 'No data available';
   static const String error = 'An error occurred';
+  static const String errorLoading = 'Error loading data';
+  static const String errorSaving = 'Error saving data';
   static const String success = 'Success';
   static const String interviewCompleted = 'Interview completed successfully';
   static const String reportGenerated = 'Report generated successfully';
@@ -76,4 +95,23 @@ class AppStrings {
   static const String evaluationComplete = 'Evaluation Complete';
   static const String commentsHint =
       'Add any additional comments about the candidate...';
+
+  // Metrics
+  static const String technicalScore = 'Technical Score';
+  static const String totalQuestions = 'Total Questions';
+  static const String questionsAnswered = 'Questions Answered';
+  static const String correctAnswers = 'Correct Answers';
+  static const String completion = 'Completion';
+  static const String duration = 'Duration';
+  static const String overallScore = 'Overall Score';
+  static const String quickStats = 'Quick Stats';
+
+  // Report
+  static const String interviewReport = 'Interview Report';
+  static const String previewPdf = 'Preview PDF';
+  static const String shareReport = 'Share Report';
+  static const String recommended = 'Recommended for Hire';
+  static const String notRecommended = 'Not Recommended';
+  static const String errorGeneratingPdf = 'Error generating PDF';
+  static const String errorSavingPdf = 'Error saving PDF';
 }

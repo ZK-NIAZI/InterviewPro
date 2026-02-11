@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../shared/domain/entities/interview.dart';
 import '../../../../shared/domain/repositories/interview_repository.dart';
@@ -12,6 +13,8 @@ import '../providers/evaluation_provider.dart';
 import '../widgets/candidate_info_card.dart';
 import '../widgets/evaluation_form_widget.dart';
 import '../widgets/back_navigation_dialog.dart';
+import '../../../../shared/presentation/widgets/metric_card.dart';
+import '../../../../shared/presentation/widgets/loading_overlay.dart';
 
 /// Candidate evaluation screen for assessing soft skills and generating reports
 class CandidateEvaluationPage extends StatefulWidget {
@@ -101,25 +104,18 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
 
           final provider = context.read<EvaluationProvider>();
           if (provider.isSaved) {
-            if (mounted) {
+            if (context.mounted) {
               context.go(AppRouter.dashboard);
             }
             return;
           }
 
-          final navigator = context;
-          final shouldPop = await BackNavigationDialog.show(navigator);
+          final shouldPop = await BackNavigationDialog.show(context);
           if (shouldPop == true) {
+            if (!context.mounted) return;
+
             // Show loading indicator
-            if (context.mounted) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (ctx) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              );
-            }
+            LoadingOverlay.show(context, message: AppStrings.deleting);
 
             // Delete the interview from database
             try {
@@ -131,9 +127,9 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
             }
 
             // Dismiss loading and navigate
-            if (navigator.mounted) {
-              navigator.pop(); // Dismiss loading
-              navigator.go(AppRouter.dashboard);
+            if (context.mounted) {
+              context.pop(); // Dismiss loading
+              context.go(AppRouter.dashboard);
             }
           }
         },
@@ -177,21 +173,12 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 return;
               }
 
-              final navigator = context;
-              final shouldPop = await BackNavigationDialog.show(navigator);
+              final shouldPop = await BackNavigationDialog.show(context);
               if (shouldPop == true) {
+                if (!mounted) return;
+
                 // Show loading indicator
-                if (context.mounted) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (ctx) => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  );
-                }
+                LoadingOverlay.show(context, message: AppStrings.deleting);
 
                 // Delete the interview from database
                 try {
@@ -204,7 +191,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
 
                 // Dismiss loading and navigate
                 if (mounted) {
-                  context.pop(); // Dismiss loading
+                  LoadingOverlay.hide(context); // Dismiss loading
                   context.go(AppRouter.dashboard);
                 }
               }
@@ -339,16 +326,19 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           Row(
             children: [
               Expanded(
-                child: _buildMetricCard(
-                  'Technical Score',
-                  '${(interview.technicalScore ?? 0).toStringAsFixed(1)}%',
+                child: MetricCard(
+                  title: AppStrings.technicalScore,
+                  value: AppFormatters.formatScore(
+                    interview.technicalScore ?? 0,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildMetricCard(
-                  'Questions Answered',
-                  '${stats['answeredQuestions']}/${stats['totalQuestions']}',
+                child: MetricCard(
+                  title: AppStrings.questionsAnswered,
+                  value:
+                      '${stats['answeredQuestions']}/${stats['totalQuestions']}',
                 ),
               ),
             ],
@@ -358,53 +348,21 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           Row(
             children: [
               Expanded(
-                child: _buildMetricCard(
-                  'Correct Answers',
-                  '${stats['correctAnswers']}',
+                child: MetricCard(
+                  title: AppStrings.correctAnswers,
+                  value: '${stats['correctAnswers']}',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildMetricCard(
-                  'Completion',
-                  '${stats['completionPercentage'].toStringAsFixed(0)}%',
+                child: MetricCard(
+                  title: AppStrings.completion,
+                  value: AppFormatters.formatScore(
+                    stats['completionPercentage'],
+                  ),
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build metric card widget with unified styling
-  Widget _buildMetricCard(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
 import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
@@ -13,6 +14,7 @@ import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../core/services/report_pdf_service.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/download_success_dialog.dart';
+import '../../../../shared/presentation/widgets/loading_overlay.dart';
 
 /// Interview report screen showing detailed evaluation results
 class InterviewReportPage extends StatefulWidget {
@@ -130,7 +132,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
           // Title (centered)
           const Expanded(
             child: Text(
-              'Interview Report',
+              AppStrings.interviewReport,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -243,7 +245,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
           Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
           Text(
-            'Error Loading Report',
+            AppStrings.errorLoading,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -292,7 +294,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     final color = isRecommended ? AppColors.primary : Colors.red;
     final text =
         reportData?.recommendation ??
-        (isRecommended ? 'Recommended for Hire' : 'Not Recommended');
+        (isRecommended ? AppStrings.recommended : AppStrings.notRecommended);
     final icon = isRecommended ? Icons.verified : Icons.cancel;
 
     return Column(
@@ -320,7 +322,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       child: CircularProgressWidget(
         score: score,
         size: 192,
-        label: 'Overall Score',
+        label: AppStrings.overallScore,
       ),
     );
   }
@@ -333,7 +335,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Quick Stats',
+            AppStrings.quickStats,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -400,7 +402,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
                     Icon(Icons.picture_as_pdf, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Preview PDF',
+                      AppStrings.previewPdf,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -431,7 +433,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
                     Icon(Icons.ios_share, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Share Report',
+                      AppStrings.shareReport,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -468,19 +470,13 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     if (reportData == null) return;
 
     // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-    );
+    LoadingOverlay.show(context, message: 'Generating PDF...');
 
     try {
       final path = await ReportPdfService.generatePdfFile(reportData);
 
       if (mounted) {
-        Navigator.pop(context); // Remove loading
+        LoadingOverlay.hide(context); // Remove loading
 
         // Use native share sheet
         await Share.shareXFiles(
@@ -492,10 +488,10 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Remove loading
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error generating PDF: $e')));
+        LoadingOverlay.hide(context); // Remove loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${AppStrings.errorGeneratingPdf}: $e')),
+        );
       }
     }
   }
@@ -505,13 +501,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
     if (reportData == null) return;
 
     // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-    );
+    LoadingOverlay.show(context, message: 'Saving PDF...');
 
     try {
       final path = await ReportPdfService.generatePdfFile(
@@ -520,7 +510,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       );
 
       if (mounted) {
-        Navigator.pop(context); // Remove loading
+        LoadingOverlay.hide(context); // Remove loading
 
         final fileName =
             'Interview_Report_${reportData.interview.candidateName.replaceAll(' ', '_')}.pdf';
@@ -529,10 +519,10 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Remove loading
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving PDF: $e')));
+        LoadingOverlay.hide(context); // Remove loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${AppStrings.errorSavingPdf}: $e')),
+        );
       }
     }
   }
