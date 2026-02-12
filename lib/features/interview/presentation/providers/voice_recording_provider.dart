@@ -175,11 +175,16 @@ class VoiceRecordingProvider extends ChangeNotifier {
     });
   }
 
+  final ValueNotifier<int> recordingDurationNotifier = ValueNotifier<int>(0);
+
   void _startTimer() {
     _timer?.cancel();
+    recordingDurationNotifier.value = _recordingDurationSeconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _recordingDurationSeconds++;
-      notifyListeners();
+      recordingDurationNotifier.value = _recordingDurationSeconds;
+      // ⚡ Performance Fix: Removed notifyListeners() to prevent full-page rebuilds every second.
+      // UI should now listen to recordingDurationNotifier specifically.
     });
   }
 

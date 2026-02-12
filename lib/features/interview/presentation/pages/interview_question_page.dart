@@ -358,13 +358,18 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
                         color: AppColors.primary.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        _formatDuration(provider.recordingDurationSeconds),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: provider.recordingDurationNotifier,
+                        builder: (context, seconds, child) {
+                          return Text(
+                            _formatDuration(seconds),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   // Voice Recorder FAB
