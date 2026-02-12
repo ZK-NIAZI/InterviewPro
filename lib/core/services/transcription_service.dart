@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Service for transcribing audio files using Gemini 1.5 Flash
 class TranscriptionService {
@@ -10,8 +11,11 @@ class TranscriptionService {
   GenerativeModel? _flashModel;
   GenerativeModel? _fallbackModel;
 
-  /// Global registry of active transcription tasks to persist across screens
+  /// Global registry of active transcription tasks
   static final Map<String, Future<String>> _activeTasks = {};
+
+  /// Global registry of pending tasks waiting for connectivity
+  static final Map<String, String> _pendingTasks = {};
 
   /// Stream for notifying listeners about transcription progress/completion
   static final StreamController<Map<String, String>> _statusController =
@@ -22,7 +26,6 @@ class TranscriptionService {
     if (_apiKey.isEmpty || _apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       debugPrint('⚠️ Gemini API Key not found or invalid in .env');
     } else {
-      // Pre-initialize models to save time
       _flashModel = GenerativeModel(
         model: 'gemini-flash-latest',
         apiKey: _apiKey,
@@ -31,12 +34,48 @@ class TranscriptionService {
         model: 'gemini-2.0-flash-lite',
         apiKey: _apiKey,
       );
+
+      // Initialize connectivity listener to resume pending tasks
+      Connectivity().onConnectivityChanged.listen((results) {
+        // results is a List<ConnectivityResult> in newer versions
+        final isConnected = results.any((r) => r != ConnectivityResult.none);
+        if (isConnected && _pendingTasks.isNotEmpty) {
+          debugPrint(
+            '🌐 Connection restored. Resuming ${_pendingTasks.length} pending STT tasks...',
+          );
+          _processPendingTasks();
+        }
+      });
     }
   }
 
+  /// Process all tasks that were queued while offline
+  void _processPendingTasks() {
+    final tasks = Map<String, String>.from(_pendingTasks);
+    _pendingTasks.clear();
+    tasks.forEach((id, path) {
+      queueTranscription(id, path);
+    });
+  }
+
+  /// Check if the device is currently online
+  Future<bool> _isOnline() async {
+    final result = await Connectivity().checkConnectivity();
+    return result.any((r) => r != ConnectivityResult.none);
+  }
+
   /// Start transcription in background and track it globally
-  void queueTranscription(String interviewId, String filePath) {
+  void queueTranscription(String interviewId, String filePath) async {
     if (_activeTasks.containsKey(interviewId)) return;
+
+    // Check connectivity before starting
+    if (!await _isOnline()) {
+      debugPrint(
+        '📶 Device offline. Queuing STT for $interviewId until connection is restored.',
+      );
+      _pendingTasks[interviewId] = filePath;
+      return;
+    }
 
     debugPrint('🚀 Proactive STT started for: $interviewId');
     final future = transcribeFile(filePath);
