@@ -28,8 +28,7 @@ class TranscriptParser {
   static List<TranscriptTurn> parse(String rawTranscript) {
     if (rawTranscript.isEmpty) return [];
 
-    // Phase 2: Hybrid Detection
-    // Detect if the string starts with a JSON bracket
+    // Detect if the string starts with a JSON bracket (Structured Diarization)
     final trimmed = rawTranscript.trim();
     if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
       try {

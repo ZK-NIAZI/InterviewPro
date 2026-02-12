@@ -38,9 +38,8 @@ class InterviewSessionManager extends ChangeNotifier {
               interviewId,
             );
             if (interview != null) {
-              // Phase 3: Smart Persistence
-              // Allow overwriting if existing transcript is null, empty, or legacy text
-              // (but the new one is structured JSON)
+              // Smart Persistence: Allow overwriting if existing transcript is null, empty,
+              // or legacy text (but the new one is structured JSON)
               final bool shouldUpdate =
                   interview.transcript == null ||
                   interview.transcript!.isEmpty ||
@@ -77,7 +76,7 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Phase 3: Detects if a new transcript is "better" (e.g. JSON vs Plain Text)
+  /// Detects if a new transcript is "better" (e.g. JSON vs Plain Text)
   bool _isBetterTranscript({
     required String oldTranscript,
     required String newTranscript,
@@ -139,7 +138,7 @@ class InterviewSessionManager extends ChangeNotifier {
       // Cache the session data securely
       _cacheSessionData();
 
-      // Phase 4: Cleanup orphaned recordings on session start
+      // Cleanup orphaned recordings on session start
       try {
         final recordingService = sl<VoiceRecordingService>();
         final interviews = await _interviewRepository.getAllInterviews();
@@ -318,7 +317,7 @@ class InterviewSessionManager extends ChangeNotifier {
       debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
       debugPrint('📊 Status: ${_currentInterview!.status}');
 
-      // Phase 4 Optimization: Cleanup redundant recordings for this interview
+      // Cleanup redundant recordings for this interview
       try {
         final recordingService = sl<VoiceRecordingService>();
         if (voiceRecordingPath != null) {
@@ -331,7 +330,7 @@ class InterviewSessionManager extends ChangeNotifier {
         debugPrint('⚠️ Redundant recording cleanup failed: $e');
       }
 
-      // Phase 3 Optimization: Save to repository BEFORE STT to ensure metadata safety
+      // Optimization: Save to repository BEFORE STT to ensure metadata safety
       debugPrint('💾 Saving completed interview to repository...');
       await _saveWithRetry(
         () => _interviewRepository.updateInterview(_currentInterview!),

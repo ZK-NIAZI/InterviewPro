@@ -5,10 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
 
-/// Service for transcribing audio files using Gemini 1.5 Flash
+/// Service for transcribing audio files using a Groq-centered pipeline (Whisper + Llama 3)
+/// with a resilient fallback to Gemini for high-fidelity audio processing.
 class TranscriptionService {
   final String _apiKey;
+  final String _groqApiKey;
   GenerativeModel? _flashModel;
   GenerativeModel? _fallbackModel;
 
@@ -23,10 +26,19 @@ class TranscriptionService {
       StreamController<Map<String, String>>.broadcast();
 
   TranscriptionService()
-    : _apiKey = dotenv.get('GEMINI_API_KEY', fallback: '') {
+    : _apiKey = dotenv.get('GEMINI_API_KEY', fallback: ''),
+      _groqApiKey = dotenv.get('GROQ_API_KEY', fallback: '') {
     if (_apiKey.isEmpty || _apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       debugPrint('⚠️ Gemini API Key not found or invalid in .env');
+    }
+
+    if (_groqApiKey.isEmpty) {
+      debugPrint('⚠️ Groq API Key not found in .env (Hybrid Mode disabled)');
     } else {
+      debugPrint('🚀 Groq Hybrid Mode initialized and ready.');
+    }
+
+    if (_apiKey.isNotEmpty) {
       _flashModel = GenerativeModel(
         model: 'gemini-flash-latest',
         apiKey: _apiKey,
@@ -136,11 +148,13 @@ class TranscriptionService {
         ]),
       ];
 
-      // Use the resilient retry wrapper
-      final rawResult = await _generateWithRetry(content);
-
-      // Phase 1 Optimization: Pre-flight JSON validation
-      return _validateAndCleanJson(rawResult);
+      // Use the Groq-centered pipeline (Whisper STT + Llama Diarization)
+      if (_groqApiKey.isNotEmpty && _groqApiKey.length > 10) {
+        return await _transcribeWithGroqPipeline(filePath);
+      } else {
+        final rawResult = await _generateWithRetry(content);
+        return _validateAndCleanJson(rawResult);
+      }
     } catch (e) {
       debugPrint('❌ STT Error: $e');
       if (e.toString().contains('429')) {
@@ -150,7 +164,7 @@ class TranscriptionService {
     }
   }
 
-  /// Phase 1: Ensures the output is valid JSON and strips any AI markdown wrappers
+  /// Validates that the output is valid JSON and strips any AI markdown wrappers
   String _validateAndCleanJson(String rawOutput) {
     try {
       // 1. Strip potential markdown blocks: ```json [...] ```
@@ -251,5 +265,126 @@ class TranscriptionService {
       }
     }
     return 'Transcription failed after multiple attempts.';
+  }
+
+  /// High-speed Raw STT via Groq Whisper (Large V3 Turbo)
+  Future<String> _transcribeWithGroq(String filePath) async {
+    final url = Uri.parse(
+      'https://api.groq.com/openai/v1/audio/transcriptions',
+    );
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $_groqApiKey'
+      ..fields['model'] = 'whisper-large-v3-turbo'
+      ..fields['response_format'] = 'json'
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final response = await http.Response.fromStream(await request.send());
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['text'] ?? '';
+    } else {
+      throw Exception(
+        'Groq API Error: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
+  /// Generic Groq Chat Completion helper (Llama 3.3 70B)
+  Future<String> _callGroqChat(String prompt) async {
+    final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $_groqApiKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'model': 'llama-3.3-70b-versatile',
+        'messages': [
+          {
+            'role': 'system',
+            'content':
+                'You are a precise technical interview transcription assistant. Your goal is to convert raw text into a structured JSON chat log with speaker labels ("Candidate" vs "Interviewer 1", etc.). You follow formatting instructions perfectly and never include text outside the requested JSON structure.',
+          },
+          {'role': 'user', 'content': prompt},
+        ],
+        'temperature': 0.1,
+        'response_format': {'type': 'json_object'},
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['choices'][0]['message']['content'] ?? '';
+    } else {
+      throw Exception(
+        'Groq Chat Error: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
+  /// Converts raw text to structured JSON turns using Groq Llama 3.3
+  Future<String> _diarizeWithGroq(String rawText) async {
+    final prompt =
+        'Context: This is a technical interview transcript. \n'
+        'Task: Convert the raw text into a professional JSON chat log.\n'
+        'Identify speakers based on context (questions usually come from interviewers, answers from the candidate).\n'
+        'Label the primary candidate as "Candidate". \n'
+        'Label different interviewers as "Interviewer 1", "Interviewer 2", etc.\n\n'
+        'RULES:\n'
+        '1. Return ONLY a valid JSON object with a "transcript" key containing the array. NO markdown or preamble.\n'
+        '2. Keys inside objects: "speaker", "text", "time" (Estimate time based on context if missing).\n'
+        '3. REQUIRED Format: {"transcript": [{"speaker": "Interviewer 1", "time": "0:00", "text": "..."}]}\n\n'
+        'RAW TRANSCRIPT: \n$rawText';
+
+    final result = await _callGroqChat(prompt);
+
+    try {
+      final decoded = jsonDecode(result);
+      if (decoded is Map && decoded.containsKey('transcript')) {
+        return jsonEncode(decoded['transcript']);
+      }
+      return result;
+    } catch (e) {
+      debugPrint('⚠️ Groq JSON unwrapping failed, returning raw result: $e');
+      return result;
+    }
+  }
+
+  /// Total Groq Orchestrator with Failover to Gemini Audio
+  Future<String> _transcribeWithGroqPipeline(String filePath) async {
+    try {
+      // 1. Raw Transcription (Groq Whisper)
+      final rawText = await _transcribeWithGroq(filePath);
+
+      // 2. Diarization (Groq Llama 3)
+      final structuredJson = await _diarizeWithGroq(rawText);
+
+      return _validateAndCleanJson(structuredJson);
+    } catch (e) {
+      debugPrint(
+        '⚠️ Groq Pipeline failed: $e. Falling back to Gemini Audio...',
+      );
+      // Final Fallback: Revert to legacy audio-processing mode with high-quality prompt
+      final bytes = await File(filePath).readAsBytes();
+      final content = [
+        Content.multi([
+          DataPart('audio/mp4', bytes),
+          TextPart(
+            'Transcribe this interview audio verbatim. \n'
+            'Identify and separate multiple speakers. \n'
+            'Label the primary candidate as "Candidate". \n'
+            'Label different interviewers as "Interviewer 1", "Interviewer 2", etc.\n'
+            'RULES:\n'
+            '1. Return ONLY a valid JSON array of objects.\n'
+            '2. Each object must have "speaker", "text", and "time" (in M:SS format) keys.\n'
+            'Format Example: [{"speaker": "Interviewer 1", "time": "0:00", "text": "..."}]',
+          ),
+        ]),
+      ];
+      final backupResult = await _generateWithRetry(content);
+      return _validateAndCleanJson(backupResult);
+    }
   }
 }

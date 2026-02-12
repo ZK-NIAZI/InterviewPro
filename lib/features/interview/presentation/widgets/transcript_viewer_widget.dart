@@ -107,14 +107,13 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Phase 4: Modern Chat Alignment
-    // Candidate (ID 0) on right, others on left
+    // Chat Alignment: Candidate (ID 0) on right, others on left
     final isCandidate = turn.speakerId == 0 || turn.isCandidate;
     final alignment = isCandidate
         ? CrossAxisAlignment.end
         : CrossAxisAlignment.start;
 
-    // Phase 4: Color Coding Palette
+    // Color Coding Palette
     Color bubbleColor;
     Color textColor = AppColors.textPrimary;
 
