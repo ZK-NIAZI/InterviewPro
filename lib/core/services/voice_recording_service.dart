@@ -246,6 +246,84 @@ class VoiceRecordingService {
     }
   }
 
+  /// Delete a specific file by its path
+  Future<void> deleteFile(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('🗑️ Manually deleted file: $path');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error deleting file at $path: $e');
+    }
+  }
+
+  /// Delete all audio files for an interview EXCEPT the active one
+  Future<void> cleanupRedundantRecordings(
+    String interviewId,
+    String activePath,
+  ) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final files = directory.listSync();
+      int deletedCount = 0;
+
+      for (final file in files) {
+        if (file is File &&
+            file.path.contains('interview_$interviewId') &&
+            file.path.endsWith('.m4a') &&
+            file.path != activePath) {
+          await file.delete();
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        debugPrint(
+          '🧹 Cleaned up $deletedCount redundant recordings for interview $interviewId',
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error during redundant cleanup: $e');
+    }
+  }
+
+  /// Remove all audio files that don't correspond to any valid interview IDs
+  Future<void> cleanupOrphanedRecordings(List<String> validInterviewIds) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final files = directory.listSync();
+      int deletedCount = 0;
+
+      for (final file in files) {
+        if (file is File &&
+            file.path.contains('interview_') &&
+            file.path.endsWith('.m4a')) {
+          // Check if this file belongs to any valid interview
+          bool isOrphaned = true;
+          for (final id in validInterviewIds) {
+            if (file.path.contains('interview_$id')) {
+              isOrphaned = false;
+              break;
+            }
+          }
+
+          if (isOrphaned) {
+            await file.delete();
+            deletedCount++;
+          }
+        }
+      }
+
+      if (deletedCount > 0) {
+        debugPrint('🧹 Cleaned up $deletedCount orphaned audio files');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error during orphaned cleanup: $e');
+    }
+  }
+
   /// Clear all recordings (e.g., when interview is cancelled)
   Future<void> clearAll() async {
     for (final key in _box.keys) {

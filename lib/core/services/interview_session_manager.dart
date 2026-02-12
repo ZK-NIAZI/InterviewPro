@@ -3,6 +3,7 @@ import '../../shared/domain/entities/entities.dart';
 import '../../shared/domain/repositories/interview_repository.dart';
 import 'cache_manager.dart';
 import '../services/transcription_service.dart';
+import '../services/voice_recording_service.dart';
 import '../services/service_locator.dart';
 
 /// Service for managing interview sessions and real-time response tracking
@@ -103,6 +104,17 @@ class InterviewSessionManager extends ChangeNotifier {
 
       // Cache the session data securely
       _cacheSessionData();
+
+      // Phase 4: Cleanup orphaned recordings on session start
+      try {
+        final recordingService = sl<VoiceRecordingService>();
+        final interviews = await _interviewRepository.getAllInterviews();
+        await recordingService.cleanupOrphanedRecordings(
+          interviews.map((i) => i.id).toList(),
+        );
+      } catch (e) {
+        debugPrint('⚠️ Initial cleanup failed: $e');
+      }
 
       debugPrint(
         '✅ Started interview session (In-Memory/Cache): ${interview.id}',
@@ -271,6 +283,19 @@ class InterviewSessionManager extends ChangeNotifier {
       debugPrint('🆔 Interview ID: ${_currentInterview!.id}');
       debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
       debugPrint('📊 Status: ${_currentInterview!.status}');
+
+      // Phase 4 Optimization: Cleanup redundant recordings for this interview
+      try {
+        final recordingService = sl<VoiceRecordingService>();
+        if (voiceRecordingPath != null) {
+          await recordingService.cleanupRedundantRecordings(
+            _currentInterview!.id,
+            voiceRecordingPath,
+          );
+        }
+      } catch (e) {
+        debugPrint('⚠️ Redundant recording cleanup failed: $e');
+      }
 
       // Phase 3 Optimization: Save to repository BEFORE STT to ensure metadata safety
       debugPrint('💾 Saving completed interview to repository...');
