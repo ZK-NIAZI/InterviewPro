@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -77,6 +78,18 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   /// Start transcribing in background as soon as we have the data
   Future<void> _startBackgroundTranscription() async {
     final path = _completedInterview?.voiceRecordingPath;
+    final existingTranscript = _completedInterview?.transcript;
+
+    // Phase 3: If we already have a transcript in the DB, use it and stop
+    if (existingTranscript != null && existingTranscript.isNotEmpty) {
+      setState(() {
+        _transcriptCache = existingTranscript;
+        _isBackgroundTranscribing = false;
+      });
+      debugPrint('📜 Using existing transcript from database');
+      return;
+    }
+
     if (path == null || path.isEmpty || _transcriptCache != null) return;
 
     setState(() => _isBackgroundTranscribing = true);
@@ -95,13 +108,18 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         );
       }
 
-      _transcriptCache = await _transcriptionFuture;
+      final result = await _transcriptionFuture;
+      if (mounted) {
+        setState(() {
+          _transcriptCache = result;
+          _isBackgroundTranscribing = false;
+        });
+      }
       debugPrint(
-        '⚡ Background STT Complete: ${_transcriptCache?.substring(0, 20)}...',
+        '⚡ Background STT Complete: ${_transcriptCache?.substring(0, min(20, _transcriptCache!.length))}...',
       );
     } catch (e) {
       debugPrint('⚠️ Background STT failed: $e');
-    } finally {
       if (mounted) setState(() => _isBackgroundTranscribing = false);
     }
   }
@@ -118,6 +136,12 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         setState(() {
           _completedInterview = interview;
           _loadingInterview = false;
+          // Phase 3: If the interview already has a transcript (saved in background), cache it
+          if (interview?.transcript != null &&
+              interview!.transcript!.isNotEmpty) {
+            _transcriptCache = interview.transcript;
+            _isBackgroundTranscribing = false;
+          }
         });
       }
 
@@ -550,7 +574,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     String finalTranscript = _transcriptCache ?? '';
 
     // If still transcribing in background, wait for it
-    if (_transcriptCache == null &&
+    if (finalTranscript.isEmpty &&
         _isBackgroundTranscribing &&
         _transcriptionFuture != null) {
       LoadingOverlay.show(context, message: 'Finishing AI transcription...');
@@ -562,22 +586,30 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
         if (mounted) LoadingOverlay.hide(context);
       }
     }
-    // Final fallback: If recording exists and no transcript, try once more
-    else if (finalTranscript.isEmpty &&
-        recordingPath != null &&
-        recordingPath.isNotEmpty) {
-      LoadingOverlay.show(
-        context,
-        message: 'Transcribing interview with Gemini AI...',
-      );
+    // Final fallback: If we still don't have it, check the repository one last time
+    // (in case background auto-persistence finished while we were on the page)
+    else if (finalTranscript.isEmpty) {
       try {
-        final transcriptionService = sl<TranscriptionService>();
-        finalTranscript = await transcriptionService.transcribeFile(
-          recordingPath,
-        );
+        final repo = sl<InterviewRepository>();
+        final interview = await repo.getInterviewById(widget.interviewId);
+        if (interview?.transcript != null &&
+            interview!.transcript!.isNotEmpty) {
+          finalTranscript = interview.transcript!;
+        }
+        // Only if REALLY missing, trigger a final manual attempt
+        else if (recordingPath != null && recordingPath.isNotEmpty) {
+          LoadingOverlay.show(
+            context,
+            message: 'Transcribing interview with Gemini AI...',
+          );
+          final transcriptionService = sl<TranscriptionService>();
+          finalTranscript = await transcriptionService.transcribeFile(
+            recordingPath,
+          );
+          if (mounted) LoadingOverlay.hide(context);
+        }
       } catch (e) {
-        debugPrint('⚠️ Final transcription attempt failed: $e');
-      } finally {
+        debugPrint('⚠️ Final transcription recovery failed: $e');
         if (mounted) LoadingOverlay.hide(context);
       }
     }

@@ -18,7 +18,48 @@ class InterviewSessionManager extends ChangeNotifier {
   static const String _currentInterviewKey = 'current_interview_session';
   static const String _sessionQuestionsKey = 'session_questions';
 
-  InterviewSessionManager(this._interviewRepository);
+  InterviewSessionManager(this._interviewRepository) {
+    _listenToTranscriptionResults();
+  }
+
+  /// Listen for background transcription results and persist them immediately
+  void _listenToTranscriptionResults() {
+    try {
+      final transcriptionService = sl<TranscriptionService>();
+      transcriptionService.statusStream.listen((results) async {
+        for (final entry in results.entries) {
+          final interviewId = entry.key;
+          final transcript = entry.value;
+
+          debugPrint('💾 Auto-persisting transcript for: $interviewId');
+          try {
+            final interview = await _interviewRepository.getInterviewById(
+              interviewId,
+            );
+            if (interview != null &&
+                (interview.transcript == null ||
+                    interview.transcript!.isEmpty)) {
+              final updatedInterview = interview.copyWith(
+                transcript: transcript,
+              );
+              await _saveWithRetry(
+                () => _interviewRepository.updateInterview(updatedInterview),
+              );
+              debugPrint(
+                '✅ Successfully persisted transcript for: $interviewId',
+              );
+            }
+          } catch (e) {
+            debugPrint(
+              '❌ Failed to auto-persist transcript for $interviewId: $e',
+            );
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('⚠️ Error initializing transcription listener: $e');
+    }
+  }
 
   // Getters
   Interview? get currentInterview => _currentInterview;
@@ -227,7 +268,18 @@ class InterviewSessionManager extends ChangeNotifier {
 
       debugPrint('✅ Interview updated with completion data');
 
-      // Proactive STT Trigger: Start transcription immediately in background
+      debugPrint('🆔 Interview ID: ${_currentInterview!.id}');
+      debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
+      debugPrint('📊 Status: ${_currentInterview!.status}');
+
+      // Phase 3 Optimization: Save to repository BEFORE STT to ensure metadata safety
+      debugPrint('💾 Saving completed interview to repository...');
+      await _saveWithRetry(
+        () => _interviewRepository.updateInterview(_currentInterview!),
+      );
+      debugPrint('✅ Interview saved to repository successfully');
+
+      // Proactive STT Trigger: Start transcription immediately AFTER record is safe in DB
       if (voiceRecordingPath != null && voiceRecordingPath.isNotEmpty) {
         try {
           final transcriptionService = sl<TranscriptionService>();
@@ -239,17 +291,6 @@ class InterviewSessionManager extends ChangeNotifier {
           debugPrint('⚠️ Failed to queue proactive STT: $e');
         }
       }
-
-      debugPrint('🆔 Interview ID: ${_currentInterview!.id}');
-      debugPrint('👤 Candidate: ${_currentInterview!.candidateName}');
-      debugPrint('📊 Status: ${_currentInterview!.status}');
-
-      // Save to repository with retry
-      debugPrint('💾 Saving completed interview to repository...');
-      await _saveWithRetry(
-        () => _interviewRepository.updateInterview(_currentInterview!),
-      );
-      debugPrint('✅ Interview saved to repository successfully');
 
       // Clear session cache
       _clearSessionCache();
