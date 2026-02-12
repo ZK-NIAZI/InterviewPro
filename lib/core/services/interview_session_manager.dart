@@ -37,18 +37,33 @@ class InterviewSessionManager extends ChangeNotifier {
             final interview = await _interviewRepository.getInterviewById(
               interviewId,
             );
-            if (interview != null &&
-                (interview.transcript == null ||
-                    interview.transcript!.isEmpty)) {
-              final updatedInterview = interview.copyWith(
-                transcript: transcript,
-              );
-              await _saveWithRetry(
-                () => _interviewRepository.updateInterview(updatedInterview),
-              );
-              debugPrint(
-                '✅ Successfully persisted transcript for: $interviewId',
-              );
+            if (interview != null) {
+              // Phase 3: Smart Persistence
+              // Allow overwriting if existing transcript is null, empty, or legacy text
+              // (but the new one is structured JSON)
+              final bool shouldUpdate =
+                  interview.transcript == null ||
+                  interview.transcript!.isEmpty ||
+                  _isBetterTranscript(
+                    oldTranscript: interview.transcript!,
+                    newTranscript: transcript,
+                  );
+
+              if (shouldUpdate) {
+                final updatedInterview = interview.copyWith(
+                  transcript: transcript,
+                );
+                await _saveWithRetry(
+                  () => _interviewRepository.updateInterview(updatedInterview),
+                );
+                debugPrint(
+                  '✅ Successfully persisted transcript for: $interviewId',
+                );
+              } else {
+                debugPrint(
+                  'ℹ️ Skipping persistence: Existing transcript is already up-to-date.',
+                );
+              }
             }
           } catch (e) {
             debugPrint(
@@ -60,6 +75,25 @@ class InterviewSessionManager extends ChangeNotifier {
     } catch (e) {
       debugPrint('⚠️ Error initializing transcription listener: $e');
     }
+  }
+
+  /// Phase 3: Detects if a new transcript is "better" (e.g. JSON vs Plain Text)
+  bool _isBetterTranscript({
+    required String oldTranscript,
+    required String newTranscript,
+  }) {
+    final oldIsJson =
+        oldTranscript.trim().startsWith('[') &&
+        oldTranscript.trim().endsWith(']');
+    final newIsJson =
+        newTranscript.trim().startsWith('[') &&
+        newTranscript.trim().endsWith(']');
+
+    // If new is JSON and old is NOT, then it's definitely better
+    if (newIsJson && !oldIsJson) return true;
+
+    // Otherwise, we don't automatically overwrite existing content
+    return false;
   }
 
   // Getters
