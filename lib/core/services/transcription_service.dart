@@ -322,11 +322,12 @@ class TranscriptionService {
                 {
                   'role': 'system',
                   'content':
-                      'You are a high-integrity transcription editor. Your SOLE task is to assign speaker labels to provided segments. \n'
-                      'CRITICAL RULES:\n'
-                      '1. NEVER change, add, or remove a single word from the "text" field of the segments.\n'
-                      '2. Use the provided [Start-End] timestamps as physical anchors for speaker changes.\n'
-                      '3. Output ONLY valid JSON containing the original text with assigned speakers.',
+                      'You are a high-integrity transcription editor. Your SOLE task is to assign speaker labels to provided audio segments. \n\n'
+                      'CRITICAL LINGUISTIC RULES:\n'
+                      '1. SEMANTIC CONTINUITY: If a segment starts with a lowercase letter or follows a segment without ending punctuation (., ?, !), it MUST be assigned to the same speaker unless there is a huge timestamp gap.\n'
+                      '2. SEGMENT SPLITTING: If a single segment contains a speaker shift (e.g., a question followed by an answer), you MUST split it into multiple JSON objects. \n'
+                      '3. NO WORD EDITS: NEVER change, add, or remove a single word from the "text" field of the segments.\n'
+                      '4. SPEAKER ROLES: Candidates provide technical explanations; Interviewers ask questions.',
                 },
                 {'role': 'user', 'content': prompt},
               ],
@@ -387,13 +388,14 @@ class TranscriptionService {
   Future<String> _diarizeWithGroq(String rawText) async {
     final prompt =
         'Context: Technical interview segments with [Start - End] timestamps. \n'
-        'Goal: Map these segments to "Candidate", "Interviewer 1", or "Interviewer 2".\n\n'
+        'Task: Convert these segments into a clean JSON transcript.\n\n'
         'INTEGRITY CONSTRAINTS:\n'
-        '- You must preserve 100% of the transcribed text. \n'
-        '- Merge consecutive segments ONLY if you are 100% certain it is the same speaker.\n'
-        '- Use the timestamp gaps to detect speaker shifts (e.g., if there is a gap or a logical shift in tone).\n\n'
+        '- Preserve 100% of the words. \n'
+        '- HANDLE MERGED SEGMENTS: If a segment contains a speaker shift (e.g., "Interviewer asks? Candidate answers."), split it into two objects.\n'
+        '- SENTENCE CONTINUITY: If a segment starts with "...widget" and follows "Stateful", keep the same speaker.\n'
+        '- Use "Candidate", "Interviewer 1", "Interviewer 2" based on context and audio cues in text.\n\n'
         'JSON FORMAT:\n'
-        '{"transcript": [{"speaker": "Label", "time": "M:SS", "text": "Exact original text"}]}\n\n'
+        '{"transcript": [{"speaker": "Label", "time": "M:SS", "text": "Exact text"}]}\n\n'
         'SEGMENTS TO PROCESS: \n$rawText';
 
     final result = await _callGroqChat(prompt);
