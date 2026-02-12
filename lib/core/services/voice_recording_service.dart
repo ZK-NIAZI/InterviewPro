@@ -81,10 +81,13 @@ class VoiceRecordingService {
 
     await stopPlayback();
 
+    _lastRecordingPath = null; // ⚡ FIX: Reset path at start of new recording
+
     final directory = await getApplicationDocumentsDirectory();
     final sanitizedCandidate = candidateName.replaceAll(' ', '_');
+    // ⚡ FIX: Consolidated prefix (removed redundant 'interview_')
     final fileName =
-        'interview_${interviewId}_${sanitizedCandidate}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        '${interviewId}_${sanitizedCandidate}_${DateTime.now().millisecondsSinceEpoch}.m4a';
     final filePath = '${directory.path}/$fileName';
     _lastRecordingPath = filePath;
 
@@ -271,7 +274,7 @@ class VoiceRecordingService {
 
       for (final file in files) {
         if (file is File &&
-            file.path.contains('interview_$interviewId') &&
+            file.path.contains(interviewId) && // Match ID directly
             file.path.endsWith('.m4a') &&
             file.path != activePath) {
           await file.delete();
@@ -303,7 +306,8 @@ class VoiceRecordingService {
           // Check if this file belongs to any valid interview
           bool isOrphaned = true;
           for (final id in validInterviewIds) {
-            if (file.path.contains('interview_$id')) {
+            if (file.path.contains(id)) {
+              // Match ID directly
               isOrphaned = false;
               break;
             }
