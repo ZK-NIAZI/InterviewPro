@@ -267,80 +267,120 @@ class TranscriptionService {
     return 'Transcription failed after multiple attempts.';
   }
 
-  /// High-speed Raw STT via Groq Whisper (Large V3 Turbo)
+  /// High-speed Raw STT via Groq Whisper (Large V3 Turbo) with Resilience
   Future<String> _transcribeWithGroq(String filePath) async {
-    final url = Uri.parse(
-      'https://api.groq.com/openai/v1/audio/transcriptions',
-    );
-    final request = http.MultipartRequest('POST', url)
-      ..headers['Authorization'] = 'Bearer $_groqApiKey'
-      ..fields['model'] = 'whisper-large-v3-turbo'
-      ..fields['response_format'] =
-          'verbose_json' // ⚡ Upgraded to Verbose for timestamps
-      ..files.add(await http.MultipartFile.fromPath('file', filePath));
-
-    final response = await http.Response.fromStream(await request.send());
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final segments = data['segments'] as List?;
-
-      if (segments != null && segments.isNotEmpty) {
-        // Format segments into a structured string for Llama's reasoning
-        return segments
-            .map((s) {
-              final start = s['start']?.toStringAsFixed(2) ?? '0.00';
-              final end = s['end']?.toStringAsFixed(2) ?? '0.00';
-              final text = s['text']?.trim() ?? '';
-              return '[$start - $end]: $text';
-            })
-            .join('\n');
-      }
-
-      return data['text'] ?? '';
-    } else {
-      throw Exception(
-        'Groq API Error: ${response.statusCode} - ${response.body}',
+    return _retry(() async {
+      final url = Uri.parse(
+        'https://api.groq.com/openai/v1/audio/transcriptions',
       );
-    }
+      final request = http.MultipartRequest('POST', url)
+        ..headers['Authorization'] = 'Bearer $_groqApiKey'
+        ..fields['model'] = 'whisper-large-v3-turbo'
+        ..fields['response_format'] = 'verbose_json'
+        ..files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      final response = await http.Response.fromStream(await request.send());
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final segments = data['segments'] as List?;
+
+        if (segments != null && segments.isNotEmpty) {
+          return segments
+              .map((s) {
+                final start = s['start']?.toStringAsFixed(2) ?? '0.00';
+                final end = s['end']?.toStringAsFixed(2) ?? '0.00';
+                final text = s['text']?.trim() ?? '';
+                return '[$start - $end]: $text';
+              })
+              .join('\n');
+        }
+
+        return data['text'] ?? '';
+      } else {
+        throw Exception(
+          'Groq Whisper Error: ${response.statusCode} - ${response.body}',
+        );
+      }
+    }, label: 'Groq Whisper');
   }
 
-  /// Generic Groq Chat Completion helper (Llama 3.3 70B)
+  /// Generic Groq Chat Completion helper (Llama 3.3 70B) with Resilience
   Future<String> _callGroqChat(String prompt) async {
-    final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $_groqApiKey',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'model': 'llama-3.3-70b-versatile',
-        'messages': [
-          {
-            'role': 'system',
-            'content':
-                'You are a high-integrity transcription editor. Your SOLE task is to assign speaker labels to provided segments. \n'
-                'CRITICAL RULES:\n'
-                '1. NEVER change, add, or remove a single word from the "text" field of the segments.\n'
-                '2. Use the provided [Start-End] timestamps as physical anchors for speaker changes.\n'
-                '3. Output ONLY valid JSON containing the original text with assigned speakers.',
-          },
-          {'role': 'user', 'content': prompt},
-        ],
-        'temperature': 0.1,
-        'response_format': {'type': 'json_object'},
-      }),
-    );
+    return _retry(() async {
+      final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Authorization': 'Bearer $_groqApiKey',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'model': 'llama-3.3-70b-versatile',
+              'messages': [
+                {
+                  'role': 'system',
+                  'content':
+                      'You are a high-integrity transcription editor. Your SOLE task is to assign speaker labels to provided segments. \n'
+                      'CRITICAL RULES:\n'
+                      '1. NEVER change, add, or remove a single word from the "text" field of the segments.\n'
+                      '2. Use the provided [Start-End] timestamps as physical anchors for speaker changes.\n'
+                      '3. Output ONLY valid JSON containing the original text with assigned speakers.',
+                },
+                {'role': 'user', 'content': prompt},
+              ],
+              'temperature': 0.1,
+              'response_format': {'type': 'json_object'},
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['choices'][0]['message']['content'] ?? '';
-    } else {
-      throw Exception(
-        'Groq Chat Error: ${response.statusCode} - ${response.body}',
-      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['choices'][0]['message']['content'] ?? '';
+      } else {
+        throw Exception(
+          'Groq Chat Error: ${response.statusCode} - ${response.body}',
+        );
+      }
+    }, label: 'Groq Llama');
+  }
+
+  /// Generic retry helper with exponential backoff
+  Future<T> _retry<T>(
+    Future<T> Function() action, {
+    int maxRetries = 3,
+    required String label,
+  }) async {
+    int attempts = 0;
+    while (attempts < maxRetries) {
+      try {
+        return await action();
+      } catch (e) {
+        attempts++;
+        final errorStr = e.toString();
+
+        bool isTransient =
+            errorStr.contains('429') ||
+            errorStr.contains('500') ||
+            errorStr.contains('503') ||
+            errorStr.contains('deadline') ||
+            errorStr.contains('SocketException') ||
+            errorStr.contains('TimeoutException');
+
+        if (isTransient && attempts < maxRetries) {
+          final delaySeconds = attempts * attempts * 2; // 2s, 8s, 18s...
+          debugPrint(
+            '⚠️ $label Attempt $attempts failed. Retrying in ${delaySeconds}s... ($e)',
+          );
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
+        }
+        rethrow;
+      }
     }
+    throw Exception('$label failed after $maxRetries attempts');
   }
 
   /// Converts raw text to structured JSON turns using Groq Llama 3.3
