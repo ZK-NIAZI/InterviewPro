@@ -101,7 +101,11 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
 
       if (_transcriptionFuture == null) {
         debugPrint('🔄 No active task found, starting fresh background STT...');
-        _transcriptionFuture = service.transcribeFile(path);
+        _transcriptionFuture = service.transcribeFile(
+          path,
+          role: widget.role,
+          level: widget.level,
+        );
       } else {
         debugPrint(
           '🤝 Picking up existing STT task for: ${widget.interviewId}',
@@ -605,6 +609,8 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           final transcriptionService = sl<TranscriptionService>();
           finalTranscript = await transcriptionService.transcribeFile(
             recordingPath,
+            role: widget.role,
+            level: widget.level,
           );
           if (mounted) LoadingOverlay.hide(context);
         }

@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 class TranscriptionService {
   final String _apiKey;
   final String _groqApiKey;
+  final String _deepgramApiKey;
   GenerativeModel? _flashModel;
   GenerativeModel? _fallbackModel;
 
@@ -27,7 +28,8 @@ class TranscriptionService {
 
   TranscriptionService()
     : _apiKey = dotenv.get('GEMINI_API_KEY', fallback: ''),
-      _groqApiKey = dotenv.get('GROQ_API_KEY', fallback: '') {
+      _groqApiKey = dotenv.get('GROQ_API_KEY', fallback: ''),
+      _deepgramApiKey = dotenv.get('DEEPGRAM_API_KEY', fallback: '') {
     if (_apiKey.isEmpty || _apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       debugPrint('⚠️ Gemini API Key not found or invalid in .env');
     }
@@ -36,6 +38,14 @@ class TranscriptionService {
       debugPrint('⚠️ Groq API Key not found in .env (Hybrid Mode disabled)');
     } else {
       debugPrint('🚀 Groq Hybrid Mode initialized and ready.');
+    }
+
+    if (_deepgramApiKey.isEmpty) {
+      debugPrint(
+        '⚠️ Deepgram API Key not found in .env (Acoustic Mode disabled)',
+      );
+    } else {
+      debugPrint('🎙️ Deepgram Acoustic Mode initialized and ready.');
     }
 
     if (_apiKey.isNotEmpty) {
@@ -110,7 +120,12 @@ class TranscriptionService {
   /// Stream of completed transcriptions
   Stream<Map<String, String>> get statusStream => _statusController.stream;
 
-  Future<String> transcribeFile(String filePath) async {
+  /// Transcribes the given audio file using either Groq (Primary) or Gemini (Fallback)
+  Future<String> transcribeFile(
+    String filePath, {
+    String? role,
+    String? level,
+  }) async {
     if (_apiKey.isEmpty || _apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
       return 'Error: Gemini API Key not found. Please set GEMINI_API_KEY in .env';
     }
@@ -150,7 +165,11 @@ class TranscriptionService {
 
       // Use the Groq-centered pipeline (Whisper STT + Llama Diarization)
       if (_groqApiKey.isNotEmpty && _groqApiKey.length > 10) {
-        return await _transcribeWithGroqPipeline(filePath);
+        return await _transcribeWithGroqPipeline(
+          filePath,
+          role: role,
+          level: level,
+        );
       } else {
         final rawResult = await _generateWithRetry(content);
         return _validateAndCleanJson(rawResult);
@@ -305,6 +324,75 @@ class TranscriptionService {
     }, label: 'Groq Whisper');
   }
 
+  /// High-fidelity Acoustic Transcription via Deepgram (Nova-2)
+  Future<String> _transcribeWithDeepgram(String filePath) async {
+    return _retry(() async {
+      final url = Uri.parse(
+        'https://api.deepgram.com/v1/listen?model=nova-2&diarize=true&smart_format=true&punctuate=true',
+      );
+
+      final bytes = await File(filePath).readAsBytes();
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Authorization': 'Token $_deepgramApiKey',
+              'Content-Type':
+                  'audio/wav', // Nova-2 handles most formats automatically
+            },
+            body: bytes,
+          )
+          .timeout(const Duration(seconds: 45));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final results = data['results']?['channels']?[0]?['alternatives']?[0];
+
+        // Extract speaker-tagged segments if available
+        final words = results?['words'] as List?;
+        if (words != null && words.isNotEmpty) {
+          final List<String> segments = [];
+          int lastSpeaker = -1;
+          StringBuffer currentSegment = StringBuffer();
+          double segmentStart = 0.0;
+
+          for (final word in words) {
+            final int speaker = word['speaker'] ?? 0;
+            final double start = (word['start'] as num).toDouble();
+            final String text = word['punctuated_word'] ?? word['word'] ?? '';
+
+            if (speaker != lastSpeaker) {
+              if (currentSegment.isNotEmpty) {
+                segments.add(
+                  '[${segmentStart.toStringAsFixed(2)} - ${start.toStringAsFixed(2)}] Speaker $lastSpeaker: ${currentSegment.toString().trim()}',
+                );
+              }
+              currentSegment = StringBuffer();
+              segmentStart = start;
+              lastSpeaker = speaker;
+            }
+            currentSegment.write('$text ');
+          }
+
+          if (currentSegment.isNotEmpty) {
+            segments.add(
+              '[${segmentStart.toStringAsFixed(2)}] Speaker $lastSpeaker: ${currentSegment.toString().trim()}',
+            );
+          }
+          return segments.join('\n');
+        }
+
+        return data['results']?['channels']?[0]?['alternatives']?[0]?['transcript'] ??
+            '';
+      } else {
+        throw Exception(
+          'Deepgram Error: ${response.statusCode} - ${response.body}',
+        );
+      }
+    }, label: 'Deepgram Nova-2');
+  }
+
   /// Generic Groq Chat Completion helper (Llama 3.3 70B) with Resilience
   Future<String> _callGroqChat(String prompt) async {
     return _retry(() async {
@@ -385,18 +473,35 @@ class TranscriptionService {
   }
 
   /// Converts raw text to structured JSON turns using Groq Llama 3.3
-  Future<String> _diarizeWithGroq(String rawText) async {
+  Future<String> _diarizeWithGroq(
+    String rawText, {
+    String? role,
+    String? level,
+  }) async {
+    final contextInfo = (role != null && level != null)
+        ? 'This is a technical interview for a **$level $role** role.'
+        : 'This is a technical interview session.';
+
     final prompt =
-        'Context: Technical interview segments with [Start - End] timestamps. \n'
-        'Task: Convert these segments into a clean JSON transcript.\n\n'
-        'INTEGRITY CONSTRAINTS:\n'
-        '- Preserve 100% of the words. \n'
-        '- HANDLE MERGED SEGMENTS: If a segment contains a speaker shift (e.g., "Interviewer asks? Candidate answers."), split it into two objects.\n'
-        '- SENTENCE CONTINUITY: If a segment starts with "...widget" and follows "Stateful", keep the same speaker.\n'
-        '- Use "Candidate", "Interviewer 1", "Interviewer 2" based on context and audio cues in text.\n\n'
-        'JSON FORMAT:\n'
-        '{"transcript": [{"speaker": "Label", "time": "M:SS", "text": "Exact text"}]}\n\n'
-        'SEGMENTS TO PROCESS: \n$rawText';
+        'Role: Advanced Diarization & Role Assignment AI\n'
+        'Task: Map numeric Acoustic IDs (Speaker 0, Speaker 1, etc.) to semantic roles based on dialogue context.\n\n'
+        'INTERVIEW CONTEXT:\n'
+        '$contextInfo\n\n'
+        'SPECIFIC DIARIZATION RULES:\n'
+        '1. **Acoustic Ground Truth**: The numeric IDs are high-fidelity. If "Speaker 0" talks, it is usually the same person.\n'
+        '2. **Candidate Attribution**: The candidate provides technical explanations, uses specialized terminology, and explains their experience.\n'
+        '3. **Interviewer Attribution**: Interviewers ask questions, provide feedback, and guide the conversation flow.\n'
+        '4. **Semantic Merging**: If Deepgram splits a single person into two IDs (e.g., Speaker 0 and Speaker 1) due to a stutter or noise, but their sentences are semantically continuous, MERGE them into the same role label.\n'
+        '5. **Role Labels**: Use exactly "Candidate", "Interviewer 1", or "Interviewer 2".\n\n'
+        'JSON FORMAT REQUIREMENT:\n'
+        'Return ONLY a JSON object with a "transcript" array. Example:\n'
+        '{\n'
+        '  "transcript": [\n'
+        '    {"speaker": "Interviewer 1", "time": "0:00", "text": "Can you explain your experience with Flutter?"},\n'
+        '    {"speaker": "Candidate", "time": "0:05", "text": "Sure, I have worked with Flutter for 3 years..."}\n'
+        '  ]\n'
+        '}\n\n'
+        'RAW SEGMENTS TO PROCESS:\n$rawText';
 
     final result = await _callGroqChat(prompt);
 
@@ -412,14 +517,36 @@ class TranscriptionService {
     }
   }
 
-  /// Total Groq Orchestrator with Failover to Gemini Audio
-  Future<String> _transcribeWithGroqPipeline(String filePath) async {
+  /// Total Orchestrator with Deepgram -> Groq Llama -> Gemini Fallback
+  Future<String> _transcribeWithGroqPipeline(
+    String filePath, {
+    String? role,
+    String? level,
+  }) async {
     try {
-      // 1. Raw Transcription (Groq Whisper)
-      final rawText = await _transcribeWithGroq(filePath);
+      String rawAcousticText;
 
-      // 2. Diarization (Groq Llama 3)
-      final structuredJson = await _diarizeWithGroq(rawText);
+      // 1. Acoustic Stage: Use Deepgram (Nova-2) if available
+      if (_deepgramApiKey.isNotEmpty) {
+        try {
+          debugPrint('🎙️ Using Deepgram for Acoustic Diarization...');
+          rawAcousticText = await _transcribeWithDeepgram(filePath);
+        } catch (e) {
+          debugPrint('⚠️ Deepgram failed, falling back to Whisper: $e');
+          rawAcousticText = await _transcribeWithGroq(filePath);
+        }
+      } else {
+        // Fallback to Groq Whisper if no Deepgram key
+        rawAcousticText = await _transcribeWithGroq(filePath);
+      }
+
+      // 2. Semantic Stage: Use Llama 3 to assign roles to the acoustic IDs
+      debugPrint('🧠 Using Groq Llama for Semantic Role Assignment...');
+      final structuredJson = await _diarizeWithGroq(
+        rawAcousticText,
+        role: role,
+        level: level,
+      );
 
       return _validateAndCleanJson(structuredJson);
     } catch (e) {

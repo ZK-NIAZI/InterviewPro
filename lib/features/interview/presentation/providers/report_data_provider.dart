@@ -25,6 +25,8 @@ class ReportDataProvider extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
+    _currentInterview = null; // ⚡ FIX: Clear stale interview data
+    _reportData = null; // ⚡ FIX: Clear stale report data
     notifyListeners();
 
     try {

@@ -218,6 +218,9 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: AudioPlayerWidget(
+                    key: ValueKey(
+                      provider.reportData!.voiceRecordingPath!,
+                    ), // ⚡ FIX: Force fresh widget on new path
                     audioPath: provider.reportData!.voiceRecordingPath!,
                     durationSeconds:
                         provider.reportData!.voiceRecordingDurationSeconds,
