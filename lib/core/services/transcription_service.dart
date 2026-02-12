@@ -275,13 +275,28 @@ class TranscriptionService {
     final request = http.MultipartRequest('POST', url)
       ..headers['Authorization'] = 'Bearer $_groqApiKey'
       ..fields['model'] = 'whisper-large-v3-turbo'
-      ..fields['response_format'] = 'json'
+      ..fields['response_format'] =
+          'verbose_json' // ⚡ Upgraded to Verbose for timestamps
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
 
     final response = await http.Response.fromStream(await request.send());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      final segments = data['segments'] as List?;
+
+      if (segments != null && segments.isNotEmpty) {
+        // Format segments into a structured string for Llama's reasoning
+        return segments
+            .map((s) {
+              final start = s['start']?.toStringAsFixed(2) ?? '0.00';
+              final end = s['end']?.toStringAsFixed(2) ?? '0.00';
+              final text = s['text']?.trim() ?? '';
+              return '[$start - $end]: $text';
+            })
+            .join('\n');
+      }
+
       return data['text'] ?? '';
     } else {
       throw Exception(
@@ -305,7 +320,11 @@ class TranscriptionService {
           {
             'role': 'system',
             'content':
-                'You are a precise technical interview transcription assistant. Your goal is to convert raw text into a structured JSON chat log with speaker labels ("Candidate" vs "Interviewer 1", etc.). You follow formatting instructions perfectly and never include text outside the requested JSON structure.',
+                'You are a high-integrity transcription editor. Your SOLE task is to assign speaker labels to provided segments. \n'
+                'CRITICAL RULES:\n'
+                '1. NEVER change, add, or remove a single word from the "text" field of the segments.\n'
+                '2. Use the provided [Start-End] timestamps as physical anchors for speaker changes.\n'
+                '3. Output ONLY valid JSON containing the original text with assigned speakers.',
           },
           {'role': 'user', 'content': prompt},
         ],
@@ -327,16 +346,15 @@ class TranscriptionService {
   /// Converts raw text to structured JSON turns using Groq Llama 3.3
   Future<String> _diarizeWithGroq(String rawText) async {
     final prompt =
-        'Context: This is a technical interview transcript. \n'
-        'Task: Convert the raw text into a professional JSON chat log.\n'
-        'Identify speakers based on context (questions usually come from interviewers, answers from the candidate).\n'
-        'Label the primary candidate as "Candidate". \n'
-        'Label different interviewers as "Interviewer 1", "Interviewer 2", etc.\n\n'
-        'RULES:\n'
-        '1. Return ONLY a valid JSON object with a "transcript" key containing the array. NO markdown or preamble.\n'
-        '2. Keys inside objects: "speaker", "text", "time" (Estimate time based on context if missing).\n'
-        '3. REQUIRED Format: {"transcript": [{"speaker": "Interviewer 1", "time": "0:00", "text": "..."}]}\n\n'
-        'RAW TRANSCRIPT: \n$rawText';
+        'Context: Technical interview segments with [Start - End] timestamps. \n'
+        'Goal: Map these segments to "Candidate", "Interviewer 1", or "Interviewer 2".\n\n'
+        'INTEGRITY CONSTRAINTS:\n'
+        '- You must preserve 100% of the transcribed text. \n'
+        '- Merge consecutive segments ONLY if you are 100% certain it is the same speaker.\n'
+        '- Use the timestamp gaps to detect speaker shifts (e.g., if there is a gap or a logical shift in tone).\n\n'
+        'JSON FORMAT:\n'
+        '{"transcript": [{"speaker": "Label", "time": "M:SS", "text": "Exact original text"}]}\n\n'
+        'SEGMENTS TO PROCESS: \n$rawText';
 
     final result = await _callGroqChat(prompt);
 
