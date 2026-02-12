@@ -107,24 +107,62 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInterviewer = turn.isInterviewer;
+    // Phase 4: Modern Chat Alignment
+    // Candidate (ID 0) on right, others on left
+    final isCandidate = turn.speakerId == 0 || turn.isCandidate;
+    final alignment = isCandidate
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start;
+
+    // Phase 4: Color Coding Palette
+    Color bubbleColor;
+    Color textColor = AppColors.textPrimary;
+
+    switch (turn.speakerId) {
+      case 0: // Candidate
+        bubbleColor = AppColors.info.withOpacity(0.12);
+        break;
+      case 1: // Interviewer 1
+        bubbleColor = AppColors.success.withOpacity(0.12);
+        break;
+      case 2: // Interviewer 2
+        bubbleColor = AppColors.warning.withOpacity(0.12);
+        break;
+      case 3: // Interviewer 3
+        bubbleColor = AppColors.primary.withOpacity(0.1);
+        break;
+      default:
+        bubbleColor = isCandidate
+            ? AppColors.info.withOpacity(0.12)
+            : AppColors.grey100;
+    }
 
     return Column(
-      crossAxisAlignment: isInterviewer
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.end,
+      crossAxisAlignment: alignment,
       children: [
-        // Speaker Label
+        // Speaker Label and Timestamp
         Padding(
           padding: const EdgeInsets.only(left: 4, right: 4, bottom: 4),
-          child: Text(
-            turn.speaker,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[500],
-              letterSpacing: 0.5,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                turn.speaker,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (turn.timestamp != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  turn.timestamp!,
+                  style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                ),
+              ],
+            ],
           ),
         ),
 
@@ -135,28 +173,18 @@ class _ChatBubble extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isInterviewer
-                ? AppColors.grey100
-                : AppColors.primary.withOpacity(0.08),
+            color: bubbleColor,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(isInterviewer ? 0 : 16),
-              bottomRight: Radius.circular(isInterviewer ? 16 : 0),
+              bottomLeft: Radius.circular(isCandidate ? 16 : 0),
+              bottomRight: Radius.circular(isCandidate ? 0 : 16),
             ),
-            border: Border.all(
-              color: isInterviewer
-                  ? AppColors.grey200
-                  : AppColors.primary.withOpacity(0.1),
-            ),
+            border: Border.all(color: bubbleColor.withOpacity(0.2)),
           ),
           child: Text(
             turn.text,
-            style: const TextStyle(
-              fontSize: 14.5,
-              color: AppColors.textPrimary,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 14.5, color: textColor, height: 1.5),
           ),
         ),
       ],
