@@ -1,9 +1,18 @@
+import 'dart:convert';
+
 /// Represents a single turn in an interview conversation
 class TranscriptTurn {
   final String speaker;
   final String text;
+  final String? timestamp;
+  final int speakerId; // 0 for Candidate, 1-3+ for Interviewers, -1 for System
 
-  TranscriptTurn({required this.speaker, required this.text});
+  TranscriptTurn({
+    required this.speaker,
+    required this.text,
+    this.timestamp,
+    this.speakerId = -1,
+  });
 
   bool get isInterviewer =>
       speaker.toLowerCase().contains('interviewer') ||
@@ -16,11 +25,50 @@ class TranscriptTurn {
 /// Utility for parsing raw transcript text into a structured conversation
 class TranscriptParser {
   /// Parses a transcript string into a list of [TranscriptTurn]s.
-  ///
-  /// Expected format:
-  /// Interviewer: Hello, how are you?
-  /// Candidate: I am doing well, thank you.
   static List<TranscriptTurn> parse(String rawTranscript) {
+    if (rawTranscript.isEmpty) return [];
+
+    // Phase 2: Hybrid Detection
+    // Detect if the string starts with a JSON bracket
+    final trimmed = rawTranscript.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        return _parseJson(trimmed);
+      } catch (e) {
+        // Fallback to legacy parsing if JSON is malformed
+      }
+    }
+
+    return _parseLegacy(rawTranscript);
+  }
+
+  /// Parses structured JSON diarization output
+  static List<TranscriptTurn> _parseJson(String jsonStr) {
+    final List<dynamic> data = jsonDecode(jsonStr);
+    return data.map((item) {
+      final speaker = item['speaker']?.toString() ?? 'Unknown';
+      return TranscriptTurn(
+        speaker: speaker,
+        text: item['text']?.toString() ?? '',
+        timestamp: item['time']?.toString(),
+        speakerId: _getSpeakerId(speaker),
+      );
+    }).toList();
+  }
+
+  /// Helper to map speaker names to IDs for UI color coding
+  static int _getSpeakerId(String speaker) {
+    final s = speaker.toLowerCase();
+    if (s.contains('candidate')) return 0;
+    if (s.contains('interviewer 1')) return 1;
+    if (s.contains('interviewer 2')) return 2;
+    if (s.contains('interviewer 3')) return 3;
+    if (s.contains('interviewer')) return 1;
+    return -1;
+  }
+
+  /// Legacy parsing logic for plain text transcripts
+  static List<TranscriptTurn> _parseLegacy(String rawTranscript) {
     if (rawTranscript.isEmpty) return [];
 
     // 1. Aggressively clean up common AI preambles/intros
@@ -123,6 +171,7 @@ class TranscriptParser {
           (t) => TranscriptTurn(
             speaker: t.speaker,
             text: t.text.replaceAll(RegExp(r'^\*+|\*+$'), '').trim(),
+            speakerId: _getSpeakerId(t.speaker),
           ),
         )
         .toList();

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -118,26 +119,62 @@ class TranscriptionService {
           DataPart('audio/mp4', bytes),
           TextPart(
             'Transcribe this interview audio verbatim. \n'
+            'Identify and separate multiple speakers. \n'
+            'Label the primary candidate as "Candidate". \n'
+            'Label different interviewers as "Interviewer 1", "Interviewer 2", etc., based on their voice and context. \n'
             'RULES:\n'
-            '1. Start directly with labels. NO preamble or intro text.\n'
-            '2. Use "Interviewer:" and "Candidate:" labels precisely.\n'
-            '3. NO markdown bolding (e.g., NO **Interviewer:**).\n'
-            '4. Return ONLY the plain text dialogue.\n'
-            'Format:\n'
-            'Interviewer: [Text]\n'
-            'Candidate: [Text]',
+            '1. Return ONLY a valid JSON array of objects. NO preamble or intro text.\n'
+            '2. Each object must have "speaker", "text", and "time" (in M:SS format) keys.\n'
+            '3. Use dialogue context to infer which interviewer is speaking if possible.\n'
+            '4. NO markdown bolding in the text content.\n'
+            'Format Example:\n'
+            '[\n'
+            '  {"speaker": "Interviewer 1", "time": "0:00", "text": "Hello..."}, \n'
+            '  {"speaker": "Candidate", "time": "0:05", "text": "Hi..."}\n'
+            ']',
           ),
         ]),
       ];
 
       // Use the resilient retry wrapper
-      return await _generateWithRetry(content);
+      final rawResult = await _generateWithRetry(content);
+
+      // Phase 1 Optimization: Pre-flight JSON validation
+      return _validateAndCleanJson(rawResult);
     } catch (e) {
       debugPrint('❌ STT Error: $e');
       if (e.toString().contains('429')) {
         return 'AI Speed Limit reached. Please wait 30 seconds and try again.';
       }
       return 'AI Transcription failed: ${e.toString().split('\n').first}';
+    }
+  }
+
+  /// Phase 1: Ensures the output is valid JSON and strips any AI markdown wrappers
+  String _validateAndCleanJson(String rawOutput) {
+    try {
+      // 1. Strip potential markdown blocks: ```json [...] ```
+      String cleaned = rawOutput.trim();
+      if (cleaned.startsWith('```')) {
+        final lines = cleaned.split('\n');
+        // Remove first line if it starts with ``` (e.g. ```json)
+        if (lines.isNotEmpty && lines.first.startsWith('```')) {
+          lines.removeAt(0);
+        }
+        // Remove last line if it starts with ```
+        if (lines.isNotEmpty && lines.last.startsWith('```')) {
+          lines.removeLast();
+        }
+        cleaned = lines.join('\n').trim();
+      }
+
+      // 2. Validate it's actually valid JSON to catch AI hallucinations
+      jsonDecode(cleaned);
+
+      return cleaned;
+    } catch (e) {
+      debugPrint('⚠️ JSON Validation failed, returning raw string: $e');
+      return rawOutput;
     }
   }
 
