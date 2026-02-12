@@ -91,8 +91,26 @@ class TranscriptionService {
         ]),
       ];
 
-      // Try with Flash Lite primary (Available, High-speed, 2.0)
+      // Use the resilient retry wrapper
+      return await _generateWithRetry(content);
+    } catch (e) {
+      debugPrint('❌ STT Error: $e');
+      if (e.toString().contains('429')) {
+        return 'AI Speed Limit reached. Please wait 30 seconds and try again.';
+      }
+      return 'AI Transcription failed: ${e.toString().split('\n').first}';
+    }
+  }
+
+  /// Private helper to handle generative AI calls with exponential backoff
+  Future<String> _generateWithRetry(
+    List<Content> content, {
+    int maxRetries = 3,
+  }) async {
+    int attempts = 0;
+    while (attempts < maxRetries) {
       try {
+        // Primary Attempt with Flash Lite (Optimized for speed/cost)
         final response =
             await (_fallbackModel ??
                     GenerativeModel(
@@ -102,40 +120,60 @@ class TranscriptionService {
                 .generateContent(content);
 
         if (response.text != null && response.text!.isNotEmpty) {
-          debugPrint('✅ STT Success (Lite Primary)');
+          debugPrint('✅ STT Success (Attempt ${attempts + 1})');
           return response.text!.trim();
         }
+
+        throw Exception('Empty response from AI');
       } catch (e) {
-        debugPrint('⚠️ Lite Primary STT attempt failed: $e');
+        attempts++;
+        final errorStr = e.toString();
 
-        // Fallback to Flash Latest if permissible, otherwise Pro
-        try {
-          final fallbackResponse =
-              await (_flashModel ??
-                      GenerativeModel(
-                        model: 'gemini-flash-latest',
-                        apiKey: _apiKey,
-                      ))
-                  .generateContent(content);
+        // Handle transient errors or rate limits
+        bool isTransient =
+            errorStr.contains('429') ||
+            errorStr.contains('500') ||
+            errorStr.contains('503') ||
+            errorStr.contains('deadline') ||
+            errorStr.contains('SocketException');
 
-          if (fallbackResponse.text != null &&
-              fallbackResponse.text!.isNotEmpty) {
-            debugPrint('✅ STT Success (Secondary)');
-            return fallbackResponse.text!.trim();
-          }
-        } catch (e2) {
-          debugPrint('❌ All STT attempts failed: $e2');
-          rethrow;
+        if (isTransient && attempts < maxRetries) {
+          final delaySeconds = attempts * attempts * 2; // 2s, 8s, 18s...
+          debugPrint(
+            '⚠️ STT Attempt $attempts failed (Transient). Retrying in ${delaySeconds}s... ($e)',
+          );
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
         }
-      }
 
-      return 'Transcription failed: No text generated.';
-    } catch (e) {
-      debugPrint('❌ STT Error: $e');
-      if (e.toString().contains('429')) {
-        return 'AI Speed Limit reached. Please wait 30 seconds and try again.';
+        // If not transient or we've reached max retries, try the secondary fallback model
+        if (attempts >= maxRetries) {
+          debugPrint(
+            '🔄 Max retries reached with Flash Lite. Trying Flash Latest as last resort...',
+          );
+          try {
+            final fallbackResponse =
+                await (_flashModel ??
+                        GenerativeModel(
+                          model: 'gemini-flash-latest',
+                          apiKey: _apiKey,
+                        ))
+                    .generateContent(content);
+
+            if (fallbackResponse.text != null &&
+                fallbackResponse.text!.isNotEmpty) {
+              debugPrint('✅ STT Success (Secondary Fallback)');
+              return fallbackResponse.text!.trim();
+            }
+          } catch (e2) {
+            debugPrint('❌ Final STT fallback also failed: $e2');
+            rethrow;
+          }
+        }
+
+        rethrow;
       }
-      return 'AI Transcription failed: ${e.toString().split('\n').first}';
     }
+    return 'Transcription failed after multiple attempts.';
   }
 }
