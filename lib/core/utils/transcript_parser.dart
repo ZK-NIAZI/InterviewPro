@@ -58,13 +58,27 @@ class TranscriptParser {
 
   /// Helper to map speaker names to IDs for UI color coding
   static int _getSpeakerId(String speaker) {
-    final s = speaker.toLowerCase();
-    if (s.contains('candidate')) return 0;
-    if (s.contains('interviewer 1')) return 1;
-    if (s.contains('interviewer 2')) return 2;
-    if (s.contains('interviewer 3')) return 3;
-    if (s.contains('interviewer')) return 1;
-    return -1;
+    final s = speaker.toLowerCase().trim();
+    if (s.contains('candidate') ||
+        s.contains('applicant') ||
+        s.contains('user')) {
+      return 0;
+    }
+    if (s.contains('interviewer 1') ||
+        s.contains('speaker 1') ||
+        s == 'interviewer') {
+      return 1;
+    }
+    if (s.contains('interviewer 2') || s.contains('speaker 2')) {
+      return 2;
+    }
+    if (s.contains('interviewer 3') || s.contains('speaker 3')) {
+      return 3;
+    }
+    if (s.contains('ai') || s.contains('system')) {
+      return -1; // System/AI colors
+    }
+    return 1; // Default to Interviewer 1 for unknown interviewer-like roles
   }
 
   /// Legacy parsing logic for plain text transcripts
