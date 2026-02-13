@@ -21,7 +21,7 @@ class _SettingsContentWidgetState extends State<SettingsContentWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF8F6F6), // Background light color from HTML
+      color: AppColors.backgroundLight, // Background light color from HTML
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           20,

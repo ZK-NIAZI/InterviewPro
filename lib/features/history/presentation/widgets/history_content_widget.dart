@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/domain/entities/entities.dart';
 import '../providers/history_provider.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 
 /// History content widget that displays interview history within the dashboard
 class HistoryContentWidget extends StatefulWidget {
@@ -28,7 +29,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF8F6F6), // Background light color from HTML
+      color: AppColors.backgroundLight, // Background light color from HTML
       child: Column(
         children: [
           // Filter chips section
@@ -47,7 +48,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   /// Builds the filter chips (All, This Week, This Month)
   Widget _buildFilterChips() {
     return Container(
-      color: const Color(0xFFF8F6F6),
+      color: AppColors.backgroundLight,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Consumer<HistoryProvider>(
         builder: (context, provider, child) {
@@ -97,7 +98,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   /// Builds the stats carousel with Total Interviews, Avg Score, Hired
   Widget _buildStatsCarousel() {
     return Container(
-      color: const Color(0xFFF8F6F6),
+      color: AppColors.backgroundLight,
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Consumer<HistoryProvider>(
         builder: (context, provider, child) {
@@ -177,7 +178,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   /// Builds the scrollable interview list
   Widget _buildInterviewList() {
     return Container(
-      color: const Color(0xFFF8F6F6),
+      color: AppColors.backgroundLight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Consumer<HistoryProvider>(
         builder: (context, provider, child) {
@@ -289,20 +290,8 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
   Widget _buildInterviewListItem(Interview interview) {
     return GestureDetector(
       onTap: () => _navigateToInterviewReport(interview),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E5E5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
+      child: PremiumCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             // Left colored indicator based on status

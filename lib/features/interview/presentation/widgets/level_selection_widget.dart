@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/domain/entities/entities.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 import '../providers/interview_setup_provider.dart';
 
 /// Widget for selecting experience level with visual cards
@@ -83,24 +84,20 @@ class LevelSelectionWidget extends StatelessWidget {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: isSelected ? 4 : 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          width: 2,
-        ),
+    return PremiumCard(
+      padding: EdgeInsets.zero,
+      color: isSelected
+          ? AppColors.primary.withValues(alpha: 0.1)
+          : Colors.white,
+      border: Border.all(
+        color: isSelected ? AppColors.primary : Colors.transparent,
+        width: 2,
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

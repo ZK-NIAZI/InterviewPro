@@ -157,20 +157,15 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
             onTap: () => context.pop(),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(
+                Icons.arrow_back_ios_new,
                 size: 24,
-                color: Color(0xFF1E293B),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -427,7 +422,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             // Download PDF button
             SizedBox(
               width: double.infinity,
-              height: 44,
+              height: 54,
               child: ElevatedButton(
                 onPressed: () => _onDownloadPDF(),
                 style: ElevatedButton.styleFrom(
@@ -460,7 +455,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             // Share report button
             SizedBox(
               width: double.infinity,
-              height: 44,
+              height: 54,
               child: OutlinedButton(
                 onPressed: _onShare,
                 style: OutlinedButton.styleFrom(

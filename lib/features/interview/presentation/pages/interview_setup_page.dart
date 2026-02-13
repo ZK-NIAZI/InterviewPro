@@ -37,7 +37,7 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: AppColors.backgroundLight,
         body: Consumer<RoleProvider>(
           builder: (context, roleProvider, child) {
             return Stack(
@@ -87,18 +87,13 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
           // Back Button
           GestureDetector(
             onTap: () => context.pop(),
-            child: Container(
-              width: 44, // ⚡ UX: Increased touch target to 44px
+            child: const SizedBox(
+              width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new, // More modern icon
-                size: 20,
-                color: Colors.black,
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                size: 24,
+                color: AppColors.primary,
               ),
             ),
           ),

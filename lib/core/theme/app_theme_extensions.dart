@@ -74,7 +74,7 @@ class AppThemeExtensions {
   }) {
     return BoxDecoration(
       color: color ?? Colors.white,
-      borderRadius: borderRadius ?? BorderRadius.circular(20),
+      borderRadius: borderRadius ?? BorderRadius.circular(16),
       boxShadow: AppColors.softShadow,
     );
   }

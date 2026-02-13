@@ -15,6 +15,7 @@ import '../providers/evaluation_provider.dart';
 import '../widgets/candidate_info_card.dart';
 import '../widgets/evaluation_form_widget.dart';
 import '../widgets/back_navigation_dialog.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 import '../../../../shared/presentation/widgets/metric_card.dart';
 import '../../../../shared/presentation/widgets/loading_overlay.dart';
 import '../../../../core/services/transcription_service.dart';
@@ -213,7 +214,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           }
         },
         child: Scaffold(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: AppColors.backgroundLight,
           body: Column(
             children: [
               // Status bar placeholder
@@ -275,16 +276,12 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                 }
               }
             },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
+            child: const SizedBox(
+              width: 44,
+              height: 44,
               child: Icon(
-                Icons.chevron_left,
-                size: 36,
+                Icons.arrow_back_ios_new,
+                size: 24,
                 color: AppColors.primary,
               ),
             ),
@@ -383,20 +380,8 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     final interview = _completedInterview!;
     final stats = interview.getPerformanceStats();
 
-    return Container(
+    return PremiumCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

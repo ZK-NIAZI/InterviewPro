@@ -111,25 +111,19 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               context.read<DashboardProvider>().refresh();
               context.pop();
             },
-            child: Container(
+            child: const SizedBox(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new,
-                size: 20,
-                color: Colors.black,
+                size: 24,
+                color: AppColors.primary,
               ),
             ),
           ),

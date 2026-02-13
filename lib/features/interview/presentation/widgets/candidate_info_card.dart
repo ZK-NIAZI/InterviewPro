@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 
 /// Card widget displaying candidate information
 class CandidateInfoCard extends StatelessWidget {
@@ -17,19 +18,8 @@ class CandidateInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PremiumCard(
       padding: const EdgeInsets.all(24), // Increased from 20 for better spacing
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: _buildCandidateInfo(), // Remove Row wrapper, use info directly
     );
   }

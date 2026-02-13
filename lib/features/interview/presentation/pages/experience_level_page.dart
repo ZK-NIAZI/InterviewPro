@@ -90,20 +90,15 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Back Button
           GestureDetector(
             onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(
                 Icons.arrow_back_ios_new,
                 size: 24,
-                color: Colors.black,
+                color: AppColors.primary,
               ),
             ),
           ),

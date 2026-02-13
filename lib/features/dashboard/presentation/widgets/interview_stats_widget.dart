@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 import '../providers/dashboard_provider.dart';
 
 /// Widget displaying interview statistics and summary information
@@ -29,70 +30,56 @@ class InterviewStatsWidget extends StatelessWidget {
               );
             }
 
-            return Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatItem(
-                            'Total Interviews',
-                            provider.totalInterviews.toString(),
-                            Icons.quiz_rounded,
-                            AppColors.primary,
-                          ),
+            return PremiumCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatItem(
+                          'Total Interviews',
+                          provider.totalInterviews.toString(),
+                          Icons.quiz_rounded,
+                          AppColors.primary,
                         ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: AppColors.grey300,
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.grey300),
+                      Expanded(
+                        child: _buildStatItem(
+                          'Completed',
+                          provider.completedInterviews.toString(),
+                          Icons.check_circle_rounded,
+                          AppColors.success,
                         ),
-                        Expanded(
-                          child: _buildStatItem(
-                            'Completed',
-                            provider.completedInterviews.toString(),
-                            Icons.check_circle_rounded,
-                            AppColors.success,
-                          ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: AppColors.grey300),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatItem(
+                          'In Progress',
+                          provider.inProgressInterviews.toString(),
+                          Icons.pending_rounded,
+                          AppColors.warning,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Divider(color: AppColors.grey300),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatItem(
-                            'In Progress',
-                            provider.inProgressInterviews.toString(),
-                            Icons.pending_rounded,
-                            AppColors.warning,
-                          ),
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.grey300),
+                      Expanded(
+                        child: _buildStatItem(
+                          'This Week',
+                          provider.thisWeekInterviews.toString(),
+                          Icons.calendar_today_rounded,
+                          AppColors.info,
                         ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: AppColors.grey300,
-                        ),
-                        Expanded(
-                          child: _buildStatItem(
-                            'This Week',
-                            provider.thisWeekInterviews.toString(),
-                            Icons.calendar_today_rounded,
-                            AppColors.info,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           },

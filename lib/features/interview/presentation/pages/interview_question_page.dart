@@ -203,7 +203,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: AppColors.backgroundLight,
         body: _isLoading
             ? _buildLoadingState()
             : _error != null

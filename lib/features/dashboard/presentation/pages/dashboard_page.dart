@@ -42,9 +42,11 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Scaffold(
         backgroundColor: _selectedIndex == 1
-            ? const Color(0xFFF8F6F6) // History background
+            ? AppColors
+                  .backgroundLight // History background
             : _selectedIndex == 2
-            ? const Color(0xFFF8F6F6) // Settings background
+            ? AppColors
+                  .backgroundLight // Settings background
             : AppColors.backgroundLight, // Home background
         body: Column(
           children: [

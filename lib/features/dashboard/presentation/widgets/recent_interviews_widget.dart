@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/domain/entities/entities.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 import '../providers/dashboard_provider.dart';
 
 /// Widget displaying recent interview sessions with status information
@@ -58,106 +59,95 @@ class RecentInterviewsWidget extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(Icons.quiz_outlined, size: 48, color: AppColors.grey400),
-            const SizedBox(height: 16),
-            Text(
-              'No interviews yet',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
+    return const PremiumCard(
+      padding: EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(Icons.quiz_outlined, size: 48, color: AppColors.grey400),
+          SizedBox(height: 16),
+          Text(
+            'No interviews yet',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Start your first interview to see it here',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Start your first interview to see it here',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildInterviewCard(Interview interview) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        interview.candidateName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
+    return PremiumCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      interview.candidateName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_getRoleDisplayName(interview.role)} • ${_getLevelDisplayName(interview.level)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_getRoleDisplayName(interview.role)} • ${_getLevelDisplayName(interview.level)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                _buildStatusChip(interview.status),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                ),
+              ),
+              _buildStatusChip(interview.status),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _formatDate(interview.startTime),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const Spacer(),
+              if (interview.overallScore != null ||
+                  interview.technicalScore != null) ...[
+                Icon(Icons.star_rounded, size: 16, color: AppColors.warning),
                 const SizedBox(width: 4),
                 Text(
-                  _formatDate(interview.startTime),
+                  '${((interview.overallScore ?? interview.technicalScore ?? 0.0)).toStringAsFixed(1)}%',
                   style: TextStyle(
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),
                 ),
-                const Spacer(),
-                if (interview.overallScore != null ||
-                    interview.technicalScore != null) ...[
-                  Icon(Icons.star_rounded, size: 16, color: AppColors.warning),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${((interview.overallScore ?? interview.technicalScore ?? 0.0)).toStringAsFixed(1)}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
               ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

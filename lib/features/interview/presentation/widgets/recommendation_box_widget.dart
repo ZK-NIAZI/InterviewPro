@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/presentation/widgets/premium_card.dart';
 
 /// Recommendation box widget with final verdict
 class RecommendationBoxWidget extends StatelessWidget {
@@ -21,22 +22,18 @@ class RecommendationBoxWidget extends StatelessWidget {
         (isRecommended ? 'RECOMMENDED FOR HIRE' : 'NOT RECOMMENDED');
 
     return Center(
-      child: Container(
+      child: PremiumCard(
         margin: const EdgeInsets.only(top: 16),
+        color: AppColors.primary,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          border: Border.all(color: const Color.fromARGB(255, 0, 0, 0), width: 2),
-          borderRadius: BorderRadius.circular(8),
-        ),
         child: Column(
           children: [
             Text(
               'FINAL VERDICT',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: const Color.fromARGB(255, 0, 0, 0),
+                color: Colors.white,
                 letterSpacing: 3,
               ),
             ),
