@@ -25,8 +25,8 @@ class RecommendationBoxWidget extends StatelessWidget {
         margin: const EdgeInsets.only(top: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.05),
-          border: Border.all(color: AppColors.primary, width: 2),
+          color: AppColors.primary,
+          border: Border.all(color: const Color.fromARGB(255, 0, 0, 0), width: 2),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -34,9 +34,9 @@ class RecommendationBoxWidget extends StatelessWidget {
             Text(
               'FINAL VERDICT',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: const Color.fromARGB(255, 0, 0, 0),
                 letterSpacing: 3,
               ),
             ),
@@ -46,7 +46,7 @@ class RecommendationBoxWidget extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: Color.fromARGB(255, 255, 255, 255),
                 letterSpacing: -0.5,
               ),
               textAlign: TextAlign.center,

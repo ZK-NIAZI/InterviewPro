@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:interview_pro_app/core/constants/app_colors.dart';
 
 /// Candidate information box widget with grid layout
 class CandidateInfoBoxWidget extends StatelessWidget {
@@ -20,7 +21,7 @@ class CandidateInfoBoxWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: const Color(0xFFF3F4F6)),
       ),
@@ -53,7 +54,7 @@ class CandidateInfoBoxWidget extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280),
+            color: Color.fromARGB(255, 0, 0, 0),
             letterSpacing: 1,
           ),
         ),
@@ -63,7 +64,7 @@ class CandidateInfoBoxWidget extends StatelessWidget {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: Color.fromARGB(255, 255, 255, 255),
           ),
         ),
       ],
