@@ -528,7 +528,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       }
     }
 
-    return questions; // Show all questions
+    return questions.take(3).toList(); // Show only 3 questions top
   }
 
   void _onDownloadPDF() async {

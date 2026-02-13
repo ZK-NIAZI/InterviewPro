@@ -199,7 +199,9 @@ class ReportPdfService {
           ),
         ),
         pw.SizedBox(height: 12),
-        ...reportData.interview.responses.map((r) => _buildQuestionRow(r)),
+        ...reportData.interview.responses
+            .take(3)
+            .map((r) => _buildQuestionRow(r)),
       ],
     );
   }
