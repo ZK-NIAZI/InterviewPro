@@ -365,7 +365,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: interview.overallScore != null
-                    ? AppColors.primary.withValues(alpha: 0.1)
+                    ? AppColors.primary
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -375,7 +375,7 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: interview.overallScore != null
-                      ? AppColors.primary
+                      ? Colors.white
                       : const Color(0xFF999999),
                 ),
               ),

@@ -577,7 +577,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     color:
                         (interview.overallScore != null ||
                             interview.technicalScore != null)
-                        ? AppColors.primary.withValues(alpha: 0.1)
+                        ? AppColors.primary
                         : AppColors.grey200,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -591,7 +591,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       color:
                           (interview.overallScore != null ||
                               interview.technicalScore != null)
-                          ? AppColors.primary
+                          ? Colors.white
                           : AppColors.textSecondary,
                     ),
                   ),
