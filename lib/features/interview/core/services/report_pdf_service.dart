@@ -27,8 +27,10 @@ class ReportPdfService {
           _buildTechnicalQuestions(reportData),
           pw.SizedBox(height: 32),
           _buildSoftSkills(reportData),
-          pw.SizedBox(height: 32),
-          _buildComments(reportData),
+          if (reportData.additionalComments.isNotEmpty) ...[
+            pw.SizedBox(height: 32),
+            _buildComments(reportData),
+          ],
           pw.SizedBox(height: 32),
           _buildFooter(),
         ],

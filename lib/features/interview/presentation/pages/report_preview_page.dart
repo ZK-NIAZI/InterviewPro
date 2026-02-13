@@ -289,8 +289,12 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
               const SizedBox(height: 24),
 
-              // Comments section
-              _buildCommentsSection(reportData),
+              // Comments section (only if not empty)
+              if (reportData?.additionalComments != null &&
+                  reportData!.additionalComments.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                _buildCommentsSection(reportData),
+              ],
 
               const SizedBox(height: 32),
 
