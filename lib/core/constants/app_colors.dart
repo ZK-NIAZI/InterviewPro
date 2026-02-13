@@ -10,7 +10,11 @@ class AppColors {
   // Background Colors (matching HTML design)
   static const Color backgroundLight = Color(0xFFF8F6F6);
   static const Color backgroundDark = Color(0xFF211112);
+  // Surface Colors for Glassmorphism/Claymorphism
   static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceMuted = Color(0xFFF1F5F9); // slate-100
+  static const Color surfaceGlass = Color(0xCCFFFFFF); // 80% opacity white
 
   // Text Colors (matching HTML design)
   static const Color textPrimary = Color(0xFF1B0E0F); // text-main
@@ -33,4 +37,34 @@ class AppColors {
   static const Color grey700 = Color(0xFF616161);
   static const Color grey800 = Color(0xFF424242);
   static const Color grey900 = Color(0xFF212121);
+
+  // Gradient Tokens
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryLight, primary],
+  );
+
+  static const LinearGradient glassGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0x66FFFFFF), Color(0x1AFFFFFF)],
+  );
+
+  // Shadow Tokens
+  static List<BoxShadow> softShadow = [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.05),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
+  static List<BoxShadow> premiumShadow = [
+    BoxShadow(
+      color: primary.withValues(alpha: 0.15),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
 }

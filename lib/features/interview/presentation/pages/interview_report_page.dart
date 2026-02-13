@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../providers/report_data_provider.dart';
 import '../widgets/circular_progress_widget.dart';
 import '../widgets/quick_stats_widget.dart';
@@ -101,29 +102,33 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+      decoration: AppThemeExtensions.glassDecoration(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Row(
         children: [
           // Back button
           GestureDetector(
             onTap: () {
+              HapticFeedback.lightImpact();
               context.read<DashboardProvider>().refresh();
               context.pop();
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.grey[200]!),
               ),
               child: const Icon(
-                Icons.arrow_back,
-                size: 24,
+                Icons.arrow_back_ios_new,
+                size: 20,
                 color: Colors.black,
               ),
             ),
@@ -134,9 +139,10 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             child: Text(
               AppStrings.interviewReport,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
                 color: Colors.black,
+                letterSpacing: -0.8,
               ),
               textAlign: TextAlign.center,
             ),
@@ -145,37 +151,43 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
           // Action buttons
           Row(
             children: [
-              GestureDetector(
-                onTap: () => _onShareReport(),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.share, size: 20, color: Colors.black),
-                ),
+              _buildHeaderAction(
+                icon: Icons.share_rounded,
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _onShareReport();
+                },
               ),
-              GestureDetector(
-                onTap: () => _onDownloadReport(),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.download,
-                    size: 20,
-                    color: Colors.black,
-                  ),
-                ),
+              const SizedBox(width: 8),
+              _buildHeaderAction(
+                icon: Icons.download_rounded,
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _onDownloadReport();
+                },
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderAction({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Icon(icon, size: 20, color: Colors.black),
       ),
     );
   }
@@ -370,48 +382,54 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!, width: 1)),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 6,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
           ],
         ),
         padding: EdgeInsets.fromLTRB(
-          20,
-          16,
-          20,
-          MediaQuery.of(context).padding.bottom + 20,
+          24,
+          24,
+          24,
+          MediaQuery.of(context).padding.bottom + 24,
         ),
         child: Column(
           children: [
-            // Download PDF button
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: () => _onDownloadPDF(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  shadowColor: AppColors.primary.withValues(alpha: 0.2),
+            // Preview PDF button
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.heavyImpact();
+                _onDownloadPDF(context);
+              },
+              child: Container(
+                width: double.infinity,
+                height: 60,
+                decoration: AppThemeExtensions.primaryGradientDecoration(
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.picture_as_pdf, size: 20),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.picture_as_pdf_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    SizedBox(width: 12),
                     Text(
                       AppStrings.previewPdf,
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -419,30 +437,36 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             // Share report button
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton(
-                onPressed: _onShareReport,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: BorderSide(color: Colors.grey[200]!),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                _onShareReport();
+              },
+              child: Container(
+                width: double.infinity,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.ios_share, size: 20),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.ios_share_rounded,
+                      size: 22,
+                      color: Colors.black87,
+                    ),
+                    SizedBox(width: 12),
                     Text(
                       AppStrings.shareReport,
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
                       ),
                     ),
                   ],

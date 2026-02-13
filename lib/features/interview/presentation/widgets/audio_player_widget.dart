@@ -156,8 +156,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               ),
               GestureDetector(
                 onTap: () {
-                  if (widget.transcript != null &&
-                      widget.transcript!.isNotEmpty) {
+                  final isTranscriptEmpty =
+                      widget.transcript == null ||
+                      widget.transcript!.trim().isEmpty ||
+                      widget.transcript!.trim() == '[]';
+
+                  if (!isTranscriptEmpty) {
                     TranscriptViewerWidget.show(
                       context,
                       rawTranscript: widget.transcript!,
@@ -185,19 +189,26 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(
-                    widget.transcript == null || widget.transcript!.isEmpty
-                        ? 'Transcript N/A'
-                        : 'View Transcript',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary.withOpacity(
-                        widget.transcript == null || widget.transcript!.isEmpty
-                            ? 0.5
-                            : 1.0,
-                      ),
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final isTranscriptEmpty =
+                          widget.transcript == null ||
+                          widget.transcript!.trim().isEmpty ||
+                          widget.transcript!.trim() == '[]';
+
+                      return Text(
+                        isTranscriptEmpty
+                            ? 'Transcript N/A'
+                            : 'View Transcript',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary.withOpacity(
+                            isTranscriptEmpty ? 0.5 : 1.0,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

@@ -61,10 +61,12 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
       results,
     ) {
       if (results.containsKey(widget.interviewId)) {
-        setState(() {
-          _transcriptCache = results[widget.interviewId];
-          _isBackgroundTranscribing = false;
-        });
+        if (mounted) {
+          setState(() {
+            _transcriptCache = results[widget.interviewId];
+            _isBackgroundTranscribing = false;
+          });
+        }
         debugPrint('🎯 STT Sync complete for: ${widget.interviewId}');
       }
     });
@@ -82,17 +84,19 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
 
     // Phase 3: If we already have a transcript in the DB, use it and stop
     if (existingTranscript != null && existingTranscript.isNotEmpty) {
-      setState(() {
-        _transcriptCache = existingTranscript;
-        _isBackgroundTranscribing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _transcriptCache = existingTranscript;
+          _isBackgroundTranscribing = false;
+        });
+      }
       debugPrint('📜 Using existing transcript from database');
       return;
     }
 
     if (path == null || path.isEmpty || _transcriptCache != null) return;
 
-    setState(() => _isBackgroundTranscribing = true);
+    if (mounted) setState(() => _isBackgroundTranscribing = true);
     try {
       final service = sl<TranscriptionService>();
 
@@ -337,8 +341,10 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Transcript Synchronization Status Indicator
-              _buildSTTStatus(),
+              // Transcript Synchronization Status Indicator (Only if recording exists)
+              if (_completedInterview?.voiceRecordingPath != null &&
+                  _completedInterview!.voiceRecordingPath!.isNotEmpty)
+                _buildSTTStatus(),
 
               const SizedBox(height: 16),
 
@@ -469,9 +475,20 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
       color = AppColors.primary;
       isSyncing = true;
     } else if (_transcriptCache != null) {
-      message = 'Interview Transcript Synchronized';
-      icon = Icons.check_circle;
-      color = Colors.green;
+      // Logic for error reporting vs success vs empty
+      if (_transcriptCache!.startsWith(TranscriptionService.errorPrefix)) {
+        message = 'Transcription failed or unavailable';
+        icon = Icons.error_outline;
+        color = AppColors.error;
+      } else if (_transcriptCache!.trim() == '[]' ||
+          _transcriptCache!.trim().isEmpty) {
+        // 🔇 Silent Audio: Hide the status bar entirely to keep UI clean
+        return const SizedBox.shrink();
+      } else {
+        message = 'AI Dialogue Analysis Ready';
+        icon = Icons.auto_awesome;
+        color = Colors.green;
+      }
     }
 
     return Container(
@@ -576,6 +593,11 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
   Future<void> _onGenerateReport(EvaluationProvider provider) async {
     final recordingPath = _completedInterview?.voiceRecordingPath;
     String finalTranscript = _transcriptCache ?? '';
+
+    // Treat error messages as empty transcripts for persistence logic
+    if (finalTranscript.startsWith(TranscriptionService.errorPrefix)) {
+      finalTranscript = '';
+    }
 
     // If still transcribing in background, wait for it
     if (finalTranscript.isEmpty &&

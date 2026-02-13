@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
@@ -70,38 +71,45 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         difficulty: _mapExperienceLevelToDifficulty(widget.selectedLevel),
       );
 
-      // If no role-specific questions, get general questions
-      if (questions.isEmpty) {
-        final generalQuestions = await provider.getRandomQuestions(
-          count: 25,
-          difficulty: _mapExperienceLevelToDifficulty(widget.selectedLevel),
-        );
+      if (mounted) {
+        if (questions.isEmpty) {
+          final generalQuestions = await provider.getRandomQuestions(
+            count: 25,
+            difficulty: _mapExperienceLevelToDifficulty(widget.selectedLevel),
+          );
 
-        setState(() {
-          _questions = generalQuestions;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _questions = questions;
-          _isLoading = false;
-        });
+          if (mounted) {
+            setState(() {
+              _questions = generalQuestions;
+              _isLoading = false;
+            });
+          }
+        } else {
+          setState(() {
+            _questions = questions;
+            _isLoading = false;
+          });
+        }
       }
 
       if (_questions.isEmpty) {
-        setState(() {
-          _error = 'No questions found for the selected criteria';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'No questions found for the selected criteria';
+          });
+        }
         return;
       }
 
       // Start interview session after questions are loaded
       await _startInterviewSession();
     } catch (e) {
-      setState(() {
-        _error = 'Failed to load questions: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load questions: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -115,18 +123,22 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         questions: _questions,
       );
 
-      setState(() {
-        _sessionStarted = true;
-        _currentQuestionIndex = _sessionManager.currentQuestionIndex;
-      });
+      if (mounted) {
+        setState(() {
+          _sessionStarted = true;
+          _currentQuestionIndex = _sessionManager.currentQuestionIndex;
+        });
+      }
 
       debugPrint('✅ Interview session started successfully');
     } catch (e) {
       debugPrint('❌ Error starting interview session: $e');
       // Continue without session tracking if it fails
-      setState(() {
-        _sessionStarted = false;
-      });
+      if (mounted) {
+        setState(() {
+          _sessionStarted = false;
+        });
+      }
     }
   }
 
@@ -409,22 +421,31 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
   Widget _buildHeader() {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      decoration: AppThemeExtensions.glassDecoration(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Close button
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              context.pop();
+            },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44, // Standard 44x44
+              height: 44,
               decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              child: const Icon(Icons.close, size: 28, color: Colors.black),
+              child: const Icon(Icons.close, size: 24, color: Colors.black),
             ),
           ),
 
@@ -433,8 +454,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
             'QUESTION ${_currentIndex + 1} OF $_totalQuestions',
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
               letterSpacing: 1.2,
             ),
           ),
@@ -446,23 +467,34 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
   Widget _buildProgressBar() {
     final progress = (_currentIndex + 1) / _totalQuestions;
 
-    return Container(
-      decoration: const BoxDecoration(color: Colors.white),
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Container(
-        height: 6,
+        height: 6, // Slightly slimmer
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Colors.grey[100], // Cleaner, more standard background
           borderRadius: BorderRadius.circular(3),
         ),
-        child: FractionallySizedBox(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          width: MediaQuery.of(context).size.width * progress,
           alignment: Alignment.centerLeft,
-          widthFactor: progress,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(3),
+          child: FractionallySizedBox(
+            widthFactor: progress,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -502,14 +534,30 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
   }
 
   Widget _buildQuestionNumber() {
-    return Text(
-      '#${_currentIndex + 1}',
-      style: TextStyle(
-        fontSize: 64,
-        fontWeight: FontWeight.w900,
-        color: AppColors.primary,
-        height: 1.0,
-        letterSpacing: -2,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 0.2),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: Text(
+        '#${_currentIndex + 1}',
+        key: ValueKey<int>(_currentIndex),
+        style: const TextStyle(
+          fontSize: 80,
+          fontWeight: FontWeight.w900,
+          color: AppColors.primary, // Set to 100% opacity using primary color
+          height: 1.0,
+          letterSpacing: -4,
+        ),
       ),
     );
   }
@@ -573,29 +621,34 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
               setState(() {
                 selectedAnswer = false;
               });
+              HapticFeedback.lightImpact();
             },
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: selectedAnswer == false
-                    ? Colors.grey[200]
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: selectedAnswer == false
-                      ? Colors.grey[400]!
-                      : Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 64,
+              decoration:
+                  AppThemeExtensions.clayDecoration(
+                    color: selectedAnswer == false
+                        ? Colors.grey[200]!
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(32),
+                    isPressed: selectedAnswer == false,
+                  ).copyWith(
+                    border: Border.all(
+                      color: selectedAnswer == false
+                          ? Colors.grey[400]!
+                          : Colors.grey[200]!,
+                      width: 1.5,
+                    ),
+                  ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.cancel_outlined,
+                    Icons.close_rounded,
                     size: 24,
                     color: selectedAnswer == false
-                        ? Colors.grey[600]
+                        ? Colors.grey[700]
                         : Colors.grey[400],
                   ),
                   const SizedBox(width: 8),
@@ -603,10 +656,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
                     AppStrings.no,
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                       color: selectedAnswer == false
-                          ? Colors.grey[700]
-                          : Colors.black,
+                          ? Colors.grey[800]
+                          : Colors.black87,
                     ),
                   ),
                 ],
@@ -615,7 +668,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
           ),
         ),
 
-        const SizedBox(width: 16),
+        const SizedBox(width: 20),
 
         // Yes button
         Expanded(
@@ -624,35 +677,31 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
               setState(() {
                 selectedAnswer = true;
               });
+              HapticFeedback.mediumImpact();
             },
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: selectedAnswer == true
-                    ? AppColors.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: selectedAnswer == true
-                      ? AppColors.primary
-                      : Colors.grey[300]!,
-                  width: 1,
-                ),
-                boxShadow: selectedAnswer == true
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : null,
-              ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 64,
+              decoration:
+                  AppThemeExtensions.clayDecoration(
+                    color: selectedAnswer == true
+                        ? AppColors.primary
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(32),
+                    isPressed: selectedAnswer == true,
+                  ).copyWith(
+                    border: Border.all(
+                      color: selectedAnswer == true
+                          ? AppColors.primary
+                          : Colors.grey[200]!,
+                      width: 1.5,
+                    ),
+                  ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.check_circle_outline,
+                    Icons.check_rounded,
                     size: 24,
                     color: selectedAnswer == true
                         ? Colors.white
@@ -663,10 +712,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
                     AppStrings.yes,
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                       color: selectedAnswer == true
                           ? Colors.white
-                          : Colors.black,
+                          : Colors.black87,
                     ),
                   ),
                 ],
@@ -827,8 +876,12 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         notes: notesController.text,
       );
 
+      if (!mounted) return;
+
       if (_currentIndex < _totalQuestions - 1) {
         await _sessionManager.nextQuestion();
+        if (!mounted) return;
+
         setState(() {
           _currentQuestionIndex = _sessionManager.currentQuestionIndex;
           // Check if next question already answered
@@ -872,6 +925,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
       // Stop and get path regardless of provider state (service now handles fallback)
       final recordingPath = await recordingProvider.stop();
+      if (!mounted) return;
+
       final recordingDuration = recordingProvider.recordingDurationSeconds;
 
       // Complete interview in manager and capture the returned interview data
@@ -879,6 +934,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         voiceRecordingPath: recordingPath,
         voiceRecordingDurationSeconds: recordingDuration,
       );
+      if (!mounted) return;
 
       // Update interview with recording details if available
       debugPrint('📽️ Recording saved at: $recordingPath');

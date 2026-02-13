@@ -16,6 +16,9 @@ class TranscriptionService {
   GenerativeModel? _flashModel;
   GenerativeModel? _fallbackModel;
 
+  /// Robust error identifier for UI differentiation
+  static const String errorPrefix = 'STT_ERROR:';
+
   /// Global registry of active transcription tasks
   static final Map<String, Future<String>> _activeTasks = {};
 
@@ -127,14 +130,14 @@ class TranscriptionService {
     String? level,
   }) async {
     if (_apiKey.isEmpty || _apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
-      return 'Error: Gemini API Key not found. Please set GEMINI_API_KEY in .env';
+      return '$errorPrefix Gemini API Key not found. Please set GEMINI_API_KEY in .env';
     }
 
     try {
       final file = File(filePath);
       if (!await file.exists()) {
         debugPrint('❌ Transcription error: File not found at $filePath');
-        return 'Error: Audio file not found.';
+        return '$errorPrefix Audio file not found.';
       }
 
       final bytes = await file.readAsBytes();
@@ -154,7 +157,8 @@ class TranscriptionService {
             '2. Each object must have "speaker", "text", and "time" (in M:SS format) keys.\n'
             '3. Use dialogue context to infer which interviewer is speaking if possible.\n'
             '4. NO markdown bolding in the text content.\n'
-            'Format Example:\n'
+            '5. IF THE AUDIO IS SILENT OR NO SPEECH IS DETECTED, RETURN AN EMPTY ARRAY: []\n'
+            'Format Example (DO NOT HALLUCINATE THESE NAMES/TEXT):\n'
             '[\n'
             '  {"speaker": "Interviewer 1", "time": "0:00", "text": "Hello..."}, \n'
             '  {"speaker": "Candidate", "time": "0:05", "text": "Hi..."}\n'
@@ -177,9 +181,9 @@ class TranscriptionService {
     } catch (e) {
       debugPrint('❌ STT Error: $e');
       if (e.toString().contains('429')) {
-        return 'AI Speed Limit reached. Please wait 30 seconds and try again.';
+        return '$errorPrefix AI Speed Limit reached. Please wait 30 seconds and try again.';
       }
-      return 'AI Transcription failed: ${e.toString().split('\n').first}';
+      return '$errorPrefix AI Transcription failed: ${e.toString().split('\n').first}';
     }
   }
 
@@ -203,6 +207,17 @@ class TranscriptionService {
 
       // 2. Validate it's actually valid JSON to catch AI hallucinations
       jsonDecode(cleaned);
+
+      // 3. Hallucination Guard: Filter out boilerplate examples from the prompt
+      // If the AI just regurgitated the example because of silence/error, clear it
+      if (cleaned.contains('Can you explain your experience with Flutter?') ||
+          cleaned.contains('Sure, I have worked with Flutter for 3 years') ||
+          (cleaned.contains('Hello...') && cleaned.contains('Hi...'))) {
+        debugPrint(
+          '⚠️ Hallucination detected: AI returned boilerplate example. Returning empty.',
+        );
+        return '[]';
+      }
 
       return cleaned;
     } catch (e) {
@@ -283,7 +298,7 @@ class TranscriptionService {
         rethrow;
       }
     }
-    return 'Transcription failed after multiple attempts.';
+    return '$errorPrefix Transcription failed after multiple attempts.';
   }
 
   /// High-speed Raw STT via Groq Whisper (Large V3 Turbo) with Resilience
@@ -492,9 +507,10 @@ class TranscriptionService {
         '2. **Candidate Attribution**: The candidate provides technical explanations, uses specialized terminology, and explains their experience.\n'
         '3. **Interviewer Attribution**: Interviewers ask questions, provide feedback, and guide the conversation flow.\n'
         '4. **Semantic Merging**: If Deepgram splits a single person into two IDs (e.g., Speaker 0 and Speaker 1) due to a stutter or noise, but their sentences are semantically continuous, MERGE them into the same role label.\n'
-        '5. **Role Labels**: Use exactly "Candidate", "Interviewer 1", or "Interviewer 2".\n\n'
+        '5. **Role Labels**: Use exactly "Candidate", "Interviewer 1", or "Interviewer 2".\n'
+        '6. IF THE PROVIDED TEXT IS EMPTY, SILENT, OR NONSENSICAL, RETURN: {"transcript": []}\n\n'
         'JSON FORMAT REQUIREMENT:\n'
-        'Return ONLY a JSON object with a "transcript" array. Example:\n'
+        'Return ONLY a JSON object with a "transcript" array. Example (FOR FORMATTING ONLY, DO NOT COPY TEXT):\n'
         '{\n'
         '  "transcript": [\n'
         '    {"speaker": "Interviewer 1", "time": "0:00", "text": "Can you explain your experience with Flutter?"},\n'
@@ -566,6 +582,7 @@ class TranscriptionService {
             'RULES:\n'
             '1. Return ONLY a valid JSON array of objects.\n'
             '2. Each object must have "speaker", "text", and "time" (in M:SS format) keys.\n'
+            '3. IF NO SPEECH DETECTED, RETURN [].\n'
             'Format Example: [{"speaker": "Interviewer 1", "time": "0:00", "text": "..."}]',
           ),
         ]),

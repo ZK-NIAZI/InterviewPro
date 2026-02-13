@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../shared/domain/entities/role.dart';
 import '../providers/role_provider.dart';
 
@@ -73,24 +74,30 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
         20,
         MediaQuery.of(context).padding.top + 20,
         20,
-        8,
+        16,
       ),
-      color: Colors.white,
+      decoration: AppThemeExtensions.glassDecoration(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       child: Row(
         children: [
           // Back Button
           GestureDetector(
             onTap: () => context.pop(),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44, // ⚡ UX: Increased touch target to 44px
+              height: 44,
               decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.grey[200]!),
               ),
               child: const Icon(
-                Icons.arrow_back,
-                size: 24,
+                Icons.arrow_back_ios_new, // More modern icon
+                size: 20,
                 color: Colors.black,
               ),
             ),
@@ -101,17 +108,17 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
             child: Text(
               'Select Role',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
                 color: Colors.black,
-                letterSpacing: -0.5,
+                letterSpacing: -0.8,
               ),
               textAlign: TextAlign.center,
             ),
           ),
 
-          // Spacer to balance the back button
-          const SizedBox(width: 40),
+          // Spacer to balance
+          const SizedBox(width: 44),
         ],
       ),
     );
@@ -193,8 +200,15 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     }
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, _calculateBottomPadding(context)),
-      child: _buildRoleGrid(roleProvider.roles),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Column(
+        children: [
+          _buildRoleGrid(roleProvider.roles),
+          const SizedBox(
+            height: 120,
+          ), // Standard bottom spacing for the fixed button area
+        ],
+      ),
     );
   }
 
@@ -242,80 +256,94 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
     // Map icon names to IconData
     final iconData = _getIconData(role.icon);
 
-    return GestureDetector(
-      onTap: () {
-        roleProvider.selectRole(role.id);
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 1.0, end: isSelected ? 1.05 : 1.0),
+      builder: (context, scale, child) {
+        return Transform.scale(scale: scale, child: child);
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.05)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Main content - perfectly centered
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      iconData,
-                      size: iconSize,
-                      color: isSelected ? AppColors.primary : Colors.black,
-                    ),
-                    SizedBox(height: spacing),
-                    Flexible(
-                      child: Text(
-                        role.name,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+      child: GestureDetector(
+        onTap: () {
+          roleProvider.selectRole(role.id);
+          HapticFeedback.lightImpact(); // ⚡ UX: Physical feedback
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration:
+              AppThemeExtensions.premiumCardDecoration(
+                color: isSelected ? Colors.white : AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(20),
+              ).copyWith(
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  width: 2,
+                ),
+                boxShadow: isSelected
+                    ? AppColors.premiumShadow
+                    : AppColors.softShadow,
+              ),
+          child: Stack(
+            children: [
+              // Main content - perfectly centered
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        iconData,
+                        size: iconSize,
+                        color: isSelected ? AppColors.primary : Colors.black87,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Selected checkmark badge
-            if (isSelected)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
+                      SizedBox(height: spacing),
+                      Flexible(
+                        child: Text(
+                          role.name,
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.black,
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.check, size: 14, color: Colors.white),
                 ),
               ),
-          ],
+
+              // Selected checkmark badge
+              if (isSelected)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -381,32 +409,6 @@ class _InterviewSetupPageState extends State<InterviewSetupPage> {
 
     // Navigate to experience level selection
     context.push('${AppRouter.experienceLevel}?role=${selectedRole.name}');
-  }
-
-  /// Calculate dynamic bottom padding based on screen size and available space
-  double _calculateBottomPadding(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Account for status bar, header, and button area (subtitle removed)
-    final statusBarHeight = MediaQuery.of(context).padding.top;
-    final headerHeight = statusBarHeight + 68;
-    final buttonAreaHeight = 96;
-
-    final availableHeight = screenHeight - headerHeight - buttonAreaHeight;
-
-    // Calculate required height for 3 rows of cards
-    final cardHeight = (screenWidth - 56) / 2 * 0.9;
-    final requiredGridHeight = (cardHeight * 3) + (16 * 2);
-
-    // If available space is tight, increase bottom padding
-    if (availableHeight < requiredGridHeight + 40) {
-      return 140;
-    } else if (screenHeight < 700) {
-      return 120;
-    } else {
-      return 100;
-    }
   }
 
   /// Map icon string to IconData
