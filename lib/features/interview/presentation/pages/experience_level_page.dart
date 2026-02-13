@@ -304,7 +304,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AlertDialog(
-            backgroundColor: Colors.white.withValues(alpha: 0.8),
+            backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
@@ -314,7 +314,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: AppColors.primary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -323,7 +323,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
               children: [
                 const Text(
                   'Please enter the name of the candidate to start the session.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: Colors.black),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -331,10 +331,12 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                   controller: nameController,
                   autofocus: true,
                   textCapitalization: TextCapitalization.words,
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
                   decoration: InputDecoration(
                     hintText: 'Full Name',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.5),
+                    fillColor: const Color(0xFFF9FAFB),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
@@ -347,7 +349,6 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppColors.primary),
                     ),
-                    prefixIcon: const Icon(Icons.person_outline),
                   ),
                 ),
               ],
