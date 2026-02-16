@@ -596,7 +596,7 @@ class InterviewRepositoryImpl implements InterviewRepository {
       final updatedInterview = interview.copyWith(
         status: InterviewStatus.completed,
         endTime: DateTime.now(),
-        technicalScore: technicalScore,
+        // technicalScore is calculated dynamically, not stored
         softSkillsScore: softSkillsScore,
         overallScore: overallScore,
       );

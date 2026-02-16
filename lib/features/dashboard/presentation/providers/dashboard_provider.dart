@@ -138,7 +138,7 @@ class DashboardProvider extends ChangeNotifier {
         final interviewsWithScores = completedInterviews
             .where(
               (interview) =>
-                  interview.technicalScore != null ||
+                  interview.technicalScore >= 0 ||
                   interview.overallScore != null,
             )
             .toList();
@@ -147,7 +147,7 @@ class DashboardProvider extends ChangeNotifier {
           final totalScore = interviewsWithScores
               .map(
                 (interview) =>
-                    interview.overallScore ?? interview.technicalScore ?? 0.0,
+                    interview.overallScore ?? interview.technicalScore,
               )
               .reduce((a, b) => a + b);
           _averageScore = totalScore / interviewsWithScores.length;

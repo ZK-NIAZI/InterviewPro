@@ -84,15 +84,14 @@ class HistoryProvider extends ChangeNotifier {
             (interview) =>
                 interview.isCompleted &&
                 (interview.overallScore != null ||
-                    interview.technicalScore != null),
+                    interview.technicalScore >= 0),
           )
           .toList();
 
       if (completedWithScores.isNotEmpty) {
         final totalScore = completedWithScores
             .map(
-              (interview) =>
-                  interview.overallScore ?? interview.technicalScore ?? 0.0,
+              (interview) => interview.overallScore ?? interview.technicalScore,
             )
             .reduce((a, b) => a + b);
         _averageScore = totalScore / completedWithScores.length;
@@ -104,8 +103,7 @@ class HistoryProvider extends ChangeNotifier {
       _hiredCount = completedWithScores
           .where(
             (interview) =>
-                (interview.overallScore ?? interview.technicalScore ?? 0.0) >=
-                70.0,
+                (interview.overallScore ?? interview.technicalScore) >= 70.0,
           )
           .length;
 

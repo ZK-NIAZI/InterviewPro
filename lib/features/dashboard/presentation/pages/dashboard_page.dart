@@ -576,25 +576,16 @@ class _DashboardPageState extends State<DashboardPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        (interview.overallScore != null ||
-                            interview.technicalScore != null)
-                        ? AppColors.primary
-                        : AppColors.grey200,
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     (interview.overallScore ?? interview.technicalScore)
-                            ?.toStringAsFixed(1) ??
-                        '–',
+                        .toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color:
-                          (interview.overallScore != null ||
-                              interview.technicalScore != null)
-                          ? Colors.white
-                          : AppColors.textSecondary,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -772,10 +763,9 @@ class _DashboardPageState extends State<DashboardPage> {
       final candidateName = Uri.encodeComponent(interview.candidateName);
       final role = Uri.encodeComponent(_getRoleDisplayName(interview));
       final level = Uri.encodeComponent(_getLevelDisplayName(interview.level));
-      final overallScore =
-          interview.overallScore ?? interview.technicalScore ?? 0.0;
+      final overallScore = interview.overallScore ?? interview.technicalScore;
       final communicationSkills = interview.softSkillsScore?.round() ?? 3;
-      final problemSolvingApproach = interview.technicalScore?.round() ?? 3;
+      final problemSolvingApproach = interview.technicalScore.round();
       final culturalFit = interview.softSkillsScore?.round() ?? 3;
       final overallImpression = interview.overallScore?.round() ?? 3;
       final additionalComments = Uri.encodeComponent(

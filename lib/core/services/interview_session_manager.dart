@@ -202,13 +202,10 @@ class InterviewSessionManager extends ChangeNotifier {
       // Add response to current interview
       final updatedResponses = [..._currentInterview!.responses, response];
 
-      // Calculate updated technical score
-      final updatedTechnicalScore = _calculateTechnicalScore(updatedResponses);
-
       // Update interview
       _currentInterview = _currentInterview!.copyWith(
         responses: updatedResponses,
-        technicalScore: updatedTechnicalScore,
+        // technicalScore is calculated dynamically
       );
 
       // Cache updated session
@@ -298,15 +295,16 @@ class InterviewSessionManager extends ChangeNotifier {
         '🏁 Starting interview completion for: ${_currentInterview!.id}',
       );
 
-      // Calculate final technical score
-      final finalTechnicalScore = _currentInterview!.calculateTechnicalScore();
-      debugPrint('📊 Calculated technical score: $finalTechnicalScore');
+      // Score is calculated dynamically via the Entity getter
+      debugPrint(
+        '📊 Final technical score: ${_currentInterview!.technicalScore}',
+      );
 
       // Update interview status
       _currentInterview = _currentInterview!.copyWith(
         status: InterviewStatus.completed,
         endTime: DateTime.now(),
-        technicalScore: finalTechnicalScore,
+        // technicalScore is calculated dynamically
         voiceRecordingPath: voiceRecordingPath,
         voiceRecordingDurationSeconds: voiceRecordingDurationSeconds,
       );
@@ -552,25 +550,6 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Helper method to calculate technical score
-  double _calculateTechnicalScore(List<QuestionResponse> responses) {
-    if (responses.isEmpty) return 0.0;
-
-    // Use the Interview entity's calculation method
-    final tempInterview = Interview(
-      id: 'temp',
-      candidateName: 'temp',
-      role: Role.flutter,
-      level: Level.associate,
-      startTime: DateTime.now(),
-      lastModified: DateTime.now(),
-      responses: responses,
-      status: InterviewStatus.inProgress,
-    );
-
-    return tempInterview.calculateTechnicalScore();
-  }
-
   /// Cache session data securely
   void _cacheSessionData() {
     try {
@@ -603,7 +582,8 @@ class InterviewSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Parse role string to Role enum with validation
+  /// Parse role string to Role enum for Icon/UI purposes only.
+  /// Does NOT affect the stored roleName.
   Role _parseRole(String roleString) {
     final normalized = roleString.toLowerCase().trim();
     if (normalized.contains('flutter')) return Role.flutter;
@@ -614,9 +594,7 @@ class InterviewSessionManager extends ChangeNotifier {
     }
     if (normalized.contains('mobile')) return Role.mobile;
 
-    // If no match found, we still return Role.flutter as a structural fallback,
-    // but the actual display will now use Interview.roleName (the original string).
-    debugPrint('ℹ️ Custom role detected: $roleString');
+    // Structural fallback for Icons, but the actual data is preserved in roleName
     return Role.flutter;
   }
 

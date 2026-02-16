@@ -37,8 +37,8 @@ class Interview extends Equatable {
   /// Overall score calculated from responses (null if not calculated)
   final double? overallScore;
 
-  /// Technical score from question responses (0-100)
-  final double? technicalScore;
+  // technicalScore is now a dynamic getter, not a stored field
+  // final double? technicalScore;
 
   /// Soft skills score from evaluation (0-100)
   final double? softSkillsScore;
@@ -85,7 +85,7 @@ class Interview extends Equatable {
     required this.responses,
     required this.status,
     this.overallScore,
-    this.technicalScore,
+    // technicalScore is calculated dynamically
     this.softSkillsScore,
     this.communicationSkills = 0,
     this.problemSolvingApproach = 0,
@@ -112,7 +112,7 @@ class Interview extends Equatable {
     List<QuestionResponse>? responses,
     InterviewStatus? status,
     double? overallScore,
-    double? technicalScore,
+    // technicalScore removed from copyWith to enforce dynamic calculation
     double? softSkillsScore,
     int? communicationSkills,
     int? problemSolvingApproach,
@@ -137,7 +137,7 @@ class Interview extends Equatable {
       responses: responses ?? this.responses,
       status: status ?? this.status,
       overallScore: overallScore ?? this.overallScore,
-      technicalScore: technicalScore ?? this.technicalScore,
+      // technicalScore is calculated dynamically
       softSkillsScore: softSkillsScore ?? this.softSkillsScore,
       communicationSkills: communicationSkills ?? this.communicationSkills,
       problemSolvingApproach:
@@ -172,39 +172,24 @@ class Interview extends Equatable {
   /// Checks if the interview is in progress
   bool get isInProgress => status == InterviewStatus.inProgress;
 
-  /// Calculate technical score from question responses
-  /// Simple calculation: (correct answers / total questions) * 100
-  double calculateTechnicalScore() {
+  /// Calculate technical score dynamically from current responses
+  /// Formula: (correct answers / total questions answered) * 100
+  /// This prevents skewed scores if totalQuestions mismatch actual responses.
+  double get technicalScore {
     if (responses.isEmpty) return 0.0;
 
-    // Count correct answers
+    // Dynamic denominator: Use actual number of responses to track "current performance"
+    // This ensures 1/1 is 100%, 1/2 is 50%, etc.
+    final denominator = responses.length;
     final correctAnswers = responses.where((r) => r.isCorrect == true).length;
 
-    // CRITICAL FIX: Use the actual number of responses as the denominator
-    // if the interview is completed or if totalQuestions is mismatched.
-    // This ensures that 2 correct out of 2 answered is 100%, not 2/25 = 8%.
-    // We defer to totalQuestions ONLY if we are strictly enforcing a fixed-length interview
-    // that hasn't finished yet. But for scoring a completed set, we use what we have.
-    final denominator =
-        (status == InterviewStatus.completed ||
-            responses.length > totalQuestions)
-        ? responses.length
-        : (totalQuestions > 0 ? totalQuestions : responses.length);
-
-    // Prevent division by zero
-    if (denominator == 0) return 0.0;
-
-    // Calculate percentage
-    final score = (correctAnswers / denominator) * 100;
-
-    return score.clamp(0.0, 100.0);
+    return (correctAnswers / denominator) * 100.0;
   }
 
-  /// Calculate final overall score
-  /// Per requirements: strictly based on technical accuracy (correct answers / total questions) * 100
+  /// Calculate final overall score (Alias for technicalScore for now)
   double calculateOverallScore({double? evaluationScore}) {
     // Ignoring evaluationScore for overall percentage as per specific requirement
-    return technicalScore ?? calculateTechnicalScore();
+    return technicalScore;
   }
 
   /// Get recommendation based on overall score
@@ -243,7 +228,7 @@ class Interview extends Equatable {
       'correctAnswers': correctAnswers,
       'incorrectAnswers': totalAnswered - correctAnswers,
       'completionPercentage': completion.clamp(0.0, 100.0),
-      'technicalScore': technicalScore ?? calculateTechnicalScore(),
+      'technicalScore': technicalScore,
       'duration': duration?.inMinutes ?? 0,
     };
   }
@@ -279,7 +264,7 @@ class Interview extends Equatable {
           .toList(),
       status: _parseInterviewStatus(json['status']),
       overallScore: json['overallScore']?.toDouble(),
-      technicalScore: json['technicalScore']?.toDouble(),
+      // technicalScore is calculated dynamically from responses
       softSkillsScore: json['softSkillsScore']?.toDouble(),
       communicationSkills: json['communicationSkills'] ?? 0,
       problemSolvingApproach: json['problemSolvingApproach'] ?? 0,
@@ -308,7 +293,7 @@ class Interview extends Equatable {
       'responses': responses.map((r) => r.toJson()).toList(),
       'status': status.toString(),
       'overallScore': overallScore,
-      'technicalScore': technicalScore,
+      'technicalScore': technicalScore, // Uses the dynamic getter
       'softSkillsScore': softSkillsScore,
       'communicationSkills': communicationSkills,
       'problemSolvingApproach': problemSolvingApproach,
@@ -378,7 +363,7 @@ class Interview extends Equatable {
     responses,
     status,
     overallScore,
-    technicalScore,
+    // technicalScore is computed
     softSkillsScore,
     communicationSkills,
     problemSolvingApproach,

@@ -450,10 +450,9 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
       final levelValue = Uri.encodeComponent(
         _getLevelDisplayName(interview.level),
       );
-      final overallScore =
-          interview.overallScore ?? interview.technicalScore ?? 0.0;
+      final overallScore = interview.overallScore ?? interview.technicalScore;
       final communicationSkills = interview.softSkillsScore?.round() ?? 3;
-      final problemSolvingApproach = interview.technicalScore?.round() ?? 3;
+      final problemSolvingApproach = interview.technicalScore.round();
       final culturalFit = interview.softSkillsScore?.round() ?? 3;
       final overallImpression = interview.overallScore?.round() ?? 3;
       final additionalComments = Uri.encodeComponent(

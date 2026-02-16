@@ -48,7 +48,6 @@ void main() {
           ),
         ],
         status: InterviewStatus.completed,
-        technicalScore: 75.0,
         overallScore: 78.5,
       );
 
@@ -82,7 +81,6 @@ void main() {
           lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
-          technicalScore: 85.0,
           overallScore: 82.0,
         ),
         Interview(
@@ -94,7 +92,6 @@ void main() {
           lastModified: DateTime.now(),
           responses: [],
           status: InterviewStatus.completed,
-          technicalScore: 70.0,
           overallScore: 68.0,
         ),
       ];

@@ -19,9 +19,24 @@ class VoiceRecordingProvider extends ChangeNotifier {
   StreamSubscription? _positionSubscription;
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _completeSubscription;
+  StreamSubscription? _recordingStateSubscription;
 
   VoiceRecordingProvider(this._recordingService) {
     _initPlaybackListeners();
+    _initRecordingListener();
+  }
+
+  void _initRecordingListener() {
+    _recordingStateSubscription = _recordingService.onRecordingStateChanged
+        .listen((isRecording) {
+          _isRecording = isRecording;
+          if (isRecording) {
+            _startTimer();
+          } else {
+            _stopTimer();
+          }
+          notifyListeners();
+        });
   }
 
   // Getters
@@ -40,24 +55,19 @@ class VoiceRecordingProvider extends ChangeNotifier {
     required String candidateName,
   }) async {
     try {
+      // Logic is handled by the service and listener now
       await _recordingService.startRecording(
         interviewId: interviewId,
         candidateName: candidateName,
       );
 
-      _isRecording = true;
       _activeInterviewId = interviewId;
       _recordingDurationSeconds = 0;
-
-      _startTimer();
-      notifyListeners();
+      // Timer start is handled by listener
     } catch (e) {
-      _isRecording = false;
       _activeInterviewId = null;
       _recordingDurationSeconds = 0;
-      _stopTimer();
-      notifyListeners();
-
+      // Error state handling
       debugPrint('❌ Error in VoiceRecordingProvider.start: $e');
       rethrow;
     }
@@ -66,16 +76,13 @@ class VoiceRecordingProvider extends ChangeNotifier {
   /// Stop current interview-wide recording
   Future<String?> stop() async {
     try {
-      _stopTimer();
+      // Timer stop is handled by listener
       final path = await _recordingService.stopRecording();
-
-      _isRecording = false;
-      notifyListeners();
+      // State update handled by listener
       return path;
     } catch (e) {
       debugPrint('❌ Error in VoiceRecordingProvider.stop: $e');
-      _isRecording = false;
-      notifyListeners();
+      // State update handled by listener (service sends false on error)
       rethrow;
     }
   }
@@ -83,17 +90,13 @@ class VoiceRecordingProvider extends ChangeNotifier {
   /// Cancel current recording (discard)
   Future<void> cancel() async {
     try {
-      _stopTimer();
       await _recordingService.stopRecording();
 
-      _isRecording = false;
       _activeInterviewId = null;
       _recordingDurationSeconds = 0;
-      notifyListeners();
+      // Listener will handle isRecording = false
     } catch (e) {
       debugPrint('❌ Error in VoiceRecordingProvider.cancel: $e');
-      _isRecording = false;
-      notifyListeners();
     }
   }
 
@@ -196,6 +199,7 @@ class VoiceRecordingProvider extends ChangeNotifier {
   @override
   void dispose() {
     _stopTimer();
+    _recordingStateSubscription?.cancel();
     _positionSubscription?.cancel();
     _playerStateSubscription?.cancel();
     _completeSubscription?.cancel();

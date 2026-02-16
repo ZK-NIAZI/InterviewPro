@@ -407,9 +407,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
               Expanded(
                 child: MetricCard(
                   title: AppStrings.technicalScore,
-                  value: AppFormatters.formatScore(
-                    interview.technicalScore ?? 0,
-                  ),
+                  value: AppFormatters.formatScore(interview.technicalScore),
                 ),
               ),
               const SizedBox(width: 12),
@@ -603,6 +601,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
       try {
         final repo = sl<InterviewRepository>();
         final interview = await repo.getInterviewById(widget.interviewId);
+        if (!mounted) return;
         if (interview?.transcript != null &&
             interview!.transcript!.isNotEmpty) {
           finalTranscript = interview.transcript!;
