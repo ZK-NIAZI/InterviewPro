@@ -72,7 +72,7 @@ class ReportDataProvider extends ChangeNotifier {
 
     // Calculate overall score (strictly technical based on new requirements)
     final overallScore = interview.calculateOverallScore();
-    final technicalScore = interview.calculateTechnicalScore();
+    final technicalScore = interview.technicalScore;
 
     // Generate detailed question breakdown
     final questionBreakdown = _generateQuestionBreakdown(interview);

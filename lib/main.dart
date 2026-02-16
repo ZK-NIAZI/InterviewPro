@@ -13,6 +13,7 @@ import 'features/interview/presentation/providers/role_provider.dart';
 import 'features/interview/presentation/providers/interview_question_provider.dart';
 import 'features/interview/presentation/providers/report_data_provider.dart';
 import 'features/interview/presentation/providers/voice_recording_provider.dart';
+import 'core/providers/auth_provider.dart';
 
 import 'dart:async';
 import 'core/services/crash_reporting_service.dart';
@@ -97,6 +98,7 @@ class InterviewProApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => InterviewQuestionProvider(sl())),
         ChangeNotifierProvider(create: (_) => ReportDataProvider(sl())),
         ChangeNotifierProvider(create: (_) => VoiceRecordingProvider(sl())),
+        ChangeNotifierProvider(create: (_) => sl<AuthProvider>()),
       ],
       child: MaterialApp.router(
         title: 'InterviewPro',

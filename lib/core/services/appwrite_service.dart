@@ -36,4 +36,24 @@ class AppwriteService {
 
   /// Get database ID for collections
   String get databaseId => AppwriteConfig.databaseId;
+
+  /// Update interview with Google Drive file info
+  Future<void> updateInterviewDriveInfo({
+    required String interviewId,
+    required String driveFileId,
+    required String driveFileUrl,
+  }) async {
+    try {
+      await _databases.updateDocument(
+        databaseId: databaseId,
+        collectionId: AppwriteConfig.interviewsCollectionId,
+        documentId: interviewId,
+        data: {'driveFileId': driveFileId, 'driveFileUrl': driveFileUrl},
+      );
+      print('✅ Updated interview $interviewId with Drive info');
+    } catch (e) {
+      print('❌ Failed to update interview with Drive info: $e');
+      rethrow;
+    }
+  }
 }

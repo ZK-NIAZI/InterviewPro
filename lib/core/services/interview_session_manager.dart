@@ -4,6 +4,7 @@ import '../../shared/domain/repositories/interview_repository.dart';
 import 'cache_manager.dart';
 import '../services/transcription_service.dart';
 import '../services/voice_recording_service.dart';
+import '../services/upload_queue_service.dart';
 import '../services/service_locator.dart';
 
 /// Service for managing interview sessions and real-time response tracking
@@ -337,6 +338,19 @@ class InterviewSessionManager extends ChangeNotifier {
 
       // Proactive STT Trigger: Start transcription immediately AFTER record is safe in DB
       if (voiceRecordingPath != null && voiceRecordingPath.isNotEmpty) {
+        // 1. Queue Upload to Google Drive (Resilient)
+        try {
+          final uploadService = sl<UploadQueueService>();
+          uploadService.addToQueue(
+            interviewId: _currentInterview!.id,
+            filePath: voiceRecordingPath,
+          );
+          debugPrint('☁️ Queued recording for upload: $voiceRecordingPath');
+        } catch (e) {
+          debugPrint('⚠️ Failed to queue upload: $e');
+        }
+
+        // 2. Queue Local Transcription (Existing Logic)
         try {
           final transcriptionService = sl<TranscriptionService>();
           transcriptionService.queueTranscription(

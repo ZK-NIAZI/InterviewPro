@@ -11,6 +11,9 @@ import 'interview_session_manager.dart';
 import 'voice_recording_service.dart';
 import 'data_management_service.dart';
 import 'transcription_service.dart';
+import 'drive_service.dart';
+import 'upload_queue_service.dart';
+import '../providers/auth_provider.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
@@ -20,6 +23,7 @@ Future<void> initializeDependencies() async {
   // Initialize Hive
   await Hive.initFlutter();
   await Hive.openBox('voiceRecordingsBox');
+  await UploadQueueService.init();
 
   // Initialize Appwrite service first
   sl.registerLazySingleton<AppwriteService>(() => AppwriteService.instance);
@@ -56,12 +60,26 @@ Future<void> initializeDependencies() async {
   );
 
   // Services
+  sl.registerLazySingleton<AuthProvider>(() => AuthProvider());
+
   sl.registerLazySingleton<InterviewSessionManager>(
     () => InterviewSessionManager(sl<InterviewRepository>()),
   );
 
   sl.registerLazySingleton<VoiceRecordingService>(
     () => VoiceRecordingService(Hive.box('voiceRecordingsBox')),
+  );
+
+  sl.registerFactory<DriveService>(
+    () => DriveService(null), // Client updated dynamically by AuthProvider
+  );
+
+  sl.registerLazySingleton<UploadQueueService>(
+    () => UploadQueueService(
+      sl<DriveService>(),
+      sl<AppwriteService>(),
+      sl<AuthProvider>(),
+    ),
   );
 
   sl.registerLazySingleton<DataManagementService>(

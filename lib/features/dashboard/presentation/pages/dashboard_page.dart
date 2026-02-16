@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/domain/entities/entities.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../history/presentation/widgets/history_content_widget.dart';
 import '../../../settings/presentation/widgets/settings_content_widget.dart';
@@ -123,6 +124,115 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
 
           const Spacer(),
+
+          // Drive Connect Button
+          Consumer<AuthProvider>(
+            builder: (context, auth, _) {
+              if (auth.isAuthenticated) {
+                return GestureDetector(
+                  onTap: () {
+                    // Show disconnect dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Google Drive Connected'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (auth.currentUser?.photoUrl != null)
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(
+                                  auth.currentUser!.photoUrl!,
+                                ),
+                                radius: 20,
+                              ),
+                            if (auth.currentUser?.displayName != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(auth.currentUser!.displayName!),
+                              ),
+                            Text(auth.currentUser?.email ?? ''),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Interviews will be uploaded to your Drive.',
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              auth.signOut();
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Disconnect',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.success),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_done,
+                          color: AppColors.success,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Linked',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                return ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await auth.signIn();
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Sign in failed: $e')),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.add_to_drive, size: 18),
+                  label: const Text('Connect Drive'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.textPrimary,
+                    elevation: 0,
+                    side: BorderSide(color: AppColors.grey300),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
