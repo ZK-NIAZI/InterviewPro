@@ -11,6 +11,7 @@ import '../../../../core/services/interview_session_manager.dart';
 import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
 import '../providers/voice_recording_provider.dart';
+import '../widgets/audio_waveform_widget.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -113,10 +114,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
     }
   }
 
-  /// Start interview session with loaded questions
   Future<void> _startInterviewSession() async {
     try {
-      await _sessionManager.startInterview(
+      // Capture the started interview session
+      final interview = await _sessionManager.startInterview(
         candidateName: widget.candidateName,
         role: widget.selectedRole,
         level: widget.selectedLevel,
@@ -128,6 +129,18 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
           _sessionStarted = true;
           _currentQuestionIndex = _sessionManager.currentQuestionIndex;
         });
+
+        // 🟢 AUTO-START TRIGGER
+        // Start recording immediately using the new interview ID
+        final voiceProvider = context.read<VoiceRecordingProvider>();
+        await voiceProvider.start(
+          interviewId: interview.id,
+          candidateName: widget.candidateName,
+        );
+
+        ScaffoldMessenger.of(
+          context,
+        ).clearSnackBars(); // Ensure clean slate but no new snackbar
       }
 
       debugPrint('✅ Interview session started successfully');
@@ -318,8 +331,15 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
   }
 
   Widget _buildQuestionContent() {
-    final provider = context.watch<VoiceRecordingProvider>();
-    final isRecording = provider.isRecording;
+    // VoiceRecordingProvider is used for auto-start, monitoring not needed for UI anymore
+    // final provider = context.watch<VoiceRecordingProvider>();
+    // Commented out to fix lint, but we use context.watch for the waveform below indirectly via the widget itself
+    // or we can consume it here if needed.
+    // Actually AudioWaveformWidget consumes the provider internally.
+    // But to toggle the visibility of the waveform, we DO need to watch the provider here.
+
+    // VoiceRecordingProvider is monitored by Consumer in sub-widgets
+    // final provider = context.watch<VoiceRecordingProvider>();
 
     return Stack(
       children: [
@@ -346,8 +366,10 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
           ],
         ),
 
-        // Floating Action Button for Voice Recording
-        // Positioned as a separate overlay to ensure tap detection works
+        // Floating Action Button REMOVED for Session-Based Automation
+        // We now record the entire session automatically.
+        // Manual control is disabled to prevent state conflicts.
+        /*
         Positioned(
           left: 0,
           right: 0,
@@ -415,6 +437,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
             ),
           ),
         ),
+        */
       ],
     );
   }
@@ -605,6 +628,43 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         // Notes input (ALWAYS VISIBLE)
         _buildNotesInput(),
 
+        const SizedBox(height: 24),
+
+        // 🎙️ Visual Feedback: Audio Waveform
+        // Only visible when recording (which is always true during session, but good to have toggle)
+        Consumer<VoiceRecordingProvider>(
+          builder: (context, provider, child) {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(sizeFactor: animation, child: child),
+                );
+              },
+              child: provider.isRecording
+                  ? const Column(
+                      children: [
+                        AudioWaveformWidget(
+                          height: 48,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Recording Active',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            );
+          },
+        ),
+
         // Extra padding to avoid overlap with FAB/Bottom Nav
         const SizedBox(height: 120),
       ],
@@ -748,32 +808,6 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
       ),
     );
-  }
-
-  String _formatDuration(int seconds) {
-    final mins = (seconds ~/ 60).toString().padLeft(2, '0');
-    final secs = (seconds % 60).toString().padLeft(2, '0');
-    return '$mins:$secs';
-  }
-
-  void _toggleRecording() async {
-    final provider = context.read<VoiceRecordingProvider>();
-    if (provider.isRecording) {
-      await provider.stop();
-    } else {
-      try {
-        await provider.start(
-          interviewId: _sessionManager.currentInterview?.id ?? 'temp',
-          candidateName: widget.candidateName,
-        );
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Microphone error: $e')));
-        }
-      }
-    }
   }
 
   Widget _buildBottomNavigation() {
@@ -942,6 +976,15 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
       if (mounted) {
         Navigator.pop(context); // Remove loading
+
+        // Show Uploading Feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Interview Completed - Uploading Recording... ☁️'),
+            backgroundColor: AppColors.primary,
+            duration: Duration(seconds: 4),
+          ),
+        );
 
         // Navigate to candidate evaluation page with interview data
         context.go(

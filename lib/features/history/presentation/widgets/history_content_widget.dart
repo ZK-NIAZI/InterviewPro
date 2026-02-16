@@ -353,17 +353,21 @@ class _HistoryContentWidgetState extends State<HistoryContentWidget> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: interview.overallScore != null
+                color: (interview.overallScore ?? interview.technicalScore) > 0
                     ? AppColors.primary
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                interview.overallScore?.toStringAsFixed(1) ?? '--',
+                (interview.overallScore ?? interview.technicalScore) > 0
+                    ? (interview.overallScore ?? interview.technicalScore)
+                          .toStringAsFixed(1)
+                    : '--',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: interview.overallScore != null
+                  color:
+                      (interview.overallScore ?? interview.technicalScore) > 0
                       ? Colors.white
                       : const Color(0xFF999999),
                 ),

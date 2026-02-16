@@ -47,7 +47,11 @@ class VoiceRecordingProvider extends ChangeNotifier {
   // Playback Getters
   bool get isPlaying => _isPlaying;
   Duration get currentPosition => _currentPosition;
+
   Duration get totalDuration => _totalDuration;
+
+  // Stream of amplitude for visualizer
+  Stream<double> get amplitudeStream => _recordingService.amplitudeStream;
 
   /// Start recording for an interview
   Future<void> start({

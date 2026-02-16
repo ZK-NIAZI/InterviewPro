@@ -67,10 +67,17 @@ class VoiceRecordingService {
     }
   }
 
+  // Amplitude stream for visualizer
+  final _amplitudeController = StreamController<double>.broadcast();
+  Timer? _amplitudeTimer;
+
   final _recordingStateController = StreamController<bool>.broadcast();
 
   /// Stream of recording state (true = recording, false = stopped)
   Stream<bool> get onRecordingStateChanged => _recordingStateController.stream;
+
+  /// Stream of current amplitude (0.0 to 1.0)
+  Stream<double> get amplitudeStream => _amplitudeController.stream;
 
   /// Start recording audio for an interview session
   Future<void> startRecording({
@@ -108,6 +115,7 @@ class VoiceRecordingService {
       debugPrint('🎙️ Starting audio recorder...');
       await _recorder.start(config, path: filePath);
       _recordingStateController.add(true); // Notify listeners
+      _startAmplitudePolling(); // 🟢 Start Polling
       debugPrint('🎙️ Audio recorder started: $filePath');
     } catch (e) {
       debugPrint('❌ Critical Error: Failed to start recorder: $e');
@@ -128,6 +136,7 @@ class VoiceRecordingService {
 
       final path = await _recorder.stop();
       _recordingStateController.add(false); // Notify listeners
+      _stopAmplitudePolling(); // 🔴 Stop Polling
       debugPrint('🛑 Stopped recording: $path');
 
       // Check file size if path exists
@@ -144,6 +153,7 @@ class VoiceRecordingService {
     } catch (e) {
       debugPrint('⚠️ Error in stopRecording: $e');
       _recordingStateController.add(false); // Ensure state is reset on error
+      _stopAmplitudePolling(); // 🔴 Ensure polling stops on error
       return _lastRecordingPath;
     }
   }
@@ -171,6 +181,40 @@ class VoiceRecordingService {
 
   /// Check if currently recording
   Future<bool> isRecording() => _recorder.isRecording();
+
+  // --- Amplitude Polling Wrappers ---
+
+  void _startAmplitudePolling() {
+    _amplitudeTimer?.cancel();
+    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      timer,
+    ) async {
+      try {
+        if (!await _recorder.isRecording()) return;
+
+        final amplitude = await _recorder.getAmplitude();
+        final current = amplitude.current; // dB value usually -160 to 0
+
+        // Normalize dB to 0.0 - 1.0 range for UI
+        // Typical speech is around -30dB to -10dB
+        // Noise floor often -50dB or lower
+        // We clamp between -60dB (min) and 0dB (max)
+        double normalized = (current + 60) / 60;
+        if (normalized < 0) normalized = 0;
+        if (normalized > 1) normalized = 1;
+
+        _amplitudeController.add(normalized);
+      } catch (e) {
+        // Silent catch to prevent timer crash
+      }
+    });
+  }
+
+  void _stopAmplitudePolling() {
+    _amplitudeTimer?.cancel();
+    _amplitudeTimer = null;
+    _amplitudeController.add(0.0); // Reset UI to flatline
+  }
 
   // --- Playback Section ---
 
@@ -362,6 +406,9 @@ class VoiceRecordingService {
   }
 
   void dispose() {
+    _amplitudeTimer?.cancel();
+    _amplitudeController.close();
+    _recordingStateController.close();
     _recorder.dispose();
     _player.dispose();
   }
