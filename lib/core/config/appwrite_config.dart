@@ -11,6 +11,7 @@ class AppwriteConfig {
 
   // Collection IDs
   static const String rolesCollectionId = 'roles';
+  static const String candidatesCollectionId = 'candidates';
   static const String interviewsCollectionId = 'interviews';
   static const String questionsCollectionId = 'questions';
   static const String evaluationsCollectionId = 'evaluations';

@@ -14,6 +14,7 @@ import 'transcription_service.dart';
 import 'drive_service.dart';
 import 'upload_queue_service.dart';
 import '../providers/auth_provider.dart';
+import '../../shared/data/datasources/sync_remote_datasource.dart';
 
 /// Service locator for dependency injection
 final GetIt sl = GetIt.instance;
@@ -77,8 +78,8 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<UploadQueueService>(
     () => UploadQueueService(
       sl<DriveService>(),
-      sl<AppwriteService>(),
       sl<AuthProvider>(),
+      sl<SyncRemoteDatasource>(),
     ),
   );
 
@@ -87,6 +88,11 @@ Future<void> initializeDependencies() async {
   );
 
   sl.registerLazySingleton<TranscriptionService>(() => TranscriptionService());
+
+  // Sync Service (Sidecar)
+  sl.registerLazySingleton<SyncRemoteDatasource>(
+    () => SyncRemoteDatasource(sl<AppwriteService>()),
+  );
 
   // Initialize data sources
   // (No local data sources to initialize)

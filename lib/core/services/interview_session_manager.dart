@@ -116,10 +116,11 @@ class InterviewSessionManager extends ChangeNotifier {
       // Enhanced input validation
       _validateInterviewInput(candidateName, role, level, questions);
 
+      final sanitizedCandidateName = _sanitizeInput(candidateName);
       // Create new interview entity with secure ID
       final interview = Interview(
-        id: _generateSecureInterviewId(),
-        candidateName: _sanitizeInput(candidateName),
+        id: _generateSecureInterviewId(sanitizedCandidateName),
+        candidateName: sanitizedCandidateName,
         role: _parseRole(role),
         roleName: role.trim(),
         level: _parseLevel(level),
@@ -341,9 +342,18 @@ class InterviewSessionManager extends ChangeNotifier {
         // 1. Queue Upload to Google Drive (Resilient)
         try {
           final uploadService = sl<UploadQueueService>();
+          // Generate a placeholder email since we don't capture it yet
+          // This ensures unique constraints in Appwrite don't break if we use a common placeholder
+          final sanitizedCandidate = _currentInterview!.candidateName
+              .replaceAll(RegExp(r'\s+'), '.')
+              .toLowerCase();
+          final placeholderEmail = '$sanitizedCandidate@interview.pro';
+
           uploadService.addToQueue(
             interviewId: _currentInterview!.id,
             filePath: voiceRecordingPath,
+            candidateName: _currentInterview!.candidateName,
+            candidateEmail: placeholderEmail,
           );
           debugPrint('☁️ Queued recording for upload: $voiceRecordingPath');
         } catch (e) {
@@ -537,11 +547,25 @@ class InterviewSessionManager extends ChangeNotifier {
         .replaceAll(RegExp(r'\s+'), ' '); // Normalize whitespace
   }
 
-  /// Generate secure interview ID
-  String _generateSecureInterviewId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final random = (timestamp * 31) % 1000000; // Simple hash for uniqueness
-    return 'interview_${timestamp}_$random';
+  /// Generate readable secure interview ID
+  /// Format: name-timestamp-random (max 36 chars)
+  String _generateSecureInterviewId(String candidateName) {
+    // 1. Sanitize: alphanumeric, hyphen, underscore only. Lowercase.
+    final slug = candidateName
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-') // Space to hyphen
+        .replaceAll(RegExp(r'[^a-z0-9\-_]'), ''); // Remove specials
+
+    // 2. Truncate name (max 20 chars to leave room for 15-char suffix)
+    final shortSlug = slug.length > 20 ? slug.substring(0, 20) : slug;
+    final prefix = shortSlug.isEmpty ? 'interview' : shortSlug;
+
+    // 3. Timestamp (seconds) & Random
+    final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+    final random = DateTime.now().millisecondsSinceEpoch % 1000;
+
+    // Example: john-doe-1712345678-123
+    return '$prefix-$timestamp-$random';
   }
 
   /// Save with retry mechanism

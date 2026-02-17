@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'drive_service.dart';
-import 'appwrite_service.dart';
+import '../../shared/data/datasources/sync_remote_datasource.dart';
 
 /// Service to handle background uploads with offline resilience
 import '../providers/auth_provider.dart';
@@ -13,8 +13,8 @@ import '../providers/auth_provider.dart';
 class UploadQueueService {
   final DriveService _driveService;
   final Box _queueBox;
-  final AppwriteService _appwriteService;
   final AuthProvider _authProvider;
+  final SyncRemoteDatasource _syncRemoteDatasource;
 
   static const String _boxName = 'uploadQueue';
   static const String _folderName = 'InterviewPro_Recordings';
@@ -23,8 +23,8 @@ class UploadQueueService {
 
   UploadQueueService(
     this._driveService,
-    this._appwriteService,
     this._authProvider,
+    this._syncRemoteDatasource,
   ) : _queueBox = Hive.box(_boxName) {
     _initConnectivityListener();
   }
@@ -49,12 +49,19 @@ class UploadQueueService {
   Future<void> addToQueue({
     required String interviewId,
     required String filePath,
+    required String candidateName,
+    String candidateEmail =
+        'unknown@candidate.com', // Placeholder until we have real email collection
   }) async {
     final task = {
       'interviewId': interviewId,
       'filePath': filePath,
       'timestamp': DateTime.now().toIso8601String(),
       'retryCount': 0,
+      // Add sidecar data to task to avoid dependence on local repository during background processing
+      'candidateName': candidateName,
+      'candidateEmail': candidateEmail,
+      'createdTime': DateTime.now().toIso8601String(),
     };
 
     await _queueBox.add(task);
@@ -133,12 +140,50 @@ class UploadQueueService {
 
           debugPrint('✅ Upload success. Updating database...');
 
-          // 2. Update Appwrite Record
-          await _appwriteService.updateInterviewDriveInfo(
-            interviewId: interviewId,
-            driveFileId: driveFileId,
-            driveFileUrl: driveFileUrl,
-          );
+          // 2. Sidecar Sync: Ensure presence in Appwrite (Candidates + Interview Metadata)
+          try {
+            // A. Sync Candidate
+            // Note: We need candidate info. Since queue only has interviewId, and we know
+            // the full interview object is in local storage, we ideally need to peek at it.
+            // However, to keep this decoupled, we might need to pass candidate info in the queue task
+            // OR fetch it from the repository here.
+            // Given the constraints, let's fetch the interview from the repository to get the candidate details.
+            // Accessing repository here is safe as it's a read operation.
+
+            // To do this clean, we'll need to inject InterviewRepository or pass data in the task.
+            // Let's check if we can pass it in the task map for simplicity and isolation.
+
+            final String candidateName =
+                task['candidateName'] ?? 'Unknown Candidate';
+            final String candidateEmail =
+                task['candidateEmail'] ?? 'unknown@candidate.com'; // Fallback
+            final String createdTimeStr =
+                task['createdTime'] ?? DateTime.now().toIso8601String();
+
+            debugPrint('🔄 Syncing Sidecar Metadata for $interviewId...');
+
+            final candidateId = await _syncRemoteDatasource.syncCandidate(
+              name: candidateName,
+              email: candidateEmail,
+            );
+
+            // B. Sync Interview Metadata
+            await _syncRemoteDatasource.syncInterviewMetadata(
+              interviewId: interviewId,
+              candidateId: candidateId,
+              driveFileId: driveFileId,
+              driveFileUrl: driveFileUrl,
+              candidateName: candidateName,
+              createdTime: DateTime.parse(createdTimeStr),
+            );
+
+            debugPrint('✅ Sidecar Sync Complete!');
+          } catch (e) {
+            debugPrint('⚠️ Sidecar Sync Failed (Non-blocking): $e');
+            // We do NOT rethrow here because the primary goal (Drive Upload) succeeded.
+            // Retrying the whole drive upload just because DB sync failed might be excessive
+            // unless strict consistency is required. Given "no trouble" requirement, we log and proceed.
+          }
 
           // 3. Remove from queue on success
           await _queueBox.delete(key);
