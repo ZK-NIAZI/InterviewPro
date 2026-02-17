@@ -24,13 +24,22 @@ class DriveService {
   }
 
   /// Check if a folder exists, create it if not, and return its ID
-  Future<String?> getOrCreateFolder(String folderName) async {
+  /// Supports optional [parentFolderId] for nested folders
+  Future<String?> getOrCreateFolder(
+    String folderName, {
+    String? parentFolderId,
+  }) async {
     if (_driveApi == null) return null;
 
     try {
       // 1. Search for folder
-      final query =
+      var query =
           "mimeType = 'application/vnd.google-apps.folder' and name = '$folderName' and trashed = false";
+
+      if (parentFolderId != null) {
+        query += " and '$parentFolderId' in parents";
+      }
+
       final fileList = await _driveApi!.files.list(
         q: query,
         $fields: 'files(id, name)',
@@ -38,7 +47,9 @@ class DriveService {
 
       if (fileList.files != null && fileList.files!.isNotEmpty) {
         final folderId = fileList.files!.first.id;
-        debugPrint('📂 Found existing folder "$folderName" (ID: $folderId)');
+        debugPrint(
+          '📂 Found existing folder "$folderName" (ID: $folderId) ${parentFolderId != null ? 'in parent $parentFolderId' : ''}',
+        );
         return folderId;
       }
 
@@ -46,6 +57,10 @@ class DriveService {
       final folderToCreate = drive.File()
         ..name = folderName
         ..mimeType = 'application/vnd.google-apps.folder';
+
+      if (parentFolderId != null) {
+        folderToCreate.parents = [parentFolderId];
+      }
 
       final createdFolder = await _driveApi!.files.create(
         folderToCreate,
@@ -61,11 +76,17 @@ class DriveService {
     }
   }
 
+  /// Sanitize a file/folder name to be safe for Drive and File Systems
+  static String sanitizeFileName(String name) {
+    return name.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_').trim();
+  }
+
   /// Upload a file to Google Drive with retries
   /// Returns the file ID and View URL
   Future<Map<String, String>> uploadFile(
     File file, {
     required String folderId,
+    String? targetFileName,
   }) async {
     if (_driveApi == null) {
       throw Exception(
@@ -74,22 +95,27 @@ class DriveService {
     }
 
     // Pass the File object so we can recreate streams on retry
-    return _uploadWithRetry(file, folderId: folderId);
+    return _uploadWithRetry(
+      file,
+      folderId: folderId,
+      targetFileName: targetFileName,
+    );
   }
 
   /// Internal method to handle exponential backoff for uploads
   Future<Map<String, String>> _uploadWithRetry(
     File file, {
     String? folderId,
+    String? targetFileName,
     int maxRetries = 3,
   }) async {
     int attempts = 0;
     while (attempts < maxRetries) {
       try {
-        final fileName = path.basename(file.path);
-
-        // Create a FRESH stream for each attempt
+        final fileName = targetFileName ?? path.basename(file.path);
         final length = await file.length();
+
+        // CORTEX-FIX: Open stream fresh for each attempt
         final stream = file.openRead();
         final media = drive.Media(stream, length);
 

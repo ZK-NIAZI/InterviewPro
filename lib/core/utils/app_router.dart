@@ -63,6 +63,8 @@ class AppRouter {
             candidateName: candidateName,
             candidateEmail: state.uri.queryParameters['candidateEmail'],
             candidatePhone: state.uri.queryParameters['candidatePhone'],
+            candidateCvId: state.uri.queryParameters['candidateCvId'],
+            candidateCvUrl: state.uri.queryParameters['candidateCvUrl'],
           );
         },
       ),
@@ -75,8 +77,11 @@ class AppRouter {
           final role = state.uri.queryParameters['role'] ?? '';
           final level = state.uri.queryParameters['level'] ?? '';
           final interviewId = state.uri.queryParameters['interviewId'] ?? '';
+          final candidateEmail =
+              state.uri.queryParameters['candidateEmail'] ?? '';
           return CandidateEvaluationPage(
             candidateName: candidateName,
+            candidateEmail: candidateEmail,
             role: role,
             level: level,
             interviewId: interviewId,

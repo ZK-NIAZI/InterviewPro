@@ -15,6 +15,8 @@ class SyncRemoteDatasource {
     required String name,
     required String email,
     String? phone,
+    String? cvFileId,
+    String? cvFileUrl,
   }) async {
     try {
       final databases = _appwriteService.databases;
@@ -31,38 +33,34 @@ class SyncRemoteDatasource {
         final candidateId = candidate.$id;
         debugPrint('✅ Found existing candidate: $name ($candidateId)');
 
-        // 2. OPTIONAL: Update phone if provided and different
-        // This makes the system "self-healing" / keeping data fresh
-        if (phone != null && phone.isNotEmpty) {
-          // We could check if phone is different, but simple update is safe
-          try {
-            await databases.updateDocument(
-              databaseId: AppwriteConfig.databaseId,
-              collectionId: AppwriteConfig.candidatesCollectionId,
-              documentId: candidateId,
-              data: {'phone': phone},
-            );
-            debugPrint('🔄 Updated candidate phone for $name ($candidateId)');
-          } catch (e) {
-            debugPrint(
-              '⚠️ Failed to update candidate phone (non-critical): $e',
-            );
-          }
-        }
+        final data = <String, dynamic>{
+          'name': name,
+          'phone': phone ?? candidate.data['phone'],
+        };
 
+        // Update CV info if provided
+        if (cvFileId != null) data['cvFileId'] = cvFileId;
+        if (cvFileUrl != null) data['cvFileUrl'] = cvFileUrl;
+
+        await databases.updateDocument(
+          databaseId: AppwriteConfig.databaseId,
+          collectionId: AppwriteConfig.candidatesCollectionId,
+          documentId: candidateId,
+          data: data,
+        );
+        debugPrint('🔄 Updated candidate for $name ($candidateId)');
         return candidateId;
       }
 
-      // 3. Create new candidate if not found
+      // 2. Create new candidate if not found
       final documentId = ID.unique();
-
-      final data = {'name': name, 'email': email};
-
-      if (phone != null && phone.isNotEmpty) {
-        data['phone'] = phone;
-      }
-
-      debugPrint('📤 Creating candidate with data: $data');
+      final data = {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'cvFileId': cvFileId,
+        'cvFileUrl': cvFileUrl,
+      };
 
       await databases.createDocument(
         databaseId: AppwriteConfig.databaseId,
@@ -90,6 +88,8 @@ class SyncRemoteDatasource {
     required String candidateName,
     required String candidateEmail,
     String? candidatePhone,
+    String? candidateCvId,
+    String? candidateCvUrl,
     required String interviewId,
     required String driveFileId,
     required String driveFileUrl,
@@ -102,6 +102,8 @@ class SyncRemoteDatasource {
         name: candidateName,
         email: candidateEmail,
         phone: candidatePhone,
+        cvFileId: candidateCvId,
+        cvFileUrl: candidateCvUrl,
       );
 
       // Check if document exists first (idempotency)
@@ -145,6 +147,25 @@ class SyncRemoteDatasource {
     } catch (e) {
       debugPrint('❌ Error syncing interview metadata: $e');
       rethrow;
+    }
+  }
+
+  /// Get candidate by email (to check for existing CV)
+  Future<Map<String, dynamic>?> getCandidateByEmail(String email) async {
+    try {
+      final response = await _appwriteService.databases.listDocuments(
+        databaseId: AppwriteConfig.databaseId,
+        collectionId: AppwriteConfig.candidatesCollectionId,
+        queries: [Query.equal('email', email)],
+      );
+
+      if (response.documents.isNotEmpty) {
+        return response.documents.first.data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('⚠️ Error retrieving candidate: $e');
+      return null;
     }
   }
 }

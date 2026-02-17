@@ -288,6 +288,7 @@ class _InterviewReportPageState extends State<InterviewReportPage> {
             role: widget.role,
             level: widget.level,
             interviewDate: reportData?.interview.startTime ?? DateTime.now(),
+            cvUrl: reportData?.interview.candidateCvUrl,
           ),
         ),
 

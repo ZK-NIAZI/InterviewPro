@@ -70,6 +70,12 @@ class Interview extends Equatable {
   /// Total duration of the interview voice recording
   final int? voiceRecordingDurationSeconds;
 
+  /// The Google Drive File ID of the candidate's CV
+  final String? candidateCvId;
+
+  /// The Google Drive View URL of the candidate's CV
+  final String? candidateCvUrl;
+
   /// Full transcript of the interview voice recording
   final String? transcript;
 
@@ -97,6 +103,8 @@ class Interview extends Equatable {
     this.voiceRecordingPath,
     this.voiceRecordingDurationSeconds,
     this.transcript,
+    this.candidateCvId,
+    this.candidateCvUrl,
   });
 
   /// Creates a copy of this interview with updated fields
@@ -124,6 +132,8 @@ class Interview extends Equatable {
     String? voiceRecordingPath,
     int? voiceRecordingDurationSeconds,
     String? transcript,
+    String? candidateCvId,
+    String? candidateCvUrl,
   }) {
     return Interview(
       id: id ?? this.id,
@@ -151,6 +161,8 @@ class Interview extends Equatable {
       voiceRecordingDurationSeconds:
           voiceRecordingDurationSeconds ?? this.voiceRecordingDurationSeconds,
       transcript: transcript ?? this.transcript,
+      candidateCvId: candidateCvId ?? this.candidateCvId,
+      candidateCvUrl: candidateCvUrl ?? this.candidateCvUrl,
     );
   }
 
@@ -276,6 +288,8 @@ class Interview extends Equatable {
       voiceRecordingPath: json['voiceRecordingPath'],
       voiceRecordingDurationSeconds: json['voiceRecordingDurationSeconds'],
       transcript: json['transcript'],
+      candidateCvId: json['candidateCvId'],
+      candidateCvUrl: json['candidateCvUrl'],
     );
   }
 
@@ -305,6 +319,8 @@ class Interview extends Equatable {
       'voiceRecordingPath': voiceRecordingPath,
       'voiceRecordingDurationSeconds': voiceRecordingDurationSeconds,
       'transcript': transcript,
+      'candidateCvId': candidateCvId,
+      'candidateCvUrl': candidateCvUrl,
     };
   }
 
@@ -375,6 +391,8 @@ class Interview extends Equatable {
     voiceRecordingPath,
     voiceRecordingDurationSeconds,
     transcript,
+    candidateCvId,
+    candidateCvUrl,
   ];
 
   @override

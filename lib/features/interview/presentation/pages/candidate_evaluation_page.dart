@@ -23,6 +23,7 @@ import '../../../../core/services/transcription_service.dart';
 /// Candidate evaluation screen for assessing soft skills and generating reports
 class CandidateEvaluationPage extends StatefulWidget {
   final String candidateName;
+  final String? candidateEmail;
   final String role;
   final String level;
   final String interviewId;
@@ -30,6 +31,7 @@ class CandidateEvaluationPage extends StatefulWidget {
   const CandidateEvaluationPage({
     super.key,
     required this.candidateName,
+    this.candidateEmail,
     required this.role,
     required this.level,
     required this.interviewId,
@@ -351,10 +353,12 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
                   candidateName:
                       _completedInterview?.candidateName ??
                       widget.candidateName,
+                  candidateEmail: widget.candidateEmail,
                   role: _completedInterview?.roleName ?? widget.role,
                   level: _completedInterview?.level.name ?? widget.level,
                   interviewDate:
                       _completedInterview?.startTime ?? DateTime.now(),
+                  cvUrl: _completedInterview?.candidateCvUrl,
                 ),
               ),
 

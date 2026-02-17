@@ -8,7 +8,10 @@ import '../../../../core/utils/app_router.dart';
 import '../../../../shared/domain/entities/experience_level.dart';
 import '../providers/experience_level_provider.dart';
 import '../../../../core/services/service_locator.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import '../../../../shared/domain/repositories/experience_level_repository.dart';
+import '../providers/cv_upload_provider.dart';
 
 /// Experience level selection screen with Appwrite backend integration
 class ExperienceLevelPage extends StatefulWidget {
@@ -315,103 +318,262 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Please enter the name of the candidate to start the session.',
-                  style: TextStyle(fontSize: 14, color: Colors.black),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: nameController,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: 'Full Name',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailController,
-                  textCapitalization: TextCapitalization.none,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: 'Email (Recommended)',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: Colors.grey[400],
-                      size: 20,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: 'Phone Number (Optional)',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    prefixIcon: Icon(
-                      Icons.phone_outlined,
-                      color: Colors.grey[400],
-                      size: 20,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-              ],
+            content: SingleChildScrollView(
+              child: Consumer<CvUploadProvider>(
+                builder: (context, cvProvider, child) {
+                  final hasCv = cvProvider.cvUrl != null;
+                  final isUploading = cvProvider.isUploading;
+                  final fileName = hasCv ? 'CV Attached' : 'Upload CV';
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Please enter the name of the candidate to start the session.',
+                        style: TextStyle(fontSize: 14, color: Colors.black),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: nameController,
+                        autofocus: !hasCv,
+                        readOnly: hasCv,
+                        textCapitalization: TextCapitalization.words,
+                        style: TextStyle(
+                          color: hasCv ? Colors.grey[600] : Colors.black,
+                          fontSize: 16,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Full Name',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: hasCv
+                              ? Colors.grey[100]
+                              : const Color(0xFFF9FAFB),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailController,
+                        readOnly: hasCv,
+                        textCapitalization: TextCapitalization.none,
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(
+                          color: hasCv ? Colors.grey[600] : Colors.black,
+                          fontSize: 16,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Email',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: hasCv
+                              ? Colors.grey[100]
+                              : const Color(0xFFF9FAFB),
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
+                            color: Colors.grey[400],
+                            size: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Phone Number',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: const Color(0xFFF9FAFB),
+                          prefixIcon: Icon(
+                            Icons.phone_outlined,
+                            color: Colors.grey[400],
+                            size: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // CV Upload Section
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: isUploading
+                                ? null
+                                : () async {
+                                    if (hasCv) return;
+
+                                    if (nameController.text.trim().isEmpty ||
+                                        emailController.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Please enter Name and Email first',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    FilePickerResult? result = await FilePicker
+                                        .platform
+                                        .pickFiles(
+                                          type: FileType.custom,
+                                          allowedExtensions: [
+                                            'pdf',
+                                            'doc',
+                                            'docx',
+                                          ],
+                                        );
+
+                                    if (result != null &&
+                                        result.files.single.path != null) {
+                                      final file = File(
+                                        result.files.single.path!,
+                                      );
+                                      await cvProvider.uploadCv(
+                                        file: file,
+                                        candidateName: nameController.text
+                                            .trim(),
+                                        candidateEmail: emailController.text
+                                            .trim(),
+                                        candidatePhone: phoneController.text
+                                            .trim(),
+                                      );
+                                    }
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: hasCv
+                                    ? const Color(0xFFF9FAFB)
+                                    : AppColors.primary,
+                                borderRadius: BorderRadius.circular(12),
+                                border: hasCv
+                                    ? Border.all(color: AppColors.primary)
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    hasCv
+                                        ? Icons.check_circle
+                                        : Icons.upload_file,
+                                    color: hasCv
+                                        ? AppColors.primary
+                                        : Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    isUploading ? 'Uploading...' : fileName,
+                                    style: TextStyle(
+                                      color: hasCv
+                                          ? AppColors.primary
+                                          : Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (isUploading) ...[
+                                    const SizedBox(width: 12),
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ] else if (hasCv) ...[
+                                    const SizedBox(width: 12),
+                                    GestureDetector(
+                                      onTap: () => cvProvider.reset(),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 18,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (cvProvider.errorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                cvProvider.errorMessage!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  context.read<CvUploadProvider>().reset(); // Reset on cancel
+                  Navigator.pop(context);
+                },
                 child: const Text(
                   'Cancel',
                   style: TextStyle(
@@ -420,41 +582,67 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                   ),
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text.trim().isNotEmpty) {
-                    final candidateName = nameController.text.trim();
-                    final candidateEmail = emailController.text.trim();
-                    final candidatePhone = phoneController.text.trim();
-                    Navigator.pop(context);
+              Consumer<CvUploadProvider>(
+                builder: (context, cvProvider, child) {
+                  return ElevatedButton(
+                    onPressed: cvProvider.isUploading
+                        ? null
+                        : () {
+                            if (nameController.text.trim().isNotEmpty) {
+                              final candidateName = nameController.text.trim();
+                              final candidateEmail = emailController.text
+                                  .trim();
+                              final candidatePhone = phoneController.text
+                                  .trim();
 
-                    final levels = _experienceLevelProvider.experienceLevels;
-                    final selectedLevelName = levels[selectedLevelIndex!].title;
+                              // Capture values before reset
+                              final cvFileId = cvProvider.cvFileId;
+                              final cvFileUrl = cvProvider.cvUrl;
 
-                    // Use Uri to properly encode query parameters
-                    final uri = Uri(
-                      path: AppRouter.interviewQuestion,
-                      queryParameters: {
-                        'role': widget.selectedRole,
-                        'level': selectedLevelName,
-                        'candidateName': candidateName,
-                        'candidateEmail': candidateEmail,
-                        'candidatePhone': candidatePhone,
-                      },
-                    );
+                              cvProvider
+                                  .reset(); // Reset provider state for next use
+                              Navigator.pop(context);
 
-                    context.push(uri.toString());
-                  }
+                              final levels =
+                                  _experienceLevelProvider.experienceLevels;
+                              final selectedLevelName =
+                                  levels[selectedLevelIndex!].title;
+
+                              // Use Uri to properly encode query parameters
+                              final Map<String, dynamic> queryParams = {
+                                'role': widget.selectedRole,
+                                'level': selectedLevelName,
+                                'candidateName': candidateName,
+                                'candidateEmail': candidateEmail,
+                                'candidatePhone': candidatePhone,
+                              };
+
+                              if (cvFileId != null) {
+                                queryParams['candidateCvId'] = cvFileId;
+                              }
+                              if (cvFileUrl != null) {
+                                queryParams['candidateCvUrl'] = cvFileUrl;
+                              }
+
+                              final uri = Uri(
+                                path: AppRouter.interviewQuestion,
+                                queryParameters: queryParams,
+                              );
+
+                              context.push(uri.toString());
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text('Start Interview'),
+                  );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text('Start Interview'),
               ),
             ],
             actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

@@ -17,8 +17,7 @@ class UploadQueueService {
   final SyncRemoteDatasource _syncRemoteDatasource;
 
   static const String _boxName = 'uploadQueue';
-  static const String _folderName = 'InterviewPro_Recordings';
-  String? _cachedFolderId;
+  final Map<String, String> _folderIdCache = {};
   bool _isProcessRunning = false;
 
   UploadQueueService(
@@ -53,6 +52,8 @@ class UploadQueueService {
     String candidateEmail =
         'unknown@candidate.com', // Placeholder until we have real email collection
     String? candidatePhone,
+    String? candidateCvId,
+    String? candidateCvUrl,
   }) async {
     final task = {
       'interviewId': interviewId,
@@ -63,6 +64,8 @@ class UploadQueueService {
       'candidateName': candidateName,
       'candidateEmail': candidateEmail,
       'candidatePhone': candidatePhone,
+      'candidateCvId': candidateCvId,
+      'candidateCvUrl': candidateCvUrl,
       'createdTime': DateTime.now().toIso8601String(),
     };
 
@@ -97,15 +100,6 @@ class UploadQueueService {
         return;
       }
 
-      // Ensure we have the target folder ID
-      if (_cachedFolderId == null) {
-        _cachedFolderId = await _driveService.getOrCreateFolder(_folderName);
-        if (_cachedFolderId == null) {
-          debugPrint('❌ Failed to resolve Drive folder. Aborting upload.');
-          return;
-        }
-      }
-
       // Iterate through keys to handle removals safely
       final keys = _queueBox.keys.toList();
 
@@ -113,6 +107,8 @@ class UploadQueueService {
         final task = Map<String, dynamic>.from(_queueBox.get(key));
         final String interviewId = task['interviewId'];
         final String filePath = task['filePath'];
+        final String candidateName =
+            task['candidateName'] ?? 'Unknown Candidate';
 
         debugPrint('🔄 Processing upload for $interviewId...');
 
@@ -132,10 +128,24 @@ class UploadQueueService {
             continue;
           }
 
-          // 1. Upload to Drive (Pass path, let service handle stream)
+          // 1. Resolve Target Folder (Per Candidate)
+          final safeName = DriveService.sanitizeFileName(candidateName);
+          String? targetFolderId = _folderIdCache[safeName];
+
+          if (targetFolderId == null) {
+            targetFolderId = await _driveService.getOrCreateFolder(safeName);
+            if (targetFolderId != null) {
+              _folderIdCache[safeName] = targetFolderId;
+            } else {
+              debugPrint('❌ Failed to resolve Drive folder for $safeName.');
+              continue; // Skip this task but don't delete (retry later)
+            }
+          }
+
+          // 2. Upload to Drive (Pass path, let service handle stream)
           final driveResult = await _driveService.uploadFile(
             file,
-            folderId: _cachedFolderId!,
+            folderId: targetFolderId,
           );
           final driveFileId = driveResult['id']!;
           final driveFileUrl = driveResult['url']!;
@@ -160,6 +170,8 @@ class UploadQueueService {
             final String candidateEmail =
                 task['candidateEmail'] ?? 'unknown@candidate.com'; // Fallback
             final String? candidatePhone = task['candidatePhone'];
+            final String? candidateCvId = task['candidateCvId'];
+            final String? candidateCvUrl = task['candidateCvUrl'];
 
             debugPrint('🔄 Syncing Sidecar Metadata for $interviewId...');
 
@@ -168,6 +180,8 @@ class UploadQueueService {
               candidateName: candidateName,
               candidateEmail: candidateEmail,
               candidatePhone: candidatePhone,
+              candidateCvId: candidateCvId,
+              candidateCvUrl: candidateCvUrl,
               interviewId: interviewId,
               driveFileId: driveFileId,
               driveFileUrl: driveFileUrl,

@@ -21,6 +21,8 @@ class InterviewQuestionPage extends StatefulWidget {
   final String candidateName;
   final String? candidateEmail;
   final String? candidatePhone;
+  final String? candidateCvId;
+  final String? candidateCvUrl;
 
   const InterviewQuestionPage({
     super.key,
@@ -29,6 +31,8 @@ class InterviewQuestionPage extends StatefulWidget {
     required this.candidateName,
     this.candidateEmail,
     this.candidatePhone,
+    this.candidateCvId,
+    this.candidateCvUrl,
   });
 
   @override
@@ -126,6 +130,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         candidateName: widget.candidateName,
         candidateEmail: widget.candidateEmail,
         candidatePhone: widget.candidatePhone,
+        candidateCvId: widget.candidateCvId,
+        candidateCvUrl: widget.candidateCvUrl,
         role: widget.selectedRole,
         level: widget.selectedLevel,
         questions: _questions,
@@ -145,9 +151,11 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
           candidateName: widget.candidateName,
         );
 
-        ScaffoldMessenger.of(
-          context,
-        ).clearSnackBars(); // Ensure clean slate but no new snackbar
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).clearSnackBars(); // Ensure clean slate but no new snackbar
+        }
       }
 
       debugPrint('✅ Interview session started successfully');
@@ -497,14 +505,14 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
               final shouldDiscard = await BackNavigationDialog.show(context);
 
               if (shouldDiscard == true) {
-                if (!context.mounted) return;
+                if (!mounted) return;
 
                 await context.read<VoiceRecordingProvider>().cancel();
                 _sessionManager.clearSession();
 
                 debugPrint('🗑️ Interview session discarded via Close button');
 
-                if (context.mounted) {
+                if (mounted) {
                   context.pop();
                 }
               }
@@ -1037,7 +1045,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
 
         // Navigate to candidate evaluation page with interview data
         context.go(
-          '${AppRouter.candidateEvaluation}?candidateName=${Uri.encodeComponent(completedInterview.candidateName)}&role=${Uri.encodeComponent(completedInterview.roleName)}&level=${Uri.encodeComponent(completedInterview.level.name)}&interviewId=${completedInterview.id}',
+          '${AppRouter.candidateEvaluation}?candidateName=${Uri.encodeComponent(completedInterview.candidateName)}&candidateEmail=${Uri.encodeComponent(widget.candidateEmail ?? '')}&role=${Uri.encodeComponent(completedInterview.roleName)}&level=${Uri.encodeComponent(completedInterview.level.name)}&interviewId=${completedInterview.id}',
         );
       }
     } catch (e) {

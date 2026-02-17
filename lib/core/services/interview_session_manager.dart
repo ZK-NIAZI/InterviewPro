@@ -114,6 +114,8 @@ class InterviewSessionManager extends ChangeNotifier {
     required String candidateName,
     String? candidateEmail,
     String? candidatePhone,
+    String? candidateCvId,
+    String? candidateCvUrl,
     required String role,
     required String level,
     required List<InterviewQuestion> questions,
@@ -136,6 +138,8 @@ class InterviewSessionManager extends ChangeNotifier {
         status: InterviewStatus.inProgress,
         currentQuestionIndex: 0,
         totalQuestions: questions.length,
+        candidateCvId: candidateCvId,
+        candidateCvUrl: candidateCvUrl,
       );
 
       // Set current session
