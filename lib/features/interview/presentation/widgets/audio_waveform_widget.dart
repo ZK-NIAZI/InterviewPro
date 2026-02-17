@@ -55,13 +55,15 @@ class _AudioWaveformWidgetState extends State<AudioWaveformWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: widget.height,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end, // Bars grow from bottom
-        children: List.generate(_barCount, (index) => _buildBar(index)),
+    return RepaintBoundary(
+      child: Container(
+        height: widget.height,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end, // Bars grow from bottom
+          children: List.generate(_barCount, (index) => _buildBar(index)),
+        ),
       ),
     );
   }
