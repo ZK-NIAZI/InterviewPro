@@ -12,6 +12,7 @@ import '../../../../shared/domain/entities/interview_question.dart';
 import '../providers/interview_question_provider.dart';
 import '../providers/voice_recording_provider.dart';
 import '../widgets/audio_waveform_widget.dart';
+import '../widgets/back_navigation_dialog.dart';
 
 /// Interview question screen matching the provided HTML design
 class InterviewQuestionPage extends StatefulWidget {
@@ -221,15 +222,42 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        body: _isLoading
-            ? _buildLoadingState()
-            : _error != null
-            ? _buildErrorState()
-            : _questions.isEmpty
-            ? _buildEmptyState()
-            : _buildQuestionContent(),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
+          if (didPop) return;
+
+          // 1. Show confirmation dialog using shared widget
+          final shouldDiscard = await BackNavigationDialog.show(context);
+
+          if (shouldDiscard == true) {
+            if (!context.mounted) return;
+
+            // 2. Stop and delete recording
+            // We use cancel() because we are discarding the session
+            await context.read<VoiceRecordingProvider>().cancel();
+
+            // 3. Clear session from memory
+            // This ensures no state leaks into the next session
+            _sessionManager.clearSession();
+
+            debugPrint('🗑️ Interview session discarded and cleaned up');
+
+            if (context.mounted) {
+              context.pop();
+            }
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          body: _isLoading
+              ? _buildLoadingState()
+              : _error != null
+              ? _buildErrorState()
+              : _questions.isEmpty
+              ? _buildEmptyState()
+              : _buildQuestionContent(),
+        ),
       ),
     );
   }
@@ -462,9 +490,24 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         children: [
           // Close button
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               HapticFeedback.mediumImpact();
-              context.pop();
+
+              // Use the same robust cleanup logic as PopScope
+              final shouldDiscard = await BackNavigationDialog.show(context);
+
+              if (shouldDiscard == true) {
+                if (!context.mounted) return;
+
+                await context.read<VoiceRecordingProvider>().cancel();
+                _sessionManager.clearSession();
+
+                debugPrint('🗑️ Interview session discarded via Close button');
+
+                if (context.mounted) {
+                  context.pop();
+                }
+              }
             },
             child: Container(
               width: 44, // Standard 44x44

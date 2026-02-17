@@ -91,10 +91,17 @@ class VoiceRecordingProvider extends ChangeNotifier {
     }
   }
 
-  /// Cancel current recording (discard)
+  /// Cancel current recording (discard & delete file)
   Future<void> cancel() async {
     try {
-      await _recordingService.stopRecording();
+      // Stop recording and get the file path
+      final path = await _recordingService.stopRecording();
+
+      // Immediately delete the file to prevent orphans
+      if (path != null) {
+        await _recordingService.deleteFile(path);
+        debugPrint('🗑️ Cancelled recording and deleted file: $path');
+      }
 
       _activeInterviewId = null;
       _recordingDurationSeconds = 0;
