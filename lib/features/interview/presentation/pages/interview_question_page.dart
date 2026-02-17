@@ -18,12 +18,16 @@ class InterviewQuestionPage extends StatefulWidget {
   final String selectedRole;
   final String selectedLevel;
   final String candidateName;
+  final String? candidateEmail;
+  final String? candidatePhone;
 
   const InterviewQuestionPage({
     super.key,
     required this.selectedRole,
     required this.selectedLevel,
     required this.candidateName,
+    this.candidateEmail,
+    this.candidatePhone,
   });
 
   @override
@@ -119,6 +123,8 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
       // Capture the started interview session
       final interview = await _sessionManager.startInterview(
         candidateName: widget.candidateName,
+        candidateEmail: widget.candidateEmail,
+        candidatePhone: widget.candidatePhone,
         role: widget.selectedRole,
         level: widget.selectedLevel,
         questions: _questions,

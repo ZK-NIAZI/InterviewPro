@@ -61,6 +61,8 @@ class AppRouter {
             selectedRole: selectedRole,
             selectedLevel: selectedLevel,
             candidateName: candidateName,
+            candidateEmail: state.uri.queryParameters['candidateEmail'],
+            candidatePhone: state.uri.queryParameters['candidatePhone'],
           );
         },
       ),

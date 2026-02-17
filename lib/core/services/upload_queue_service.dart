@@ -52,6 +52,7 @@ class UploadQueueService {
     required String candidateName,
     String candidateEmail =
         'unknown@candidate.com', // Placeholder until we have real email collection
+    String? candidatePhone,
   }) async {
     final task = {
       'interviewId': interviewId,
@@ -61,6 +62,7 @@ class UploadQueueService {
       // Add sidecar data to task to avoid dependence on local repository during background processing
       'candidateName': candidateName,
       'candidateEmail': candidateEmail,
+      'candidatePhone': candidatePhone,
       'createdTime': DateTime.now().toIso8601String(),
     };
 
@@ -157,24 +159,18 @@ class UploadQueueService {
                 task['candidateName'] ?? 'Unknown Candidate';
             final String candidateEmail =
                 task['candidateEmail'] ?? 'unknown@candidate.com'; // Fallback
-            final String createdTimeStr =
-                task['createdTime'] ?? DateTime.now().toIso8601String();
+            final String? candidatePhone = task['candidatePhone'];
 
             debugPrint('🔄 Syncing Sidecar Metadata for $interviewId...');
 
-            final candidateId = await _syncRemoteDatasource.syncCandidate(
-              name: candidateName,
-              email: candidateEmail,
-            );
-
-            // B. Sync Interview Metadata
+            // B. Sync Interview Metadata (Handles Candidate Sync internally)
             await _syncRemoteDatasource.syncInterviewMetadata(
+              candidateName: candidateName,
+              candidateEmail: candidateEmail,
+              candidatePhone: candidatePhone,
               interviewId: interviewId,
-              candidateId: candidateId,
               driveFileId: driveFileId,
               driveFileUrl: driveFileUrl,
-              candidateName: candidateName,
-              createdTime: DateTime.parse(createdTimeStr),
             );
 
             debugPrint('✅ Sidecar Sync Complete!');

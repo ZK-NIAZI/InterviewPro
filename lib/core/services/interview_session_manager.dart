@@ -16,6 +16,10 @@ class InterviewSessionManager extends ChangeNotifier {
   List<InterviewQuestion> _sessionQuestions = [];
   DateTime? _questionStartTime;
 
+  // Transient candidate info (not stored in Interview entity to avoid db migration)
+  String? _currentCandidateEmail;
+  String? _currentCandidatePhone;
+
   // Cache keys
   static const String _currentInterviewKey = 'current_interview_session';
   static const String _sessionQuestionsKey = 'session_questions';
@@ -108,6 +112,8 @@ class InterviewSessionManager extends ChangeNotifier {
   /// Start a new interview session with enhanced validation
   Future<Interview> startInterview({
     required String candidateName,
+    String? candidateEmail,
+    String? candidatePhone,
     required String role,
     required String level,
     required List<InterviewQuestion> questions,
@@ -136,6 +142,8 @@ class InterviewSessionManager extends ChangeNotifier {
       _currentInterview = interview;
       _sessionQuestions = questions;
       _questionStartTime = DateTime.now();
+      _currentCandidateEmail = candidateEmail;
+      _currentCandidatePhone = candidatePhone;
 
       // Cache the session data securely
       _cacheSessionData();
@@ -344,16 +352,24 @@ class InterviewSessionManager extends ChangeNotifier {
           final uploadService = sl<UploadQueueService>();
           // Generate a placeholder email since we don't capture it yet
           // This ensures unique constraints in Appwrite don't break if we use a common placeholder
+          // priority: 1. provided email, 2. placeholder
           final sanitizedCandidate = _currentInterview!.candidateName
               .replaceAll(RegExp(r'\s+'), '.')
               .toLowerCase();
           final placeholderEmail = '$sanitizedCandidate@interview.pro';
 
+          final effectiveEmail =
+              (_currentCandidateEmail != null &&
+                  _currentCandidateEmail!.isNotEmpty)
+              ? _currentCandidateEmail!
+              : placeholderEmail;
+
           uploadService.addToQueue(
             interviewId: _currentInterview!.id,
             filePath: voiceRecordingPath,
             candidateName: _currentInterview!.candidateName,
-            candidateEmail: placeholderEmail,
+            candidateEmail: effectiveEmail,
+            candidatePhone: _currentCandidatePhone,
           );
           debugPrint('☁️ Queued recording for upload: $voiceRecordingPath');
         } catch (e) {
@@ -505,6 +521,8 @@ class InterviewSessionManager extends ChangeNotifier {
     _currentInterview = null;
     _sessionQuestions = [];
     _questionStartTime = null;
+    _currentCandidateEmail = null;
+    _currentCandidatePhone = null;
     _clearSessionCache();
     notifyListeners();
   }

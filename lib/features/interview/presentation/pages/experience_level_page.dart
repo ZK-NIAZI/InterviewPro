@@ -291,6 +291,8 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
   /// Shows a modern, minimal dialog with blurred background for candidate name
   void _showCandidateNameDialog() {
     final TextEditingController nameController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController phoneController = TextEditingController();
 
     showDialog(
       context: context,
@@ -346,6 +348,65 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  textCapitalization: TextCapitalization.none,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Email (Recommended)',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey[400],
+                      size: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Phone Number (Optional)',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    prefixIcon: Icon(
+                      Icons.phone_outlined,
+                      color: Colors.grey[400],
+                      size: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
               ],
             ),
             actions: [
@@ -363,15 +424,26 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                 onPressed: () {
                   if (nameController.text.trim().isNotEmpty) {
                     final candidateName = nameController.text.trim();
+                    final candidateEmail = emailController.text.trim();
+                    final candidatePhone = phoneController.text.trim();
                     Navigator.pop(context);
 
                     final levels = _experienceLevelProvider.experienceLevels;
                     final selectedLevelName = levels[selectedLevelIndex!].title;
 
-                    // Navigate to interview question screen with candidate name
-                    context.push(
-                      '${AppRouter.interviewQuestion}?role=${widget.selectedRole}&level=$selectedLevelName&candidateName=$candidateName',
+                    // Use Uri to properly encode query parameters
+                    final uri = Uri(
+                      path: AppRouter.interviewQuestion,
+                      queryParameters: {
+                        'role': widget.selectedRole,
+                        'level': selectedLevelName,
+                        'candidateName': candidateName,
+                        'candidateEmail': candidateEmail,
+                        'candidatePhone': candidatePhone,
+                      },
                     );
+
+                    context.push(uri.toString());
                   }
                 },
                 style: ElevatedButton.styleFrom(
