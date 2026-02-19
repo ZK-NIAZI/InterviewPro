@@ -15,6 +15,7 @@ class EvaluationProvider extends ChangeNotifier {
   int _culturalFit = 0;
   int _overallImpression = 0;
   String _additionalComments = '';
+  InterviewVerdict? _verdict;
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isSaved = false;
@@ -25,6 +26,7 @@ class EvaluationProvider extends ChangeNotifier {
   int get culturalFit => _culturalFit;
   int get overallImpression => _overallImpression;
   String get additionalComments => _additionalComments;
+  InterviewVerdict? get verdict => _verdict;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   bool get isSaved => _isSaved;
@@ -44,7 +46,8 @@ class EvaluationProvider extends ChangeNotifier {
     return _communicationSkills > 0 &&
         _problemSolvingApproach > 0 &&
         _culturalFit > 0 &&
-        _overallImpression > 0;
+        _overallImpression > 0 &&
+        _verdict != null;
   }
 
   /// Update communication skills rating
@@ -83,6 +86,14 @@ class EvaluationProvider extends ChangeNotifier {
   void updateAdditionalComments(String comments) {
     if (_additionalComments != comments) {
       _additionalComments = comments;
+      notifyListeners();
+    }
+  }
+
+  /// Update verdict
+  void updateVerdict(InterviewVerdict? verdict) {
+    if (_verdict != verdict) {
+      _verdict = verdict;
       notifyListeners();
     }
   }
@@ -137,6 +148,7 @@ class EvaluationProvider extends ChangeNotifier {
     _culturalFit = 0;
     _overallImpression = 0;
     _additionalComments = '';
+    _verdict = null;
     _isSaved = false;
     notifyListeners();
   }
@@ -206,6 +218,7 @@ class EvaluationProvider extends ChangeNotifier {
           overallImpression: _overallImpression,
           additionalComments: _additionalComments,
           transcript: transcript,
+          verdict: _verdict,
         );
         await _interviewRepository.updateInterview(updatedInterview);
       }
@@ -249,23 +262,10 @@ OVERALL SCORE: $scorePercentage%
 ADDITIONAL COMMENTS:
 ${_additionalComments.isEmpty ? 'No additional comments provided.' : _additionalComments}
 
-RECOMMENDATION:
-${_getRecommendation(calculatedScore)}
+VERDICT:
+${_verdict?.displayName ?? 'Not Selected'}
 ''';
 
     return report;
-  }
-
-  /// Get recommendation based on score (0-100)
-  String _getRecommendation(double score) {
-    if (score >= 80.0) {
-      return 'Highly Recommended - Excellent candidate with strong skills across all areas.';
-    } else if (score >= 60.0) {
-      return 'Recommended - Good candidate with solid skills, minor areas for improvement.';
-    } else if (score >= 40.0) {
-      return 'Consider with Reservations - Average candidate, significant areas need improvement.';
-    } else {
-      return 'Not Recommended - Candidate needs substantial development before being suitable for this role.';
-    }
   }
 }

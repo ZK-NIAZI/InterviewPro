@@ -1,13 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../../../../shared/domain/entities/entities.dart';
 import '../../../../shared/domain/repositories/repositories.dart';
+import '../../../../core/services/drive_service.dart';
 
 /// Provider for managing interview setup state and logic
 class InterviewSetupProvider extends ChangeNotifier {
   final InterviewQuestionRepository _questionRepository;
   final InterviewRepository _interviewRepository;
+  final DriveService _driveService;
 
-  InterviewSetupProvider(this._questionRepository, this._interviewRepository);
+  InterviewSetupProvider(
+    this._questionRepository,
+    this._interviewRepository,
+    this._driveService,
+  );
 
   bool _isLoading = false;
   Role? _selectedRole;
@@ -25,6 +31,40 @@ class InterviewSetupProvider extends ChangeNotifier {
       _selectedRole != null &&
       _selectedLevel != null &&
       _candidateName.trim().isNotEmpty;
+
+  /// Prepares the candidate workspace by creating a unique folder in Drive
+  Future<String> prepareCandidateWorkspace(String candidateName) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Check connection
+      if (_driveService.driveApi == null) {
+        throw Exception(
+          'Google Drive is not connected. Please connect from Dashboard.',
+        );
+      }
+
+      // 2. Create Unique Folder directly
+      final folderId = await _driveService.createUniqueCandidateFolder(
+        candidateName,
+      );
+
+      if (folderId == null) {
+        throw Exception(
+          'Failed to create a unique folder on Google Drive. Please check your connection.',
+        );
+      }
+
+      return folderId;
+    } catch (e) {
+      debugPrint('Error preparing workspace: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// Set the selected role and update available questions
   Future<void> setSelectedRole(Role role) async {
@@ -96,7 +136,12 @@ class InterviewSetupProvider extends ChangeNotifier {
   }
 
   /// Create a new interview with current settings
-  Future<Interview> createInterview(String candidateName) async {
+  Future<Interview> createInterview(
+    String candidateName, {
+    String? candidateCvId,
+    String? candidateCvUrl,
+    String? driveFolderId,
+  }) async {
     if (_selectedRole == null || _selectedLevel == null) {
       throw Exception('Role and level must be selected');
     }
@@ -136,6 +181,9 @@ class InterviewSetupProvider extends ChangeNotifier {
         responses: [],
         status: InterviewStatus.notStarted,
         overallScore: null,
+        candidateCvId: candidateCvId,
+        candidateCvUrl: candidateCvUrl,
+        driveFolderId: driveFolderId,
       );
 
       // Save the interview

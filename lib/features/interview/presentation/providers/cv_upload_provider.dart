@@ -16,6 +16,7 @@ class CvUploadProvider extends ChangeNotifier {
   CvUploadStatus _status = CvUploadStatus.idle;
   String? _cvUrl;
   String? _cvFileId;
+  String? _uploadedFolderId;
   String? _errorMessage;
 
   CvUploadProvider(
@@ -28,6 +29,7 @@ class CvUploadProvider extends ChangeNotifier {
   String? get cvUrl => _cvUrl;
   String? get cvFileId => _cvFileId;
   String? get errorMessage => _errorMessage;
+  String? get uploadedFolderId => _uploadedFolderId;
   bool get isUploading => _status == CvUploadStatus.uploading;
 
   // Removed _rootFolderName as we now use per-candidate root folders
@@ -43,9 +45,19 @@ class CvUploadProvider extends ChangeNotifier {
       final candidateData = await _syncRemoteDatasource.getCandidateByEmail(
         email,
       );
-      if (candidateData != null && candidateData['cvFileUrl'] != null) {
-        _cvUrl = candidateData['cvFileUrl'];
-        _status = CvUploadStatus.success;
+      if (candidateData != null) {
+        // Restore CV info
+        if (candidateData['cvFileUrl'] != null) {
+          _cvUrl = candidateData['cvFileUrl'];
+          _cvFileId = candidateData['cvFileId'];
+          _status = CvUploadStatus.success;
+        }
+
+        // Restore Folder ID (Critical for consistency)
+        if (candidateData['driveFolderId'] != null) {
+          _uploadedFolderId = candidateData['driveFolderId'];
+          debugPrint('📂 Restored existing Drive Folder: $_uploadedFolderId');
+        }
       } else {
         _status = CvUploadStatus.idle;
       }
@@ -91,9 +103,12 @@ class CvUploadProvider extends ChangeNotifier {
         throw Exception('User not signed in to Google Drive');
       }
 
-      // 4. Get/Create Candidate Folder (At Root)
-      final safeName = DriveService.sanitizeFileName(candidateName);
-      final candidateFolderId = await _driveService.getOrCreateFolder(safeName);
+      // 4. Get/Create Candidate Folder (Unique Strategy)
+      // Use existing folder if restored, otherwise create new unique one
+      String? candidateFolderId = _uploadedFolderId;
+      candidateFolderId ??= await _driveService.createUniqueCandidateFolder(
+          candidateName,
+        );
 
       if (candidateFolderId == null) {
         throw Exception('Could not create candidate folder');
@@ -102,6 +117,7 @@ class CvUploadProvider extends ChangeNotifier {
       // 5. Prepare Filename
       // Format: {CandidateName}_CV.{extension}
       final extension = file.path.split('.').last;
+      final safeName = DriveService.sanitizeFileName(candidateName);
       final targetFileName = '${safeName}_CV.$extension';
 
       // 6. Upload File
@@ -113,17 +129,19 @@ class CvUploadProvider extends ChangeNotifier {
       final driveFileId = result['id']!;
       final driveFileUrl = result['url']!;
 
-      // 6. Sync with Appwrite
+      // 6. Sync with Appwrite (Persist ALL IDs)
       await _syncRemoteDatasource.syncCandidate(
         name: candidateName,
         email: candidateEmail,
         phone: candidatePhone,
         cvFileId: driveFileId,
         cvFileUrl: driveFileUrl,
+        driveFolderId: candidateFolderId, // CRITICAL: Save folder ID
       );
 
       _cvUrl = driveFileUrl;
       _cvFileId = driveFileId;
+      _uploadedFolderId = candidateFolderId;
       _status = CvUploadStatus.success;
       debugPrint('✅ CV Uploaded Successfully: $driveFileUrl');
     } catch (e) {
@@ -145,6 +163,7 @@ class CvUploadProvider extends ChangeNotifier {
     _errorMessage = null;
     _cvUrl = null;
     _cvFileId = null;
+    _uploadedFolderId = null;
     notifyListeners();
   }
 }

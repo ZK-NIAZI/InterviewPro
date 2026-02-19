@@ -23,6 +23,7 @@ class InterviewQuestionPage extends StatefulWidget {
   final String? candidatePhone;
   final String? candidateCvId;
   final String? candidateCvUrl;
+  final String? driveFolderId;
 
   const InterviewQuestionPage({
     super.key,
@@ -33,6 +34,7 @@ class InterviewQuestionPage extends StatefulWidget {
     this.candidatePhone,
     this.candidateCvId,
     this.candidateCvUrl,
+    this.driveFolderId,
   });
 
   @override

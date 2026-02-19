@@ -88,11 +88,13 @@ class InterviewProApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SplashProvider()),
+        ChangeNotifierProvider(
+          create: (_) => SplashProvider(sl<AuthProvider>()),
+        ),
         ChangeNotifierProvider(create: (_) => DashboardProvider(sl())),
         ChangeNotifierProvider(create: (_) => HistoryProvider(sl())),
         ChangeNotifierProvider(
-          create: (_) => InterviewSetupProvider(sl(), sl()),
+          create: (_) => InterviewSetupProvider(sl(), sl(), sl()),
         ),
         ChangeNotifierProvider(create: (_) => EvaluationProvider(sl())),
         ChangeNotifierProvider(create: (_) => RoleProvider()),

@@ -54,6 +54,7 @@ class UploadQueueService {
     String? candidatePhone,
     String? candidateCvId,
     String? candidateCvUrl,
+    String? driveFolderId,
   }) async {
     final task = {
       'interviewId': interviewId,
@@ -66,6 +67,7 @@ class UploadQueueService {
       'candidatePhone': candidatePhone,
       'candidateCvId': candidateCvId,
       'candidateCvUrl': candidateCvUrl,
+      'driveFolderId': driveFolderId,
       'createdTime': DateTime.now().toIso8601String(),
     };
 
@@ -109,6 +111,7 @@ class UploadQueueService {
         final String filePath = task['filePath'];
         final String candidateName =
             task['candidateName'] ?? 'Unknown Candidate';
+        final String? driveFolderId = task['driveFolderId'];
 
         debugPrint('🔄 Processing upload for $interviewId...');
 
@@ -129,16 +132,24 @@ class UploadQueueService {
           }
 
           // 1. Resolve Target Folder (Per Candidate)
-          final safeName = DriveService.sanitizeFileName(candidateName);
-          String? targetFolderId = _folderIdCache[safeName];
+          String? targetFolderId = driveFolderId;
 
+          // Only resolve by name if ID is missing (Legacy fallback or safeguard)
           if (targetFolderId == null) {
-            targetFolderId = await _driveService.getOrCreateFolder(safeName);
-            if (targetFolderId != null) {
-              _folderIdCache[safeName] = targetFolderId;
-            } else {
-              debugPrint('❌ Failed to resolve Drive folder for $safeName.');
-              continue; // Skip this task but don't delete (retry later)
+            debugPrint(
+              '⚠️ Missing driveFolderId for $interviewId. Falling back to name resolution.',
+            );
+            final safeName = DriveService.sanitizeFileName(candidateName);
+            targetFolderId = _folderIdCache[safeName];
+
+            if (targetFolderId == null) {
+              targetFolderId = await _driveService.getOrCreateFolder(safeName);
+              if (targetFolderId != null) {
+                _folderIdCache[safeName] = targetFolderId;
+              } else {
+                debugPrint('❌ Failed to resolve Drive folder for $safeName.');
+                continue; // Skip this task but don't delete (retry later)
+              }
             }
           }
 
@@ -185,6 +196,7 @@ class UploadQueueService {
               interviewId: interviewId,
               driveFileId: driveFileId,
               driveFileUrl: driveFileUrl,
+              driveFolderId: targetFolderId, // Pass the resolved folder ID
             );
 
             debugPrint('✅ Sidecar Sync Complete!');

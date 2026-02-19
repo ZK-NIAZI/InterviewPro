@@ -644,8 +644,7 @@ class _CandidateEvaluationPageState extends State<CandidateEvaluationPage> {
     if (success) {
       // Use technical-only score as overall score per user requirement
       double overallScore =
-          _completedInterview?.calculateOverallScore() ??
-          provider.calculatedScore;
+          _completedInterview?.technicalScore ?? provider.calculatedScore;
 
       // Show report with real data
       _showReportDialog(provider, overallScore);

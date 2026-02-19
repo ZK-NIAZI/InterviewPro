@@ -61,7 +61,14 @@ Future<void> initializeDependencies() async {
   );
 
   // Services
-  sl.registerLazySingleton<AuthProvider>(() => AuthProvider());
+  // Services
+  sl.registerLazySingleton<DriveService>(
+    () => DriveService(), // Client updated dynamically by AuthProvider
+  );
+
+  sl.registerLazySingleton<AuthProvider>(
+    () => AuthProvider(sl<DriveService>()),
+  );
 
   sl.registerLazySingleton<InterviewSessionManager>(
     () => InterviewSessionManager(sl<InterviewRepository>()),
@@ -69,10 +76,6 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton<VoiceRecordingService>(
     () => VoiceRecordingService(Hive.box('voiceRecordingsBox')),
-  );
-
-  sl.registerFactory<DriveService>(
-    () => DriveService(null), // Client updated dynamically by AuthProvider
   );
 
   sl.registerLazySingleton<UploadQueueService>(

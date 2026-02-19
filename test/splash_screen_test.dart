@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:mockito/mockito.dart';
 import 'package:interview_pro_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:interview_pro_app/features/splash/presentation/providers/splash_provider.dart';
 import 'package:interview_pro_app/core/constants/app_colors.dart';
 import 'package:interview_pro_app/core/constants/app_strings.dart';
+import 'package:interview_pro_app/core/providers/auth_provider.dart';
+
+class MockAuthProvider extends Mock implements AuthProvider {
+  @override
+  Future<void> trySilentSignIn() async {}
+}
 
 void main() {
+  late MockAuthProvider mockAuthProvider;
+
+  setUp(() {
+    mockAuthProvider = MockAuthProvider();
+  });
+
   group('Splash Screen Tests', () {
     testWidgets('should display InterviewPro branding with correct colors', (
       WidgetTester tester,
@@ -15,7 +28,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ChangeNotifierProvider(
-            create: (_) => SplashProvider(),
+            create: (_) => SplashProvider(mockAuthProvider),
             child: const SplashPage(),
           ),
         ),
@@ -45,7 +58,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ChangeNotifierProvider(
-            create: (_) => SplashProvider(),
+            create: (_) => SplashProvider(mockAuthProvider),
             child: const SplashPage(),
           ),
         ),
@@ -64,7 +77,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ChangeNotifierProvider(
-            create: (_) => SplashProvider(),
+            create: (_) => SplashProvider(mockAuthProvider),
             child: const SplashPage(),
           ),
         ),

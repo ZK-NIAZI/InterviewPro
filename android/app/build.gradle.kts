@@ -59,6 +59,15 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // Force downgrade transitive dependencies that require newer AGP
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.browser:browser:1.8.0")
+            force("androidx.core:core-ktx:1.13.1")
+            force("androidx.core:core:1.13.1")
+        }
+    }
     
     // Build optimization
     buildFeatures {

@@ -209,3 +209,33 @@ enum InterviewStatus {
     );
   }
 }
+
+/// Enumeration for interview verdict
+enum InterviewVerdict {
+  reject,
+  hold,
+  nextRound,
+  hire;
+
+  /// Gets a display-friendly name for the verdict
+  String get displayName {
+    switch (this) {
+      case InterviewVerdict.reject:
+        return 'Reject';
+      case InterviewVerdict.hold:
+        return 'Hold';
+      case InterviewVerdict.nextRound:
+        return 'Next Round';
+      case InterviewVerdict.hire:
+        return 'Hire';
+    }
+  }
+
+  /// Creates a InterviewVerdict from a string value
+  static InterviewVerdict fromString(String value) {
+    return InterviewVerdict.values.firstWhere(
+      (verdict) => verdict.name.toLowerCase() == value.toLowerCase(),
+      orElse: () => throw ArgumentError('Invalid verdict: $value'),
+    );
+  }
+}

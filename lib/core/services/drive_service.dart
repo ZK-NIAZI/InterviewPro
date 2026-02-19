@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
@@ -8,19 +9,19 @@ import 'package:path/path.dart' as path;
 class DriveService {
   drive.DriveApi? _driveApi;
 
-  /// The authenticated HTTP client from Google Sign-In
-  final auth.AuthClient? _authClient;
+  DriveService();
 
-  DriveService(this._authClient) {
-    if (_authClient != null) {
-      _driveApi = drive.DriveApi(_authClient);
-    }
-  }
+  drive.DriveApi? get driveApi => _driveApi;
 
   /// Update the authenticated client (e.g., after sign-in)
-  void updateClient(auth.AuthClient client) {
-    _driveApi = drive.DriveApi(client);
-    debugPrint('✅ DriveService updated with new authenticated client');
+  void updateClient(auth.AuthClient? client) {
+    if (client != null) {
+      _driveApi = drive.DriveApi(client);
+      debugPrint('✅ DriveService updated with new authenticated client');
+    } else {
+      _driveApi = null;
+      debugPrint('🔒 DriveService client cleared (User signed out)');
+    }
   }
 
   /// Check if a folder exists, create it if not, and return its ID
@@ -74,6 +75,68 @@ class DriveService {
       debugPrint('❌ Error getting/creating folder: $e');
       return null;
     }
+  }
+
+  /// Create a unique candidate folder with collision handling
+  /// Format: "Name (Suffix)" e.g. "John Doe (AF3K92)"
+  Future<String?> createUniqueCandidateFolder(String candidateName) async {
+    if (_driveApi == null) return null;
+
+    final baseName = sanitizeFileName(candidateName);
+    int attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      // 1. Generate Name with Suffix
+      final suffix = _generateRandomSuffix();
+      final folderName = '$baseName ($suffix)';
+
+      try {
+        // 2. Check for existence (Collision Check)
+        final query =
+            "mimeType = 'application/vnd.google-apps.folder' and name = '$folderName' and trashed = false";
+        final fileList = await _driveApi!.files.list(
+          q: query,
+          $fields: 'files(id)',
+        );
+
+        if (fileList.files != null && fileList.files!.isNotEmpty) {
+          debugPrint('⚠️ Collision detected for $folderName. Retrying...');
+          attempts++;
+          continue; // Retry with new suffix
+        }
+
+        // 3. Create Folder
+        final folderToCreate = drive.File()
+          ..name = folderName
+          ..mimeType = 'application/vnd.google-apps.folder';
+
+        final createdFolder = await _driveApi!.files.create(
+          folderToCreate,
+          $fields: 'id, name',
+        );
+
+        debugPrint(
+          '✅ Created unique candidate folder: "$folderName" (ID: ${createdFolder.id})',
+        );
+        return createdFolder.id;
+      } catch (e) {
+        debugPrint('❌ Error creating unique folder: $e');
+        return null; // Network or API error, stop retrying
+      }
+    }
+
+    debugPrint('❌ Failed to create unique folder after $maxAttempts attempts');
+    return null;
+  }
+
+  /// Generate a 6-character alphanumeric suffix
+  String _generateRandomSuffix() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = math.Random();
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
   }
 
   /// Sanitize a file/folder name to be safe for Drive and File Systems

@@ -30,12 +30,12 @@ class VoiceRecordingService {
             usageType: AndroidUsageType.media,
             audioFocus: AndroidAudioFocus.gain,
           ),
-          iOS: const AudioContextIOS(
+          iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: [
+            options: {
               AVAudioSessionOptions.defaultToSpeaker,
               AVAudioSessionOptions.mixWithOthers,
-            ],
+            },
           ),
         ),
       );

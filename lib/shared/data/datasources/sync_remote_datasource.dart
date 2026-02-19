@@ -17,6 +17,7 @@ class SyncRemoteDatasource {
     String? phone,
     String? cvFileId,
     String? cvFileUrl,
+    String? driveFolderId,
   }) async {
     try {
       final databases = _appwriteService.databases;
@@ -41,6 +42,8 @@ class SyncRemoteDatasource {
         // Update CV info if provided
         if (cvFileId != null) data['cvFileId'] = cvFileId;
         if (cvFileUrl != null) data['cvFileUrl'] = cvFileUrl;
+        // Update Drive Folder ID if provided (Persist unique folder)
+        if (driveFolderId != null) data['driveFolderId'] = driveFolderId;
 
         await databases.updateDocument(
           databaseId: AppwriteConfig.databaseId,
@@ -60,6 +63,7 @@ class SyncRemoteDatasource {
         'phone': phone,
         'cvFileId': cvFileId,
         'cvFileUrl': cvFileUrl,
+        'driveFolderId': driveFolderId,
       };
 
       await databases.createDocument(
@@ -93,6 +97,7 @@ class SyncRemoteDatasource {
     required String interviewId,
     required String driveFileId,
     required String driveFileUrl,
+    String? driveFolderId,
   }) async {
     try {
       final databases = _appwriteService.databases;
@@ -104,6 +109,7 @@ class SyncRemoteDatasource {
         phone: candidatePhone,
         cvFileId: candidateCvId,
         cvFileUrl: candidateCvUrl,
+        driveFolderId: driveFolderId,
       );
 
       // Check if document exists first (idempotency)
@@ -115,15 +121,18 @@ class SyncRemoteDatasource {
         );
 
         // Update if exists
+        final data = <String, dynamic>{
+          'candidateId': candidateId,
+          'driveFileId': driveFileId,
+          'driveFileUrl': driveFileUrl,
+        };
+        if (driveFolderId != null) data['driveFolderId'] = driveFolderId;
+
         await databases.updateDocument(
           databaseId: AppwriteConfig.databaseId,
           collectionId: AppwriteConfig.interviewsCollectionId,
           documentId: interviewId,
-          data: {
-            'candidateId': candidateId,
-            'driveFileId': driveFileId,
-            'driveFileUrl': driveFileUrl,
-          },
+          data: data,
         );
         debugPrint('🔄 Updated existing interview metadata: $interviewId');
       } catch (e) {
@@ -137,6 +146,7 @@ class SyncRemoteDatasource {
               'candidateId': candidateId,
               'driveFileId': driveFileId,
               'driveFileUrl': driveFileUrl,
+              'driveFolderId': driveFolderId,
             },
           );
           debugPrint('✨ Created new interview metadata record: $interviewId');

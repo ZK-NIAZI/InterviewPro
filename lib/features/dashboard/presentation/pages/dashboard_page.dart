@@ -11,6 +11,8 @@ import '../providers/dashboard_provider.dart';
 import '../../../history/presentation/widgets/history_content_widget.dart';
 import '../../../settings/presentation/widgets/settings_content_widget.dart';
 
+import '../../../../shared/presentation/widgets/drive_connect_dialog.dart';
+
 /// Main dashboard page matching the provided HTML design exactly
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -21,6 +23,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
+  // _shouldGlow state removed from here as it's now handled by _ConnectDriveButton
 
   @override
   void initState() {
@@ -205,31 +208,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 );
               } else {
-                return ElevatedButton.icon(
-                  onPressed: () async {
-                    try {
-                      await auth.signIn();
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Sign in failed: $e')),
-                        );
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.add_to_drive, size: 18),
-                  label: const Text('Connect Drive'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.textPrimary,
-                    elevation: 0,
-                    side: BorderSide(color: AppColors.grey300),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
-                );
+                return const _ConnectDriveButton();
               }
             },
           ),
@@ -395,7 +374,18 @@ class _DashboardPageState extends State<DashboardPage> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: () => context.push(AppRouter.interview),
+        onPressed: () {
+          final auth = context.read<AuthProvider>();
+          if (auth.isAuthenticated) {
+            context.push(AppRouter.interview);
+          } else {
+            // Show explanation dialog
+            showDialog(
+              context: context,
+              builder: (context) => const DriveConnectDialog(),
+            );
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -548,15 +538,6 @@ class _DashboardPageState extends State<DashboardPage> {
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => context.push(AppRouter.interview),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Start Interview'),
-          ),
         ],
       ),
     );
@@ -597,15 +578,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   side: const BorderSide(color: AppColors.primary),
                 ),
                 child: const Text('Retry'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: () => context.push(AppRouter.interview),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Start New Interview'),
               ),
             ],
           ),
@@ -906,6 +878,31 @@ class _DashboardPageState extends State<DashboardPage> {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Isolated widget for "Connect Drive" button to handle dialog
+/// without rebuilding the entire Dashboard
+class _ConnectDriveButton extends StatelessWidget {
+  const _ConnectDriveButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () async {
+        // 1. Show the glassmorphic dialog and WAIT for result
+        await DriveConnectDialog.show(context);
+      },
+      icon: const Icon(Icons.add_to_drive, size: 18),
+      label: const Text('Connect Drive'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+        side: BorderSide(color: AppColors.grey300),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }

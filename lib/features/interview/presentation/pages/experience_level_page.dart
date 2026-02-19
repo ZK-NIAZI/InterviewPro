@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import '../../../../shared/domain/repositories/experience_level_repository.dart';
 import '../providers/cv_upload_provider.dart';
+import '../providers/interview_setup_provider.dart';
 
 /// Experience level selection screen with Appwrite backend integration
 class ExperienceLevelPage extends StatefulWidget {
@@ -587,7 +588,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                     return ElevatedButton(
                       onPressed: cvProvider.isUploading
                           ? null
-                          : () {
+                          : () async {
                               if (nameController.text.trim().isNotEmpty) {
                                 final candidateName = nameController.text
                                     .trim();
@@ -596,13 +597,57 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                                 final candidatePhone = phoneController.text
                                     .trim();
 
+                                // 1. Drive Folder Validation Gate
+                                // Check if we already have a folder from CV upload
+                                String? driveFolderId =
+                                    cvProvider.uploadedFolderId;
+
+                                // If not, we MUST create one now
+                                if (driveFolderId == null) {
+                                  try {
+                                    final setupProvider = context
+                                        .read<InterviewSetupProvider>();
+
+                                    // Show blocking dialog while preparing workspace
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (c) => const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+
+                                    driveFolderId = await setupProvider
+                                        .prepareCandidateWorkspace(
+                                          candidateName,
+                                        );
+
+                                    if (context.mounted) {
+                                      Navigator.pop(context); // Pop loading
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context); // Pop loading
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text('Error: $e')),
+                                      );
+                                    }
+                                    return;
+                                  }
+                                }
+
                                 // Capture values before reset
                                 final cvFileId = cvProvider.cvFileId;
                                 final cvFileUrl = cvProvider.cvUrl;
 
                                 cvProvider
                                     .reset(); // Reset provider state for next use
-                                Navigator.pop(context);
+
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
 
                                 final levels =
                                     _experienceLevelProvider.experienceLevels;
@@ -616,6 +661,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                                   'candidateName': candidateName,
                                   'candidateEmail': candidateEmail,
                                   'candidatePhone': candidatePhone,
+                                  'driveFolderId': driveFolderId, // PASS THE ID
                                 };
 
                                 if (cvFileId != null) {
@@ -630,7 +676,9 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                                   queryParameters: queryParams,
                                 );
 
-                                context.push(uri.toString());
+                                if (context.mounted) {
+                                  context.push(uri.toString());
+                                }
                               }
                             },
                       style: ElevatedButton.styleFrom(

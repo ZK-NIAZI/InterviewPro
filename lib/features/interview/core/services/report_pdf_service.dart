@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+
+import '../extensions/verdict_pdf_extension.dart';
 import '../../presentation/providers/report_data_provider.dart';
 
 /// Service responsible for generating and downloading interview report PDFs
@@ -143,6 +145,23 @@ class ReportPdfService {
   }
 
   static pw.Widget _buildScoreSection(ReportData reportData) {
+    // Determine color and text based on verdict (if available) or score (fallback)
+    PdfColor color;
+    PdfColor textColor;
+    String text;
+
+    if (reportData.verdict != null) {
+      text = reportData.verdict!.displayName.toUpperCase();
+      color = reportData.verdict!.pdfColor;
+      textColor = reportData.verdict!.pdfTextColor;
+    } else {
+      // Fallback for legacy data
+      final isPassing = reportData.overallScore >= 70;
+      text = isPassing ? 'RECOMMENDED' : 'NOT RECOMMENDED';
+      color = isPassing ? PdfColors.green100 : PdfColors.red100;
+      textColor = isPassing ? PdfColors.green800 : PdfColors.red800;
+    }
+
     return pw.Center(
       child: pw.Column(
         children: [
@@ -167,19 +186,15 @@ class ReportPdfService {
           pw.Container(
             padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: pw.BoxDecoration(
-              color: (reportData.overallScore >= 70)
-                  ? PdfColors.green100
-                  : PdfColors.red100,
+              color: color,
               borderRadius: const pw.BorderRadius.all(pw.Radius.circular(16)),
             ),
             child: pw.Text(
-              reportData.recommendation.toUpperCase(),
+              text,
               style: pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
-                color: (reportData.overallScore >= 70)
-                    ? PdfColors.green800
-                    : PdfColors.red800,
+                color: textColor,
               ),
             ),
           ),

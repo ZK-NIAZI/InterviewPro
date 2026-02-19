@@ -37,9 +37,6 @@ class Interview extends Equatable {
   /// Overall score calculated from responses (null if not calculated)
   final double? overallScore;
 
-  // technicalScore is now a dynamic getter, not a stored field
-  // final double? technicalScore;
-
   /// Soft skills score from evaluation (0-100)
   final double? softSkillsScore;
 
@@ -79,6 +76,12 @@ class Interview extends Equatable {
   /// Full transcript of the interview voice recording
   final String? transcript;
 
+  /// The Google Drive Folder ID for this candidate/session
+  final String? driveFolderId;
+
+  /// The final verdict for the interview
+  final InterviewVerdict? verdict;
+
   const Interview({
     required this.id,
     required this.candidateName,
@@ -91,7 +94,7 @@ class Interview extends Equatable {
     required this.responses,
     required this.status,
     this.overallScore,
-    // technicalScore is calculated dynamically
+
     this.softSkillsScore,
     this.communicationSkills = 0,
     this.problemSolvingApproach = 0,
@@ -105,6 +108,8 @@ class Interview extends Equatable {
     this.transcript,
     this.candidateCvId,
     this.candidateCvUrl,
+    this.driveFolderId,
+    this.verdict,
   });
 
   /// Creates a copy of this interview with updated fields
@@ -120,7 +125,7 @@ class Interview extends Equatable {
     List<QuestionResponse>? responses,
     InterviewStatus? status,
     double? overallScore,
-    // technicalScore removed from copyWith to enforce dynamic calculation
+
     double? softSkillsScore,
     int? communicationSkills,
     int? problemSolvingApproach,
@@ -134,6 +139,8 @@ class Interview extends Equatable {
     String? transcript,
     String? candidateCvId,
     String? candidateCvUrl,
+    String? driveFolderId,
+    InterviewVerdict? verdict,
   }) {
     return Interview(
       id: id ?? this.id,
@@ -147,7 +154,7 @@ class Interview extends Equatable {
       responses: responses ?? this.responses,
       status: status ?? this.status,
       overallScore: overallScore ?? this.overallScore,
-      // technicalScore is calculated dynamically
+
       softSkillsScore: softSkillsScore ?? this.softSkillsScore,
       communicationSkills: communicationSkills ?? this.communicationSkills,
       problemSolvingApproach:
@@ -163,6 +170,8 @@ class Interview extends Equatable {
       transcript: transcript ?? this.transcript,
       candidateCvId: candidateCvId ?? this.candidateCvId,
       candidateCvUrl: candidateCvUrl ?? this.candidateCvUrl,
+      driveFolderId: driveFolderId ?? this.driveFolderId,
+      verdict: verdict ?? this.verdict,
     );
   }
 
@@ -198,15 +207,14 @@ class Interview extends Equatable {
     return (correctAnswers / denominator) * 100.0;
   }
 
-  /// Calculate final overall score (Alias for technicalScore for now)
-  double calculateOverallScore({double? evaluationScore}) {
-    // Ignoring evaluationScore for overall percentage as per specific requirement
-    return technicalScore;
-  }
-
-  /// Get recommendation based on overall score
+  /// Get recommendation based on verdict if available, otherwise fallback to score
   String getRecommendation({double? evaluationScore}) {
-    final score = calculateOverallScore(evaluationScore: evaluationScore);
+    if (verdict != null) {
+      return verdict!.displayName;
+    }
+
+    // Fallback for old interviews
+    final score = technicalScore;
 
     if (score >= 70.0) {
       return 'Recommended for Hire';
@@ -290,6 +298,8 @@ class Interview extends Equatable {
       transcript: json['transcript'],
       candidateCvId: json['candidateCvId'],
       candidateCvUrl: json['candidateCvUrl'],
+      driveFolderId: json['driveFolderId'],
+      verdict: json['verdict'] != null ? _parseVerdict(json['verdict']) : null,
     );
   }
 
@@ -321,6 +331,8 @@ class Interview extends Equatable {
       'transcript': transcript,
       'candidateCvId': candidateCvId,
       'candidateCvUrl': candidateCvUrl,
+      'driveFolderId': driveFolderId,
+      'verdict': verdict?.name,
     };
   }
 
@@ -366,6 +378,16 @@ class Interview extends Equatable {
     return InterviewStatus.inProgress; // Default fallback
   }
 
+  /// Helper method to safely parse Verdict from string
+  static InterviewVerdict? _parseVerdict(dynamic verdictValue) {
+    if (verdictValue == null) return null;
+    try {
+      return InterviewVerdict.fromString(verdictValue.toString());
+    } catch (_) {
+      return null; // Return null if invalid/unknown value
+    }
+  }
+
   @override
   List<Object?> get props => [
     id,
@@ -393,6 +415,8 @@ class Interview extends Equatable {
     transcript,
     candidateCvId,
     candidateCvUrl,
+    driveFolderId,
+    verdict,
   ];
 
   @override

@@ -71,7 +71,7 @@ class ReportDataProvider extends ChangeNotifier {
     final stats = interview.getPerformanceStats();
 
     // Calculate overall score (strictly technical based on new requirements)
-    final overallScore = interview.calculateOverallScore();
+    final overallScore = interview.technicalScore;
     final technicalScore = interview.technicalScore;
 
     // Generate detailed question breakdown
@@ -103,6 +103,7 @@ class ReportDataProvider extends ChangeNotifier {
       duration: interview.duration?.inMinutes ?? 0,
       voiceRecordingPath: interview.voiceRecordingPath,
       voiceRecordingDurationSeconds: interview.voiceRecordingDurationSeconds,
+      verdict: interview.verdict,
     );
   }
 
@@ -170,6 +171,7 @@ class ReportData {
   // Audio recording fields
   final String? voiceRecordingPath;
   final int? voiceRecordingDurationSeconds;
+  final InterviewVerdict? verdict;
 
   const ReportData({
     required this.interview,
@@ -192,6 +194,7 @@ class ReportData {
     required this.duration,
     this.voiceRecordingPath,
     this.voiceRecordingDurationSeconds,
+    this.verdict,
   });
 }
 
