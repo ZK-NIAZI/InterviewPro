@@ -94,7 +94,7 @@ class InterviewProApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DashboardProvider(sl())),
         ChangeNotifierProvider(create: (_) => HistoryProvider(sl())),
         ChangeNotifierProvider(
-          create: (_) => InterviewSetupProvider(sl(), sl(), sl()),
+          create: (_) => InterviewSetupProvider(sl(), sl(), sl(), sl()),
         ),
         ChangeNotifierProvider(create: (_) => EvaluationProvider(sl())),
         ChangeNotifierProvider(create: (_) => RoleProvider()),

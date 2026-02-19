@@ -2,17 +2,20 @@ import 'package:flutter/foundation.dart';
 import '../../../../shared/domain/entities/entities.dart';
 import '../../../../shared/domain/repositories/repositories.dart';
 import '../../../../core/services/drive_service.dart';
+import '../../../../shared/data/datasources/sync_remote_datasource.dart';
 
 /// Provider for managing interview setup state and logic
 class InterviewSetupProvider extends ChangeNotifier {
   final InterviewQuestionRepository _questionRepository;
   final InterviewRepository _interviewRepository;
   final DriveService _driveService;
+  final SyncRemoteDatasource _syncRemoteDatasource;
 
   InterviewSetupProvider(
     this._questionRepository,
     this._interviewRepository,
     this._driveService,
+    this._syncRemoteDatasource,
   );
 
   bool _isLoading = false;
@@ -32,8 +35,11 @@ class InterviewSetupProvider extends ChangeNotifier {
       _selectedLevel != null &&
       _candidateName.trim().isNotEmpty;
 
-  /// Prepares the candidate workspace by creating a unique folder in Drive
-  Future<String> prepareCandidateWorkspace(String candidateName) async {
+  /// Prepares the candidate workspace by checking for existing or creating new folder
+  Future<String> prepareCandidateWorkspace(
+    String candidateName, {
+    String? candidateEmail,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
@@ -45,7 +51,28 @@ class InterviewSetupProvider extends ChangeNotifier {
         );
       }
 
-      // 2. Create Unique Folder directly
+      // 2. Check for existing folder if email provided (Deduplication)
+      if (candidateEmail != null && candidateEmail.isNotEmpty) {
+        try {
+          final existingCandidate = await _syncRemoteDatasource
+              .getCandidateByEmail(candidateEmail);
+          if (existingCandidate != null) {
+            final existingFolderId = existingCandidate['driveFolderId'];
+            if (existingFolderId != null &&
+                existingFolderId.toString().isNotEmpty) {
+              debugPrint(
+                '♻️ Reusing existing Drive Folder ID: $existingFolderId for $candidateEmail',
+              );
+              return existingFolderId;
+            }
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error checking existing candidate folder: $e');
+          // Fallthrough to create new if check fails
+        }
+      }
+
+      // 3. Create Unique Folder directly
       final folderId = await _driveService.createUniqueCandidateFolder(
         candidateName,
       );

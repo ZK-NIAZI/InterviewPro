@@ -104,11 +104,32 @@ class CvUploadProvider extends ChangeNotifier {
       }
 
       // 4. Get/Create Candidate Folder (Unique Strategy)
-      // Use existing folder if restored, otherwise create new unique one
+      // Use existing folder if restored, or check DB, otherwise create new unique one
       String? candidateFolderId = _uploadedFolderId;
+
+      // If not locally cached, check DB first (Deduplication)
+      if (candidateFolderId == null) {
+        try {
+          final existingCandidate = await _syncRemoteDatasource
+              .getCandidateByEmail(candidateEmail);
+          if (existingCandidate != null) {
+            final existingId = existingCandidate['driveFolderId'];
+            if (existingId != null && existingId.toString().isNotEmpty) {
+              candidateFolderId = existingId;
+              debugPrint(
+                '♻️ Reusing existing Drive Folder ID for CV Upload: $candidateFolderId',
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error checking existing candidate for CV upload: $e');
+        }
+      }
+
+      // Only create new if we still don't have an ID
       candidateFolderId ??= await _driveService.createUniqueCandidateFolder(
-          candidateName,
-        );
+        candidateName,
+      );
 
       if (candidateFolderId == null) {
         throw Exception('Could not create candidate folder');

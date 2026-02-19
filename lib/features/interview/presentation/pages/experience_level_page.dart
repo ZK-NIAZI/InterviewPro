@@ -620,6 +620,7 @@ class _ExperienceLevelPageState extends State<ExperienceLevelPage> {
                                     driveFolderId = await setupProvider
                                         .prepareCandidateWorkspace(
                                           candidateName,
+                                          candidateEmail: candidateEmail,
                                         );
 
                                     if (context.mounted) {
