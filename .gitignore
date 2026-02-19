@@ -63,3 +63,10 @@ test/hive_test/
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 .agents/
 .env
+
+# Security / Secrets
+service_account.json
+client_secret_*.json
+key.properties
+**/*.keystore
+**/*.jks

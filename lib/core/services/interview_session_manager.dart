@@ -116,6 +116,7 @@ class InterviewSessionManager extends ChangeNotifier {
     String? candidatePhone,
     String? candidateCvId,
     String? candidateCvUrl,
+    String? driveFolderId, // 🟢 Added parameter
     required String role,
     required String level,
     required List<InterviewQuestion> questions,
@@ -140,6 +141,7 @@ class InterviewSessionManager extends ChangeNotifier {
         totalQuestions: questions.length,
         candidateCvId: candidateCvId,
         candidateCvUrl: candidateCvUrl,
+        driveFolderId: driveFolderId, // 🟢 Added initialization
       );
 
       // Set current session
@@ -374,6 +376,8 @@ class InterviewSessionManager extends ChangeNotifier {
             candidateName: _currentInterview!.candidateName,
             candidateEmail: effectiveEmail,
             candidatePhone: _currentCandidatePhone,
+            driveFolderId:
+                _currentInterview!.driveFolderId, // 🟢 FIX: Pass the ID!
           );
           debugPrint('☁️ Queued recording for upload: $voiceRecordingPath');
         } catch (e) {

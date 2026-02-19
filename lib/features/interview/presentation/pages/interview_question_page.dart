@@ -134,6 +134,7 @@ class _InterviewQuestionPageState extends State<InterviewQuestionPage>
         candidatePhone: widget.candidatePhone,
         candidateCvId: widget.candidateCvId,
         candidateCvUrl: widget.candidateCvUrl,
+        driveFolderId: widget.driveFolderId, // 🟢 Passed from widget
         role: widget.selectedRole,
         level: widget.selectedLevel,
         questions: _questions,

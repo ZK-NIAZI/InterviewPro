@@ -65,6 +65,8 @@ class AppRouter {
             candidatePhone: state.uri.queryParameters['candidatePhone'],
             candidateCvId: state.uri.queryParameters['candidateCvId'],
             candidateCvUrl: state.uri.queryParameters['candidateCvUrl'],
+            driveFolderId:
+                state.uri.queryParameters['driveFolderId'], // 🟢 Added
           );
         },
       ),
