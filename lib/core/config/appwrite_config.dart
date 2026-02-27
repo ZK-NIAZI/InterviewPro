@@ -21,4 +21,8 @@ class AppwriteConfig {
 
   /// Get configuration status message
   static String get statusMessage => SetupHelper.setupStatusMessage;
+
+  // Development Fallbacks
+  static const String testCompanyId = '699d77ca003617180a13';
+  static const String testInterviewerId = 'test_interviewer_123';
 }

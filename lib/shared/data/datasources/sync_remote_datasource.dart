@@ -18,6 +18,8 @@ class SyncRemoteDatasource {
     String? cvFileId,
     String? cvFileUrl,
     String? driveFolderId,
+    String? companyId,
+    String? interviewerId,
   }) async {
     try {
       final databases = _appwriteService.databases;
@@ -45,6 +47,11 @@ class SyncRemoteDatasource {
         // Update Drive Folder ID if provided (Persist unique folder)
         if (driveFolderId != null) data['driveFolderId'] = driveFolderId;
 
+        // Ensure required fields are always present during update if missing
+        data['companyId'] = companyId ?? AppwriteConfig.testCompanyId;
+        data['interviewerId'] =
+            interviewerId ?? AppwriteConfig.testInterviewerId;
+
         await databases.updateDocument(
           databaseId: AppwriteConfig.databaseId,
           collectionId: AppwriteConfig.candidatesCollectionId,
@@ -64,6 +71,8 @@ class SyncRemoteDatasource {
         'cvFileId': cvFileId,
         'cvFileUrl': cvFileUrl,
         'driveFolderId': driveFolderId,
+        'companyId': companyId ?? AppwriteConfig.testCompanyId,
+        'interviewerId': interviewerId ?? AppwriteConfig.testInterviewerId,
       };
 
       await databases.createDocument(
@@ -98,6 +107,8 @@ class SyncRemoteDatasource {
     required String driveFileId,
     required String driveFileUrl,
     String? driveFolderId,
+    String? companyId,
+    String? interviewerId,
   }) async {
     try {
       final databases = _appwriteService.databases;
@@ -110,6 +121,8 @@ class SyncRemoteDatasource {
         cvFileId: candidateCvId,
         cvFileUrl: candidateCvUrl,
         driveFolderId: driveFolderId,
+        companyId: companyId,
+        interviewerId: interviewerId,
       );
 
       // Check if document exists first (idempotency)
@@ -125,6 +138,8 @@ class SyncRemoteDatasource {
           'candidateId': candidateId,
           'driveFileId': driveFileId,
           'driveFileUrl': driveFileUrl,
+          'companyId': companyId ?? AppwriteConfig.testCompanyId,
+          'interviewerId': interviewerId ?? AppwriteConfig.testInterviewerId,
         };
         if (driveFolderId != null) data['driveFolderId'] = driveFolderId;
 
@@ -147,6 +162,9 @@ class SyncRemoteDatasource {
               'driveFileId': driveFileId,
               'driveFileUrl': driveFileUrl,
               'driveFolderId': driveFolderId,
+              'companyId': companyId ?? AppwriteConfig.testCompanyId,
+              'interviewerId':
+                  interviewerId ?? AppwriteConfig.testInterviewerId,
             },
           );
           debugPrint('✨ Created new interview metadata record: $interviewId');
